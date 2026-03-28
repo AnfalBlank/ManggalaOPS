@@ -1,6 +1,7 @@
 import { format } from "date-fns";
-import { AlertCircle, Banknote, Download, FileCheck, Landmark, Plus } from "lucide-react";
+import { AlertCircle, Banknote, FileCheck, Landmark, Plus } from "lucide-react";
 
+import { DownloadInvoiceButton } from "@/components/pdf/download-invoice-button";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,6 @@ import {
 } from "@/components/ui/table";
 import { getInvoices } from "@/lib/data";
 import { formatCurrency } from "@/lib/format";
-import { generateInvoicePDF } from "@/lib/pdf";
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "Paid") {
@@ -145,28 +145,20 @@ export default async function InvoicesPage() {
                       </TableCell>
                       <TableCell className="text-right py-4">
                         <div className="flex items-center justify-end">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 w-8 px-0 text-slate-400 hover:text-blue-600 rounded-full bg-white shadow-sm border-slate-200"
-                            onClick={() =>
-                              generateInvoicePDF({
-                                id: invoice.code,
-                                client: invoice.clientName,
-                                project: invoice.projectName ?? "-",
-                                date: invoice.date ? new Date(invoice.date) : new Date(),
-                                dueDate: invoice.dueDate ? new Date(invoice.dueDate) : new Date(),
-                                subtotal: invoice.subtotal,
-                                ppn: invoice.tax,
-                                total: invoice.total,
-                                amountPaid: invoice.amountPaid,
-                                status: invoice.status,
-                              })
-                            }
-                            title="Download Invoice PDF"
-                          >
-                            <Download className="size-4" />
-                          </Button>
+                          <DownloadInvoiceButton
+                            payload={{
+                              id: invoice.code,
+                              client: invoice.clientName,
+                              project: invoice.projectName ?? "-",
+                              date: invoice.date ?? new Date().toISOString(),
+                              dueDate: invoice.dueDate ?? new Date().toISOString(),
+                              subtotal: invoice.subtotal,
+                              ppn: invoice.tax,
+                              total: invoice.total,
+                              amountPaid: invoice.amountPaid,
+                              status: invoice.status,
+                            }}
+                          />
                         </div>
                       </TableCell>
                     </TableRow>

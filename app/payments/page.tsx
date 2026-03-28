@@ -1,7 +1,8 @@
 import { format } from "date-fns";
-import { Banknote, ListPlus, Receipt, ShieldCheck } from "lucide-react";
+import { Banknote, ListPlus, ShieldCheck } from "lucide-react";
 
 import { PageWrapper } from "@/components/layout/page-wrapper";
+import { DownloadKwitansiButton } from "@/components/pdf/download-kwitansi-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, ErrorState } from "@/components/ui/state";
@@ -15,7 +16,6 @@ import {
 } from "@/components/ui/table";
 import { getPayments } from "@/lib/data";
 import { formatCurrency } from "@/lib/format";
-import { generateKwitansiPDF } from "@/lib/pdf";
 
 export default async function PaymentsPage() {
   try {
@@ -101,22 +101,14 @@ export default async function PaymentsPage() {
                       </TableCell>
                       <TableCell className="text-center py-4">
                         <div className="flex items-center justify-center">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 w-8 px-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-full border-emerald-200"
-                            onClick={() =>
-                              generateKwitansiPDF({
-                                id: payment.code,
-                                client: payment.clientName,
-                                amount: payment.amount,
-                                description: `Pembayaran Invoice ${payment.invoiceCode}`,
-                              })
-                            }
-                            title="Download Kwitansi"
-                          >
-                            <Receipt className="size-4" />
-                          </Button>
+                          <DownloadKwitansiButton
+                            payload={{
+                              id: payment.code,
+                              client: payment.clientName,
+                              amount: payment.amount,
+                              description: `Pembayaran Invoice ${payment.invoiceCode}`,
+                            }}
+                          />
                         </div>
                       </TableCell>
                     </TableRow>

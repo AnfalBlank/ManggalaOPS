@@ -13,7 +13,7 @@ if (!authToken) {
   throw new Error("Missing TURSO_AUTH_TOKEN environment variable");
 }
 
-export default {
+const config = {
   schema: "./db/schema.ts",
   out: "./db/migrations",
   dialect: "sqlite",
@@ -22,3 +22,5 @@ export default {
     authToken,
   },
 };
+
+export default config;

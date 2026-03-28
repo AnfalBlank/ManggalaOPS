@@ -123,7 +123,7 @@ export async function getInvoices(): Promise<InvoiceListItem[]> {
   const paymentTotals = db
     .select({
       invoiceId: payments.invoiceId,
-      amountPaid: sql<number>`coalesce(sum(${payments.amount}), 0)`,
+      amountPaid: sql<number>`coalesce(sum(${payments.amount}), 0)`.as("amountPaid"),
     })
     .from(payments)
     .groupBy(payments.invoiceId)
