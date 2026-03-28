@@ -4,19 +4,31 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { payments } from "@/db/schema";
 import { getPayments } from "@/lib/data";
+import { parseMoneyInput } from "@/lib/money";
+import { ensurePaymentMatchesInvoice } from "@/lib/validators";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const paymentId = Number(id);
     const body = await request.json();
+    const invoiceId = Number(body.invoiceId);
+    const clientId = Number(body.clientId);
+    const amount = parseMoneyInput(body.amount);
+
+    await ensurePaymentMatchesInvoice({
+      invoiceId,
+      clientId,
+      amount,
+      excludePaymentId: paymentId,
+    });
 
     await db
       .update(payments)
       .set({
-        invoiceId: Number(body.invoiceId),
-        clientId: Number(body.clientId),
-        amount: Number(body.amount ?? 0),
+        invoiceId,
+        clientId,
+        amount,
         paymentMethod: String(body.paymentMethod ?? "").trim() || null,
         referenceCode: String(body.referenceCode ?? "").trim() || null,
       })

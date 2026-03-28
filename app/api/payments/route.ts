@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { payments } from "@/db/schema";
 import { getPayments } from "@/lib/data";
+import { parseMoneyInput } from "@/lib/money";
+import { ensurePaymentMatchesInvoice } from "@/lib/validators";
 
 export async function GET() {
   try {
@@ -21,16 +23,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const invoiceId = Number(body.invoiceId);
     const clientId = Number(body.clientId);
-    const amount = Number(body.amount ?? 0);
+    const amount = parseMoneyInput(body.amount);
     const paymentMethod = String(body.paymentMethod ?? "").trim() || null;
     const referenceCode = String(body.referenceCode ?? "").trim() || null;
 
     if (!invoiceId || !clientId || amount <= 0) {
       return NextResponse.json(
-        { error: "invoiceId, clientId, and amount are required" },
+        { error: "invoiceId, clientId, dan amount wajib diisi" },
         { status: 400 },
       );
     }
+
+    await ensurePaymentMatchesInvoice({ invoiceId, clientId, amount });
 
     await db.insert(payments).values({
       invoiceId,

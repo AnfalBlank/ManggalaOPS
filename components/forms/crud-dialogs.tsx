@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
+import { MoneyInput } from "@/components/forms/money-input";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formatMoneyInput, parseMoneyInput } from "@/lib/money";
 
 type ClientOption = {
   id: number;
@@ -136,7 +138,7 @@ export function CreateLeadDialog({ clients }: LeadDialogProps) {
           </div>
           <div className="grid gap-2">
             <Label htmlFor="lead-value">Estimated Value</Label>
-            <Input id="lead-value" type="number" value={estimatedValue} onChange={(event) => setEstimatedValue(event.target.value)} placeholder="850000000" />
+            <MoneyInput id="lead-value" value={estimatedValue} onChange={setEstimatedValue} placeholder="850.000.000" />
           </div>
           <div className="grid gap-2">
             <Label>Status</Label>
@@ -174,9 +176,7 @@ export function CreateInvoiceDialog({ clients }: InvoiceDialogProps) {
   const [tax, setTax] = useState("");
   const [dueDate, setDueDate] = useState("");
 
-  const total = useMemo(() => {
-    return Number(subtotal || 0) + Number(tax || 0);
-  }, [subtotal, tax]);
+  const total = useMemo(() => parseMoneyInput(subtotal) + parseMoneyInput(tax), [subtotal, tax]);
 
   const handleSubmit = async () => {
     try {
@@ -230,18 +230,18 @@ export function CreateInvoiceDialog({ clients }: InvoiceDialogProps) {
           </div>
           <div className="grid gap-2">
             <Label htmlFor="invoice-subtotal">Subtotal</Label>
-            <Input id="invoice-subtotal" type="number" value={subtotal} onChange={(event) => setSubtotal(event.target.value)} placeholder="225000000" />
+            <MoneyInput id="invoice-subtotal" value={subtotal} onChange={setSubtotal} placeholder="225.000.000" />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="invoice-tax">PPN</Label>
-            <Input id="invoice-tax" type="number" value={tax} onChange={(event) => setTax(event.target.value)} placeholder="24750000" />
+            <MoneyInput id="invoice-tax" value={tax} onChange={setTax} placeholder="24.750.000" />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="invoice-due-date">Due Date</Label>
             <Input id="invoice-due-date" type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
           </div>
           <div className="rounded-lg border bg-muted/30 p-3 text-sm">
-            Total invoice: <span className="font-semibold">Rp {total.toLocaleString("id-ID")}</span>
+            Total invoice: <span className="font-semibold">Rp {formatMoneyInput(total)}</span>
           </div>
         </div>
         <DialogFooter>
@@ -333,7 +333,7 @@ export function RecordPaymentDialog({ clients, invoices }: PaymentDialogProps) {
           </div>
           <div className="grid gap-2">
             <Label htmlFor="payment-amount">Amount</Label>
-            <Input id="payment-amount" type="number" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="65000000" />
+            <MoneyInput id="payment-amount" value={amount} onChange={setAmount} placeholder="65.000.000" />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="payment-method">Payment Method</Label>
@@ -346,7 +346,7 @@ export function RecordPaymentDialog({ clients, invoices }: PaymentDialogProps) {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Batal</Button>
-          <Button onClick={handleSubmit} disabled={!clientId || !invoiceId || Number(amount) <= 0 || loading}>
+          <Button onClick={handleSubmit} disabled={!clientId || !invoiceId || parseMoneyInput(amount) <= 0 || loading}>
             {loading ? <Loader2 className="size-4 animate-spin" /> : "Simpan Payment"}
           </Button>
         </DialogFooter>

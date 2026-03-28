@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { MoneyInput } from "@/components/forms/money-input";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formatMoneyInput, parseMoneyInput } from "@/lib/money";
 
 type ClientOption = {
   id: number;
@@ -148,7 +150,7 @@ export function LeadRowActions({ row, clients }: { row: LeadRow; clients: Client
               </div>
               <div className="grid gap-2">
                 <Label>Estimated Value</Label>
-                <Input type="number" value={estimatedValue} onChange={(event) => setEstimatedValue(event.target.value)} />
+                <MoneyInput value={estimatedValue} onChange={setEstimatedValue} placeholder="111.000.000" />
               </div>
               <div className="grid gap-2">
                 <Label>Status</Label>
@@ -180,7 +182,7 @@ export function InvoiceRowActions({ row, clients }: { row: InvoiceRow; clients: 
   const [tax, setTax] = useState(String(row.tax));
   const [dueDate, setDueDate] = useState(row.dueDate ? row.dueDate.slice(0, 10) : "");
 
-  const total = useMemo(() => Number(subtotal || 0) + Number(tax || 0), [subtotal, tax]);
+  const total = useMemo(() => parseMoneyInput(subtotal) + parseMoneyInput(tax), [subtotal, tax]);
 
   const handleDelete = async () => {
     if (!confirm(`Hapus invoice #${row.id}?`)) return;
@@ -232,18 +234,18 @@ export function InvoiceRowActions({ row, clients }: { row: InvoiceRow; clients: 
               </div>
               <div className="grid gap-2">
                 <Label>Subtotal</Label>
-                <Input type="number" value={subtotal} onChange={(event) => setSubtotal(event.target.value)} />
+                <MoneyInput value={subtotal} onChange={setSubtotal} placeholder="50.000.000" />
               </div>
               <div className="grid gap-2">
                 <Label>PPN</Label>
-                <Input type="number" value={tax} onChange={(event) => setTax(event.target.value)} />
+                <MoneyInput value={tax} onChange={setTax} placeholder="5.500.000" />
               </div>
               <div className="grid gap-2">
                 <Label>Due Date</Label>
                 <Input type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
               </div>
               <div className="rounded-lg border bg-muted/30 p-3 text-sm">
-                Total: <span className="font-semibold">Rp {total.toLocaleString("id-ID")}</span>
+                Total: <span className="font-semibold">Rp {formatMoneyInput(total)}</span>
               </div>
             </div>
             <DialogFooter>
@@ -326,7 +328,7 @@ export function PaymentRowActions({ row, clients, invoices }: { row: PaymentRow;
               </div>
               <div className="grid gap-2">
                 <Label>Amount</Label>
-                <Input type="number" value={amount} onChange={(event) => setAmount(event.target.value)} />
+                <MoneyInput value={amount} onChange={setAmount} placeholder="10.000.000" />
               </div>
               <div className="grid gap-2">
                 <Label>Payment Method</Label>

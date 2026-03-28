@@ -4,6 +4,8 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { invoices } from "@/db/schema";
 import { getInvoices } from "@/lib/data";
+import { parseMoneyInput } from "@/lib/money";
+import { ensureInvoiceCanBeDeleted, ensureInvoiceCanBeUpdated } from "@/lib/validators";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -11,9 +13,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const invoiceId = Number(id);
     const body = await request.json();
 
-    const subtotal = Number(body.subtotal ?? 0);
-    const tax = Number(body.tax ?? 0);
-    const total = Number(body.total ?? subtotal + tax);
+    const subtotal = parseMoneyInput(body.subtotal);
+    const tax = parseMoneyInput(body.tax);
+    const total = parseMoneyInput(body.total) || subtotal + tax;
+
+    await ensureInvoiceCanBeUpdated(invoiceId, total);
 
     await db
       .update(invoices)
@@ -38,7 +42,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    await db.delete(invoices).where(eq(invoices.id, Number(id)));
+    const invoiceId = Number(id);
+    await ensureInvoiceCanBeDeleted(invoiceId);
+    await db.delete(invoices).where(eq(invoices.id, invoiceId));
     return NextResponse.json({ ok: true, data: await getInvoices() });
   } catch (error) {
     return NextResponse.json(
