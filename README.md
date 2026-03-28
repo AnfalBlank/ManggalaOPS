@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ManggalaOPS
 
-## Getting Started
+ERP/CRM dashboard for PT. Manggala Utama Indonesia built with Next.js, Drizzle ORM, and Turso/libSQL.
 
-First, run the development server:
+## Requirements
+
+- Node.js 20+
+- npm
+- Turso database URL and auth token
+
+## Environment Setup
+
+1. Copy the example env file:
+
+```bash
+cp .env.local.example .env.local
+```
+
+2. Fill in these values in `.env.local`:
+
+```env
+TURSO_DATABASE_URL=libsql://your-database-name.turso.io
+TURSO_AUTH_TOKEN=your_turso_auth_token
+```
+
+## Database Setup
+
+Push the schema to Turso:
+
+```bash
+npm run db:push
+```
+
+(Optional) generate migration files:
+
+```bash
+npm run db:generate
+```
+
+Seed starter data:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# in another terminal
+curl -X POST http://localhost:3000/api/seed
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Run Locally
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open <http://localhost:3000>
 
-## Learn More
+## Available Scripts
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run dev` — start dev server
+- `npm run build` — production build
+- `npm run start` — run production server
+- `npm run lint` — run ESLint
+- `npm run db:generate` — generate drizzle artifacts
+- `npm run db:migrate` — run drizzle migrations
+- `npm run db:push` — push schema to Turso/libSQL
+- `npm run db:studio` — open Drizzle Studio
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## API Endpoints
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `GET /api/health`
+- `GET /api/dashboard`
+- `GET /api/leads`
+- `GET /api/projects`
+- `GET /api/quotations`
+- `GET /api/invoices`
+- `GET /api/payments`
+- `POST /api/seed`
 
-## Deploy on Vercel
+## Notes
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- The app requires `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` for build/runtime.
+- Main operational pages already read live data from Drizzle queries.
+- If the database is empty, run the seed endpoint once.
