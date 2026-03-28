@@ -1,6 +1,5 @@
 "use client";
 
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Bell, Search } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -10,7 +9,6 @@ export function Topbar({ user }: { user?: { name: string; email: string; role: s
   return (
     <header className="sticky top-0 z-10 w-full flex items-center h-16 px-4 border-b bg-white shrink-0">
       <div className="flex items-center gap-2">
-        <SidebarTrigger className="-ml-1 text-muted-foreground hover:bg-muted" />
         <div className="w-1 h-4 bg-border mx-2 hidden sm:block"></div>
         <div className="hidden sm:flex items-center text-sm text-muted-foreground font-medium w-64">
           <Search className="size-4 mr-2" />

@@ -1,16 +1,17 @@
-import { CheckCircle, Clock, FileSignature, FileX, Plus } from "lucide-react";
+import { CheckCircle, Clock, FileSignature, FileX } from "lucide-react";
 
+import { QuotationDialog } from "@/components/forms/project-quotation-dialogs";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { QuotationActionsTable } from "@/components/quotations/quotation-actions";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, ErrorState } from "@/components/ui/state";
-import { getQuotations } from "@/lib/data";
+import { getProjects, getQuotations } from "@/lib/data";
 import { formatCurrency } from "@/lib/format";
+import { getClientOptions } from "@/lib/options";
 
 export default async function QuotationsPage() {
   try {
-    const quotations = await getQuotations();
+    const [quotations, clients, projects] = await Promise.all([getQuotations(), getClientOptions(), getProjects()]);
     const totalQuotations = quotations.length;
     const acceptedQuotations = quotations.filter((quotation) => quotation.status === "Accepted").length;
     const pendingValue = quotations
@@ -25,9 +26,7 @@ export default async function QuotationsPage() {
             <h1 className="text-3xl font-bold tracking-tight text-primary">Quotations</h1>
             <p className="text-muted-foreground mt-1">Manage service and procurement quotes sent to clients.</p>
           </div>
-          <Button className="bg-primary hover:bg-primary/90 text-white rounded-lg px-4 gap-2 shadow-sm" disabled>
-            <Plus className="size-4" /> Create Quotation
-          </Button>
+          <QuotationDialog clients={clients} projects={projects.map((project) => ({ id: project.id, name: project.name }))} />
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -84,7 +83,7 @@ export default async function QuotationsPage() {
               description="Tabel quotations masih kosong. Setelah tim sales bikin penawaran atau seed dijalankan, datanya akan muncul di sini."
             />
           ) : (
-            <QuotationActionsTable quotations={quotations} />
+            <QuotationActionsTable quotations={quotations} clients={clients} projects={projects.map((project) => ({ id: project.id, name: project.name }))} />
           )}
         </div>
       </PageWrapper>

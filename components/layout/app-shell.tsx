@@ -13,7 +13,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <AppSidebar role={user.role} />
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         <Topbar user={{ name: user.name, email: user.email, role: user.role }} />

@@ -1,6 +1,8 @@
 import { format } from "date-fns";
-import { Activity, Briefcase, CheckCircle, FolderPlus, Wallet } from "lucide-react";
+import { Activity, Briefcase, CheckCircle, Wallet } from "lucide-react";
 
+import { ProjectDialog } from "@/components/forms/project-quotation-dialogs";
+import { ProjectRowActions } from "@/components/forms/project-quotation-row-actions";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,10 +18,11 @@ import {
 } from "@/components/ui/table";
 import { getProjects } from "@/lib/data";
 import { formatCurrency } from "@/lib/format";
+import { getClientOptions } from "@/lib/options";
 
 export default async function ProjectsPage() {
   try {
-    const projects = await getProjects();
+    const [projects, clients] = await Promise.all([getProjects(), getClientOptions()]);
     const totalProjects = projects.length;
     const completedProjects = projects.filter((project) => project.status === "Completed").length;
     const inProgressProjects = projects.filter((project) => project.status === "In Progress").length;
@@ -32,9 +35,7 @@ export default async function ProjectsPage() {
             <h1 className="text-3xl font-bold tracking-tight text-primary">Projects & Procurement</h1>
             <p className="text-muted-foreground mt-1">Track ongoing implementations and hardware procurements.</p>
           </div>
-          <Button className="bg-primary hover:bg-primary/90 text-white rounded-lg px-4 gap-2 shadow-sm" disabled>
-            <FolderPlus className="size-4" /> New Project
-          </Button>
+          <ProjectDialog clients={clients} />
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -101,7 +102,8 @@ export default async function ProjectsPage() {
                     <TableHead className="text-xs uppercase tracking-wider">Timeline</TableHead>
                     <TableHead className="w-[150px] text-xs uppercase tracking-wider">Progress</TableHead>
                     <TableHead className="text-right text-xs uppercase tracking-wider">Contract Value</TableHead>
-                    <TableHead className="text-center text-xs uppercase tracking-wider rounded-tr-xl">Status</TableHead>
+                    <TableHead className="text-center text-xs uppercase tracking-wider">Status</TableHead>
+                    <TableHead className="text-right rounded-tr-xl">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -136,6 +138,9 @@ export default async function ProjectsPage() {
                         ) : (
                           <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 hover:text-blue-800 border-none shadow-none">{project.status}</Badge>
                         )}
+                      </TableCell>
+                      <TableCell className="text-right py-4">
+                        <ProjectRowActions project={project} clients={clients} />
                       </TableCell>
                     </TableRow>
                   ))}

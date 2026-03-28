@@ -91,7 +91,7 @@ export function AppSidebar({ role = "admin" }: { role?: string }) {
   });
 
   return (
-    <Sidebar className="border-r-0">
+    <Sidebar className="border-r-0" collapsible="none">
       {/* 
         We use a solid dark blue base with a very subtle gradient towards the bottom/right 
         to add depth without making it look "flashy".
