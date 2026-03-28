@@ -1,10 +1,10 @@
 import { format } from "date-fns";
-import { AlertCircle, Banknote, FileCheck, Landmark, Plus } from "lucide-react";
+import { AlertCircle, Banknote, FileCheck, Landmark } from "lucide-react";
 
+import { CreateInvoiceDialog } from "@/components/forms/crud-dialogs";
 import { DownloadInvoiceButton } from "@/components/pdf/download-invoice-button";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, ErrorState } from "@/components/ui/state";
 import {
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { getInvoices } from "@/lib/data";
 import { formatCurrency } from "@/lib/format";
+import { getClientOptions } from "@/lib/options";
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "Paid") {
@@ -33,7 +34,7 @@ function StatusBadge({ status }: { status: string }) {
 
 export default async function InvoicesPage() {
   try {
-    const invoices = await getInvoices();
+    const [invoices, clients] = await Promise.all([getInvoices(), getClientOptions()]);
     const totalInvoices = invoices.length;
     const totalValue = invoices.reduce((acc, curr) => acc + curr.total, 0);
     const totalPaid = invoices.reduce((acc, curr) => acc + curr.amountPaid, 0);
@@ -46,9 +47,7 @@ export default async function InvoicesPage() {
             <h1 className="text-3xl font-bold tracking-tight text-primary">Invoices</h1>
             <p className="text-muted-foreground mt-1">Manage billings and track outstanding payments.</p>
           </div>
-          <Button className="bg-primary hover:bg-primary/90 text-white rounded-lg px-4 gap-2 shadow-sm" disabled>
-            <Plus className="size-4" /> Create Invoice
-          </Button>
+          <CreateInvoiceDialog clients={clients} />
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

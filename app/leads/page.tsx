@@ -1,6 +1,7 @@
 import { format } from "date-fns";
-import { Banknote, Filter, Plus, Search, Target, TrendingUp, Users } from "lucide-react";
+import { Banknote, Filter, Search, Target, TrendingUp, Users } from "lucide-react";
 
+import { CreateLeadDialog } from "@/components/forms/crud-dialogs";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { getLeads } from "@/lib/data";
 import { formatCurrency } from "@/lib/format";
+import { getClientOptions } from "@/lib/options";
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -33,7 +35,7 @@ const getStatusBadge = (status: string) => {
 
 export default async function CRMPage() {
   try {
-    const leads = await getLeads();
+    const [leads, clients] = await Promise.all([getLeads(), getClientOptions()]);
     const totalLeads = leads.length;
     const wonLeads = leads.filter((lead) => lead.status === "Won").length;
     const openValue = leads
@@ -48,9 +50,7 @@ export default async function CRMPage() {
             <h1 className="text-3xl font-bold tracking-tight text-primary">Lead Management</h1>
             <p className="text-muted-foreground mt-1">Manage and track your prospect pipeline easily.</p>
           </div>
-          <Button className="bg-primary hover:bg-primary/90 text-white rounded-lg px-4 gap-2 shadow-sm" disabled>
-            <Plus className="size-4" /> Add New Lead
-          </Button>
+          <CreateLeadDialog clients={clients} />
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

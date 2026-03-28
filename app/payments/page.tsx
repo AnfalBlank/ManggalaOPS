@@ -1,9 +1,9 @@
 import { format } from "date-fns";
-import { Banknote, ListPlus, ShieldCheck } from "lucide-react";
+import { Banknote, ShieldCheck } from "lucide-react";
 
+import { RecordPaymentDialog } from "@/components/forms/crud-dialogs";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { DownloadKwitansiButton } from "@/components/pdf/download-kwitansi-button";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, ErrorState } from "@/components/ui/state";
 import {
@@ -16,10 +16,15 @@ import {
 } from "@/components/ui/table";
 import { getPayments } from "@/lib/data";
 import { formatCurrency } from "@/lib/format";
+import { getClientOptions, getInvoiceOptions } from "@/lib/options";
 
 export default async function PaymentsPage() {
   try {
-    const payments = await getPayments();
+    const [payments, clients, invoices] = await Promise.all([
+      getPayments(),
+      getClientOptions(),
+      getInvoiceOptions(),
+    ]);
     const totalPayments = payments.length;
     const totalValueReceived = payments.reduce((acc, curr) => acc + curr.amount, 0);
 
@@ -30,9 +35,7 @@ export default async function PaymentsPage() {
             <h1 className="text-3xl font-bold tracking-tight text-primary">Payments</h1>
             <p className="text-muted-foreground mt-1">Track incoming payments and generate official receipts (Kwitansi).</p>
           </div>
-          <Button className="bg-primary hover:bg-primary/90 text-white rounded-lg px-4 gap-2 shadow-sm" disabled>
-            <ListPlus className="size-4" /> Record Payment
-          </Button>
+          <RecordPaymentDialog clients={clients} invoices={invoices} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
