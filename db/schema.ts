@@ -5,6 +5,22 @@ import {
   real
 } from "drizzle-orm/sqlite-core";
 
+export const users = sqliteTable('users', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  passwordHash: text('password_hash').notNull(),
+  role: text('role').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+});
+
+export const sessions = sqliteTable('sessions', {
+  id: text('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }),
+});
+
 // 1. CRM & Core
 export const clients = sqliteTable('clients', {
   id: integer('id').primaryKey({ autoIncrement: true }),

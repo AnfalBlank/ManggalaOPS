@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { ArrowDownCircle, ArrowUpCircle, CreditCard, Plus, Wallet } from "lucide-react";
 
 import { RoleGuard } from "@/components/auth/guard";
+import { CreateExpenseDialog, ExpenseRowActions } from "@/components/forms/expense-dialogs";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,9 +39,7 @@ export default async function FinancePage() {
             <Button variant="outline" className="gap-2" disabled>
               Export Report
             </Button>
-            <Button className="bg-primary hover:bg-primary/90 text-white rounded-lg px-4 gap-2" disabled>
-              <Plus className="size-4" /> Add Expense
-            </Button>
+            <CreateExpenseDialog />
           </div>
         </div>
 
@@ -99,11 +98,12 @@ export default async function FinancePage() {
                     <TableHead className="text-xs uppercase tracking-wider">Category</TableHead>
                     <TableHead className="text-xs uppercase tracking-wider">Description</TableHead>
                     <TableHead className="text-right text-xs uppercase tracking-wider">Amount (IDR)</TableHead>
-                    <TableHead className="text-center w-[120px] rounded-tr-xl text-xs uppercase tracking-wider">Status</TableHead>
+                    <TableHead className="text-center text-xs uppercase tracking-wider">Status</TableHead>
+                    <TableHead className="text-right w-[120px] rounded-tr-xl text-xs uppercase tracking-wider">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.recentExpenses.map((expense: { id: number; date: string; category: string; description: string; amount: number; status: string }) => (
+                  {data.recentExpenses.map((expense: { id: number; date: string; category: string; description: string; amount: number; status: string; projectId: number | null }) => (
                     <TableRow key={expense.id} className="group hover:bg-muted/30 transition-colors border-b last:border-0">
                       <TableCell className="font-medium text-muted-foreground py-4">EXP-{String(expense.id).padStart(4, "0")}</TableCell>
                       <TableCell className="text-sm py-4">{format(new Date(expense.date), "dd MMM yyyy")}</TableCell>
@@ -116,6 +116,7 @@ export default async function FinancePage() {
                       <TableCell className="text-sm py-4 max-w-[250px] truncate" title={expense.description}>{expense.description}</TableCell>
                       <TableCell className="text-right font-medium py-4 text-foreground">{formatCurrency(expense.amount)}</TableCell>
                       <TableCell className="text-center py-4"><Badge>{expense.status}</Badge></TableCell>
+                      <TableCell className="text-right py-4"><ExpenseRowActions expense={expense} /></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
