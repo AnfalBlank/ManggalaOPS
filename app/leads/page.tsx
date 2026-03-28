@@ -1,38 +1,13 @@
-import { format } from "date-fns";
-import { Banknote, Filter, Search, Target, TrendingUp, Users } from "lucide-react";
+import { Banknote, Target, TrendingUp, Users } from "lucide-react";
 
 import { CreateLeadDialog } from "@/components/forms/crud-dialogs";
-import { LeadRowActions } from "@/components/forms/table-row-actions";
 import { PageWrapper } from "@/components/layout/page-wrapper";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { FilterableLeadsTable } from "@/components/tables/filterable-lists";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, ErrorState } from "@/components/ui/state";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { getLeads } from "@/lib/data";
 import { formatCurrency } from "@/lib/format";
 import { getClientOptions } from "@/lib/options";
-
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case "Won":
-      return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 border-none shadow-none">Won</Badge>;
-    case "Lost":
-      return <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100 hover:text-rose-800 border-none shadow-none">Lost</Badge>;
-    case "Negotiation":
-    case "Follow Up":
-      return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 hover:text-amber-800 border-none shadow-none">{status}</Badge>;
-    default:
-      return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 hover:text-blue-800 border-none shadow-none">{status}</Badge>;
-  }
-};
 
 export default async function CRMPage() {
   try {
@@ -102,67 +77,13 @@ export default async function CRMPage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-border p-4 md:p-6">
-          <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-            <div className="relative w-full sm:max-w-xs opacity-60">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <input
-                placeholder="Search leads..."
-                disabled
-                className="flex h-9 w-full rounded-md border bg-muted/30 pl-9 pr-3 py-1 text-sm shadow-sm"
-              />
-            </div>
-            <Button variant="outline" className="gap-2 shrink-0" disabled>
-              <Filter className="size-4" /> Filter
-            </Button>
-          </div>
-
           {leads.length === 0 ? (
             <EmptyState
               title="Belum ada data leads"
               description="Database sudah tersambung, tapi tabel leads masih kosong. Jalankan seed atau mulai input data operasional." 
             />
           ) : (
-            <div className="w-full overflow-x-auto pb-4 rounded-xl border">
-              <Table className="min-w-[800px]">
-                <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-[120px] rounded-tl-xl text-xs uppercase tracking-wider">Lead ID</TableHead>
-                    <TableHead className="text-xs uppercase tracking-wider">Client</TableHead>
-                    <TableHead className="text-xs uppercase tracking-wider">Contact</TableHead>
-                    <TableHead className="text-xs uppercase tracking-wider">Service Need</TableHead>
-                    <TableHead className="text-right text-xs uppercase tracking-wider">Est. Value (IDR)</TableHead>
-                    <TableHead className="text-center text-xs uppercase tracking-wider">Status</TableHead>
-                    <TableHead className="text-right text-xs uppercase tracking-wider">Date</TableHead>
-                    <TableHead className="text-right w-[90px] rounded-tr-xl text-xs uppercase tracking-wider">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {leads.map((lead) => (
-                    <TableRow key={lead.id} className="group hover:bg-muted/30 transition-colors border-b last:border-0">
-                      <TableCell className="font-medium text-muted-foreground py-4">{lead.code}</TableCell>
-                      <TableCell className="font-semibold text-foreground py-4">{lead.clientName}</TableCell>
-                      <TableCell className="py-4">
-                        <div className="flex flex-col">
-                          <span className="text-sm">{lead.contactPerson ?? "-"}</span>
-                          <span className="text-xs text-muted-foreground">{lead.phone ?? "-"}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm py-4 max-w-[200px] truncate" title={lead.serviceName}>
-                        {lead.serviceName}
-                      </TableCell>
-                      <TableCell className="text-right font-medium py-4">{formatCurrency(lead.estimatedValue)}</TableCell>
-                      <TableCell className="text-center py-4">{getStatusBadge(lead.status)}</TableCell>
-                      <TableCell className="text-right text-muted-foreground text-sm py-4">
-                        {lead.createdAt ? format(new Date(lead.createdAt), "dd MMM yyyy") : "-"}
-                      </TableCell>
-                      <TableCell className="text-right py-4">
-                        <LeadRowActions row={lead} clients={clients} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <FilterableLeadsTable leads={leads} clients={clients} />
           )}
         </div>
       </PageWrapper>

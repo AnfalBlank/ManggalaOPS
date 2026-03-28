@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { payments } from "@/db/schema";
 import { getPayments } from "@/lib/data";
+import { createJournalForPayment } from "@/lib/business";
 import { parseMoneyInput } from "@/lib/money";
 import { ensurePaymentMatchesInvoice } from "@/lib/validators";
 
@@ -36,14 +37,18 @@ export async function POST(request: NextRequest) {
 
     await ensurePaymentMatchesInvoice({ invoiceId, clientId, amount });
 
-    await db.insert(payments).values({
+    const inserted = await db.insert(payments).values({
       invoiceId,
       clientId,
       amount,
       paymentMethod,
       date: new Date(),
       referenceCode,
-    });
+    }).returning({ id: payments.id });
+
+    if (inserted[0]?.id) {
+      await createJournalForPayment(inserted[0].id);
+    }
 
     const data = await getPayments();
     return NextResponse.json({ ok: true, data });

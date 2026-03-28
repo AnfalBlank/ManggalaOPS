@@ -1,20 +1,10 @@
-import { format } from "date-fns";
 import { Banknote, ShieldCheck } from "lucide-react";
 
 import { RecordPaymentDialog } from "@/components/forms/crud-dialogs";
-import { PaymentRowActions } from "@/components/forms/table-row-actions";
 import { PageWrapper } from "@/components/layout/page-wrapper";
-import { DownloadKwitansiButton } from "@/components/pdf/download-kwitansi-button";
+import { FilterablePaymentsTable } from "@/components/tables/filterable-lists";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, ErrorState } from "@/components/ui/state";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { getPayments } from "@/lib/data";
 import { formatCurrency } from "@/lib/format";
 import { getClientOptions, getInvoiceOptions } from "@/lib/options";
@@ -77,53 +67,7 @@ export default async function PaymentsPage() {
               description="Belum ada pembayaran tercatat. Setelah finance merekam pembayaran, daftar payment akan muncul di sini."
             />
           ) : (
-            <div className="w-full overflow-x-auto pb-4 rounded-xl border">
-              <Table className="min-w-[800px]">
-                <TableHeader className="bg-slate-50 sticky top-0 z-10">
-                  <TableRow className="hover:bg-transparent border-b">
-                    <TableHead className="w-[120px] text-xs uppercase tracking-wider font-semibold">Payment ID</TableHead>
-                    <TableHead className="text-xs uppercase tracking-wider font-semibold">Client</TableHead>
-                    <TableHead className="text-xs uppercase tracking-wider font-semibold">Related Invoice</TableHead>
-                    <TableHead className="text-xs uppercase tracking-wider font-semibold">Method</TableHead>
-                    <TableHead className="text-right text-xs uppercase tracking-wider font-semibold">Amount Reflected</TableHead>
-                    <TableHead className="text-right text-xs uppercase tracking-wider font-semibold">Date</TableHead>
-                    <TableHead className="text-center text-xs uppercase tracking-wider font-semibold">Receipt</TableHead>
-                    <TableHead className="text-right text-xs uppercase tracking-wider font-semibold">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {payments.map((payment) => (
-                    <TableRow key={payment.id} className="group hover:bg-slate-50/50 transition-colors border-b last:border-0">
-                      <TableCell className="font-medium text-slate-500 py-4">{payment.code}</TableCell>
-                      <TableCell className="py-4">
-                        <span className="font-semibold text-slate-800">{payment.clientName}</span>
-                      </TableCell>
-                      <TableCell className="py-4 text-xs font-medium text-blue-600 hover:underline cursor-pointer">{payment.invoiceCode}</TableCell>
-                      <TableCell className="text-sm py-4 text-slate-600">{payment.paymentMethod ?? "-"}</TableCell>
-                      <TableCell className="text-right font-bold py-4 text-emerald-600">{formatCurrency(payment.amount)}</TableCell>
-                      <TableCell className="text-right text-sm py-4 text-slate-500">
-                        {payment.date ? format(new Date(payment.date), "dd MMM yyyy") : "-"}
-                      </TableCell>
-                      <TableCell className="text-center py-4">
-                        <div className="flex items-center justify-center">
-                          <DownloadKwitansiButton
-                            payload={{
-                              id: payment.code,
-                              client: payment.clientName,
-                              amount: payment.amount,
-                              description: `Pembayaran Invoice ${payment.invoiceCode}`,
-                            }}
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right py-4">
-                        <PaymentRowActions row={payment} clients={clients} invoices={invoices} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <FilterablePaymentsTable payments={payments} clients={clients} invoices={invoices} />
           )}
         </div>
       </PageWrapper>

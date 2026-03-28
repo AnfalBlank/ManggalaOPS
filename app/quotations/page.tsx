@@ -1,19 +1,10 @@
-import { format } from "date-fns";
-import { CheckCircle, Clock, Download, FileSignature, FileX, Plus } from "lucide-react";
+import { CheckCircle, Clock, FileSignature, FileX, Plus } from "lucide-react";
 
 import { PageWrapper } from "@/components/layout/page-wrapper";
-import { Badge } from "@/components/ui/badge";
+import { QuotationActionsTable } from "@/components/quotations/quotation-actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, ErrorState } from "@/components/ui/state";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { getQuotations } from "@/lib/data";
 import { formatCurrency } from "@/lib/format";
 
@@ -93,64 +84,7 @@ export default async function QuotationsPage() {
               description="Tabel quotations masih kosong. Setelah tim sales bikin penawaran atau seed dijalankan, datanya akan muncul di sini."
             />
           ) : (
-            <div className="w-full overflow-x-auto pb-4 rounded-xl border">
-              <Table className="min-w-[900px]">
-                <TableHeader className="bg-slate-50 sticky top-0 z-10">
-                  <TableRow className="hover:bg-transparent border-b">
-                    <TableHead className="w-[120px] text-xs uppercase tracking-wider font-semibold">Quote ID</TableHead>
-                    <TableHead className="text-xs uppercase tracking-wider font-semibold">Client & Project</TableHead>
-                    <TableHead className="text-xs uppercase tracking-wider font-semibold">Dates</TableHead>
-                    <TableHead className="text-right text-xs uppercase tracking-wider font-semibold">Total Amount</TableHead>
-                    <TableHead className="text-center text-xs uppercase tracking-wider font-semibold">Status</TableHead>
-                    <TableHead className="text-right w-[100px] text-xs uppercase tracking-wider font-semibold">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {quotations.map((quote) => (
-                    <TableRow key={quote.id} className="group hover:bg-slate-50/50 transition-colors border-b last:border-0">
-                      <TableCell className="font-medium text-slate-500 py-4">{quote.code}</TableCell>
-                      <TableCell className="py-4">
-                        <div className="flex flex-col gap-1">
-                          <span className="font-semibold text-slate-800">{quote.clientName}</span>
-                          <span className="text-xs text-slate-500 line-clamp-1">{quote.projectName ?? "-"}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-xs py-4 text-slate-500">
-                        <div className="flex flex-col gap-1">
-                          <span>Date: {quote.date ? format(new Date(quote.date), "dd MMM yyyy") : "-"}</span>
-                          <span>Valid: {quote.validUntil ? format(new Date(quote.validUntil), "dd MMM yyyy") : "-"}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right font-semibold py-4 text-slate-700">{formatCurrency(quote.total)}</TableCell>
-                      <TableCell className="text-center py-4">
-                        {quote.status === "Accepted" ? (
-                          <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none">Accepted</Badge>
-                        ) : quote.status === "Sent" ? (
-                          <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none">Sent</Badge>
-                        ) : quote.status === "Rejected" ? (
-                          <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100 border-none">Rejected</Badge>
-                        ) : (
-                          <Badge className="bg-slate-200 text-slate-700 hover:bg-slate-200 border-none">{quote.status}</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right py-4">
-                        <div className="flex items-center justify-end">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 w-8 px-0 text-slate-400 rounded-full bg-white shadow-sm border-slate-200"
-                            disabled
-                            title="Download PDF"
-                          >
-                            <Download className="size-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <QuotationActionsTable quotations={quotations} />
           )}
         </div>
       </PageWrapper>
