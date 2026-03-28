@@ -10,6 +10,7 @@ export const routeAccess: Record<string, AppRole[]> = {
   "/finance": ["admin", "finance"],
   "/accounting": ["admin", "finance"],
   "/reports": ["admin", "finance", "sales", "project_manager"],
+  "/users": ["admin"],
 };
 
 export function canAccessPath(role: AppRole, pathname: string) {

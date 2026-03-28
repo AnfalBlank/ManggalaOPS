@@ -22,6 +22,7 @@ import {
   BookMarked,
   PieChart,
   Settings,
+  UserCog,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -71,6 +72,11 @@ const navItems = [
     title: "Reports",
     url: "/reports",
     icon: PieChart,
+  },
+  {
+    title: "Users",
+    url: "/users",
+    icon: UserCog,
   },
 ];
 
