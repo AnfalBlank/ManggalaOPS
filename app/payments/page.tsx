@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { Banknote, ShieldCheck } from "lucide-react";
 
 import { RecordPaymentDialog } from "@/components/forms/crud-dialogs";
+import { PaymentRowActions } from "@/components/forms/table-row-actions";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { DownloadKwitansiButton } from "@/components/pdf/download-kwitansi-button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -87,6 +88,7 @@ export default async function PaymentsPage() {
                     <TableHead className="text-right text-xs uppercase tracking-wider font-semibold">Amount Reflected</TableHead>
                     <TableHead className="text-right text-xs uppercase tracking-wider font-semibold">Date</TableHead>
                     <TableHead className="text-center text-xs uppercase tracking-wider font-semibold">Receipt</TableHead>
+                    <TableHead className="text-right text-xs uppercase tracking-wider font-semibold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -113,6 +115,9 @@ export default async function PaymentsPage() {
                             }}
                           />
                         </div>
+                      </TableCell>
+                      <TableCell className="text-right py-4">
+                        <PaymentRowActions row={payment} clients={clients} invoices={invoices} />
                       </TableCell>
                     </TableRow>
                   ))}

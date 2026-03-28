@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { AlertCircle, Banknote, FileCheck, Landmark } from "lucide-react";
 
 import { CreateInvoiceDialog } from "@/components/forms/crud-dialogs";
+import { InvoiceRowActions } from "@/components/forms/table-row-actions";
 import { DownloadInvoiceButton } from "@/components/pdf/download-invoice-button";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { Badge } from "@/components/ui/badge";
@@ -114,7 +115,7 @@ export default async function InvoicesPage() {
                     <TableHead className="text-right text-xs uppercase tracking-wider font-semibold">Amount Paid</TableHead>
                     <TableHead className="text-right text-xs uppercase tracking-wider font-semibold">Total Amount</TableHead>
                     <TableHead className="text-center text-xs uppercase tracking-wider font-semibold">Status</TableHead>
-                    <TableHead className="text-right w-[100px] text-xs uppercase tracking-wider font-semibold">Actions</TableHead>
+                    <TableHead className="text-right w-[140px] text-xs uppercase tracking-wider font-semibold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -143,7 +144,7 @@ export default async function InvoicesPage() {
                         <StatusBadge status={invoice.status} />
                       </TableCell>
                       <TableCell className="text-right py-4">
-                        <div className="flex items-center justify-end">
+                        <div className="flex items-center justify-end gap-2">
                           <DownloadInvoiceButton
                             payload={{
                               id: invoice.code,
@@ -158,6 +159,7 @@ export default async function InvoicesPage() {
                               status: invoice.status,
                             }}
                           />
+                          <InvoiceRowActions row={invoice} clients={clients} />
                         </div>
                       </TableCell>
                     </TableRow>

@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { Banknote, Filter, Search, Target, TrendingUp, Users } from "lucide-react";
 
 import { CreateLeadDialog } from "@/components/forms/crud-dialogs";
+import { LeadRowActions } from "@/components/forms/table-row-actions";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -131,7 +132,8 @@ export default async function CRMPage() {
                     <TableHead className="text-xs uppercase tracking-wider">Service Need</TableHead>
                     <TableHead className="text-right text-xs uppercase tracking-wider">Est. Value (IDR)</TableHead>
                     <TableHead className="text-center text-xs uppercase tracking-wider">Status</TableHead>
-                    <TableHead className="text-right w-[100px] rounded-tr-xl text-xs uppercase tracking-wider">Date</TableHead>
+                    <TableHead className="text-right text-xs uppercase tracking-wider">Date</TableHead>
+                    <TableHead className="text-right w-[90px] rounded-tr-xl text-xs uppercase tracking-wider">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -152,6 +154,9 @@ export default async function CRMPage() {
                       <TableCell className="text-center py-4">{getStatusBadge(lead.status)}</TableCell>
                       <TableCell className="text-right text-muted-foreground text-sm py-4">
                         {lead.createdAt ? format(new Date(lead.createdAt), "dd MMM yyyy") : "-"}
+                      </TableCell>
+                      <TableCell className="text-right py-4">
+                        <LeadRowActions row={lead} clients={clients} />
                       </TableCell>
                     </TableRow>
                   ))}
