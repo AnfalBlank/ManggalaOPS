@@ -99,7 +99,7 @@ export default async function FinancePage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.recentExpenses.map((expense: { id: number; date: string; category: string; description: string; amount: number; status: string; projectId: number | null }) => (
+                  {data.recentExpenses.map((expense: { id: number; date: Date; category: string; description: string; amount: number; status: string | null; projectId: number | null }) => (
                     <TableRow key={expense.id} className="group hover:bg-muted/30 transition-colors border-b last:border-0">
                       <TableCell className="font-medium text-muted-foreground py-4">EXP-{String(expense.id).padStart(4, "0")}</TableCell>
                       <TableCell className="text-sm py-4">{format(new Date(expense.date), "dd MMM yyyy")}</TableCell>

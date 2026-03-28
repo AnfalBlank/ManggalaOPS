@@ -80,7 +80,7 @@ const navItems = [
   },
 ];
 
-export function AppSidebar({ role = "admin" }: { role?: string }) {
+export function AppSidebar({ role = "admin", user }: { role?: string; user?: { name: string; email: string } }) {
   const pathname = usePathname();
   const visibleItems = navItems.filter((item) => {
     if (role === "admin") return true;
@@ -91,7 +91,7 @@ export function AppSidebar({ role = "admin" }: { role?: string }) {
   });
 
   return (
-    <Sidebar className="border-r-0" collapsible="none">
+    <Sidebar className="hidden border-r-0 md:flex md:w-72 md:min-w-72" collapsible="none">
       {/* 
         We use a solid dark blue base with a very subtle gradient towards the bottom/right 
         to add depth without making it look "flashy".
@@ -186,8 +186,8 @@ export function AppSidebar({ role = "admin" }: { role?: string }) {
               <span className="text-white text-xs font-bold">AD</span>
             </div>
             <div className="flex flex-col overflow-hidden">
-              <span className="text-sm font-semibold text-white truncate group-hover:text-blue-100 transition-colors">Admin Ops</span>
-              <span className="text-xs text-slate-400 truncate group-hover:text-slate-300">admin@manggala.co.id</span>
+              <span className="text-sm font-semibold text-white truncate group-hover:text-blue-100 transition-colors">{user?.name ?? "Admin Ops"}</span>
+              <span className="text-xs text-slate-400 truncate group-hover:text-slate-300">{user?.email ?? "admin@manggala.co.id"}</span>
             </div>
           </div>
         </div>

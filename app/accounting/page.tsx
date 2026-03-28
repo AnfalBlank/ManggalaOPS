@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { format } from "date-fns";
 import { BookOpen, FileSpreadsheet, Plus } from "lucide-react";
 
@@ -93,8 +94,8 @@ export default async function AccountingPage() {
                   </TableHeader>
                   <TableBody>
                     {Object.entries(grouped).map(([journalId, entries]) => (
-                      <>
-                        <TableRow key={`header-${journalId}`} className="bg-muted/10 border-b-0 hover:bg-muted/10">
+                      <Fragment key={`journal-group-${journalId}`}>
+                        <TableRow className="bg-muted/10 border-b-0 hover:bg-muted/10">
                           <TableCell colSpan={4} className="py-2 text-xs font-medium text-muted-foreground bg-muted/20">
                             JRN-{journalId} - {entries[0]?.description}
                           </TableCell>
@@ -109,7 +110,7 @@ export default async function AccountingPage() {
                             <TableCell className="text-right py-2 font-medium">{entry.credit ? formatCurrency(entry.credit) : ""}</TableCell>
                           </TableRow>
                         ))}
-                      </>
+                      </Fragment>
                     ))}
                   </TableBody>
                 </Table>

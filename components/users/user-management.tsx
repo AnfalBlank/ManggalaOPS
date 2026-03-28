@@ -19,7 +19,7 @@ type UserRow = {
   name: string;
   email: string;
   role: string;
-  createdAt: string | null;
+  createdAt: string | Date | null;
 };
 
 const roleOptions = [

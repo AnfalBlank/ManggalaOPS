@@ -15,11 +15,11 @@ import { formatMoneyInput, parseMoneyInput } from "@/lib/money";
 
 type Expense = {
   id: number;
-  date: string;
+  date: string | Date;
   category: string;
   description: string;
   amount: number;
-  status: string;
+  status: string | null;
   projectId: number | null;
 };
 
@@ -84,7 +84,7 @@ export function CreateExpenseDialog() {
 export function ExpenseRowActions({ expense }: { expense: Expense }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState(expense.date.slice(0, 10));
+  const [date, setDate] = useState(new Date(expense.date).toISOString().slice(0, 10));
   const [category, setCategory] = useState(expense.category);
   const [description, setDescription] = useState(expense.description);
   const [amount, setAmount] = useState(String(expense.amount));
