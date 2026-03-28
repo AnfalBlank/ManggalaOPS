@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { payments } from "@/db/schema";
+import { deletePaymentJournal, upsertPaymentJournal } from "@/lib/business";
 import { getPayments } from "@/lib/data";
 import { parseMoneyInput } from "@/lib/money";
 import { ensurePaymentMatchesInvoice } from "@/lib/validators";
@@ -34,6 +35,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       })
       .where(eq(payments.id, paymentId));
 
+    await upsertPaymentJournal(paymentId);
+
     return NextResponse.json({ ok: true, data: await getPayments() });
   } catch (error) {
     return NextResponse.json(
@@ -46,7 +49,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    await db.delete(payments).where(eq(payments.id, Number(id)));
+    const paymentId = Number(id);
+    await deletePaymentJournal(paymentId);
+    await db.delete(payments).where(eq(payments.id, paymentId));
     return NextResponse.json({ ok: true, data: await getPayments() });
   } catch (error) {
     return NextResponse.json(

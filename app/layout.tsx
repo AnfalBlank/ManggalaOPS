@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { RoleSwitcher } from "@/components/auth/role-switcher";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { Toaster } from "@/components/ui/sonner";
@@ -30,6 +31,7 @@ export default function RootLayout({
             <AppSidebar />
             <main className="flex-1 flex flex-col h-screen overflow-hidden">
               <Topbar />
+              <div className="px-4 pt-3"><RoleSwitcher /></div>
               {children}
             </main>
           </SidebarProvider>

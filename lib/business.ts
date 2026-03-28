@@ -52,6 +52,37 @@ export async function acceptQuotationAndCreateProject(quotationId: number) {
   };
 }
 
+export async function upsertInvoiceJournal(invoiceId: number) {
+  const invoice = await db.query.invoices.findFirst({ where: eq(invoices.id, invoiceId) });
+  if (!invoice) throw new Error("Invoice tidak ditemukan");
+
+  const existingJournal = await db.query.journals.findFirst({
+    where: eq(journals.referenceId, `invoice:${invoiceId}`),
+  });
+
+  let journalId = existingJournal?.id;
+
+  if (!journalId) {
+    const inserted = await db.insert(journals).values({
+      date: invoice.date,
+      description: `Invoice issued #${invoiceId}`,
+      referenceId: `invoice:${invoiceId}`,
+    }).returning({ id: journals.id });
+    journalId = inserted[0]?.id;
+  }
+
+  if (!journalId) throw new Error("Gagal membuat jurnal invoice");
+
+  await db.delete(journalEntries).where(eq(journalEntries.journalId, journalId));
+  await db.insert(journalEntries).values([
+    { journalId, accountCode: "1101", debit: invoice.total ?? 0, credit: 0 },
+    { journalId, accountCode: invoice.projectId ? "4001" : "4002", debit: 0, credit: invoice.subtotal ?? 0 },
+    { journalId, accountCode: "2101", debit: 0, credit: invoice.tax ?? 0 },
+  ]);
+
+  return { journalId };
+}
+
 export async function createInvoiceFromQuotation(quotationId: number) {
   const quotation = await db.query.quotations.findFirst({
     where: eq(quotations.id, quotationId),
@@ -86,12 +117,13 @@ export async function createInvoiceFromQuotation(quotationId: number) {
       unitPrice: quotation.total ?? 0,
       amount: quotation.total ?? 0,
     });
+    await upsertInvoiceJournal(invoiceId);
   }
 
   return { invoiceId };
 }
 
-export async function createJournalForPayment(paymentId: number) {
+export async function upsertPaymentJournal(paymentId: number) {
   const payment = await db.query.payments.findFirst({
     where: eq(payments.id, paymentId),
   });
@@ -104,25 +136,26 @@ export async function createJournalForPayment(paymentId: number) {
     where: eq(journals.referenceId, `payment:${paymentId}`),
   });
 
-  if (existingJournal) {
-    return { journalId: existingJournal.id, created: false };
+  let journalId = existingJournal?.id;
+
+  if (!journalId) {
+    const insertedJournal = await db
+      .insert(journals)
+      .values({
+        date: payment.date,
+        description: `Payment received for invoice #${payment.invoiceId}`,
+        referenceId: `payment:${paymentId}`,
+      })
+      .returning({ id: journals.id });
+
+    journalId = insertedJournal[0]?.id;
   }
-
-  const insertedJournal = await db
-    .insert(journals)
-    .values({
-      date: payment.date,
-      description: `Payment received for invoice #${payment.invoiceId}`,
-      referenceId: `payment:${paymentId}`,
-    })
-    .returning({ id: journals.id });
-
-  const journalId = insertedJournal[0]?.id;
 
   if (!journalId) {
     throw new Error("Gagal membuat jurnal payment");
   }
 
+  await db.delete(journalEntries).where(eq(journalEntries.journalId, journalId));
   await db.insert(journalEntries).values([
     {
       journalId,
@@ -138,7 +171,29 @@ export async function createJournalForPayment(paymentId: number) {
     },
   ]);
 
-  return { journalId, created: true };
+  return { journalId, created: !existingJournal };
+}
+
+export async function deletePaymentJournal(paymentId: number) {
+  const journal = await db.query.journals.findFirst({
+    where: eq(journals.referenceId, `payment:${paymentId}`),
+  });
+
+  if (!journal) return;
+
+  await db.delete(journalEntries).where(eq(journalEntries.journalId, journal.id));
+  await db.delete(journals).where(eq(journals.id, journal.id));
+}
+
+export async function deleteInvoiceJournal(invoiceId: number) {
+  const journal = await db.query.journals.findFirst({
+    where: eq(journals.referenceId, `invoice:${invoiceId}`),
+  });
+
+  if (!journal) return;
+
+  await db.delete(journalEntries).where(eq(journalEntries.journalId, journal.id));
+  await db.delete(journals).where(eq(journals.id, journal.id));
 }
 
 export async function getFinanceSummary() {

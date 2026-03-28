@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/db";
 import { invoices } from "@/db/schema";
+import { upsertInvoiceJournal } from "@/lib/business";
 import { getInvoices } from "@/lib/data";
 import { parseMoneyInput } from "@/lib/money";
 
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await db.insert(invoices).values({
+    const inserted = await db.insert(invoices).values({
       clientId,
       projectId,
       quotationId,
@@ -45,7 +46,11 @@ export async function POST(request: NextRequest) {
       tax,
       total,
       status: "Unpaid",
-    });
+    }).returning({ id: invoices.id });
+
+    if (inserted[0]?.id) {
+      await upsertInvoiceJournal(inserted[0].id);
+    }
 
     const data = await getInvoices();
     return NextResponse.json({ ok: true, data });

@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { ArrowDownCircle, ArrowUpCircle, CreditCard, Plus, Wallet } from "lucide-react";
 
+import { RoleGuard } from "@/components/auth/guard";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ export default async function FinancePage() {
 
     return (
       <PageWrapper>
+        <RoleGuard allow={["admin", "finance"]}>
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-primary">Finance</h1>
@@ -121,6 +123,7 @@ export default async function FinancePage() {
             </div>
           )}
         </div>
+        </RoleGuard>
       </PageWrapper>
     );
   } catch (error) {
