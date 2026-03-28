@@ -14,23 +14,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getAccountingOverviewData } from "@/lib/admin-data";
 import { formatCurrency } from "@/lib/format";
-
-async function getAccountingOverview() {
-  const response = await fetch("http://localhost:3000/api/accounting/overview", { cache: "no-store" });
-  return response.json();
-}
 
 export default async function AccountingPage() {
   try {
-    const data = await getAccountingOverview();
+    const data = await getAccountingOverviewData();
     type JournalEntryRow = {
       id: number;
-      date: string;
+      date: Date;
       description: string;
       accountCode: string;
-      debit: number;
-      credit: number;
+      debit: number | null;
+      credit: number | null;
     };
 
     const grouped = (data.entries as JournalEntryRow[]).reduce<Record<string, JournalEntryRow[]>>((acc, entry) => {

@@ -16,16 +16,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getFinanceOverviewData } from "@/lib/admin-data";
 import { formatCurrency } from "@/lib/format";
-
-async function getFinanceOverview() {
-  const response = await fetch("http://localhost:3000/api/finance/overview", { cache: "no-store" });
-  return response.json();
-}
 
 export default async function FinancePage() {
   try {
-    const data = await getFinanceOverview();
+    const data = await getFinanceOverviewData();
 
     return (
       <PageWrapper>

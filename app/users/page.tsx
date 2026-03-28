@@ -2,15 +2,11 @@ import { RoleGuard } from "@/components/auth/guard";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { EmptyState, ErrorState } from "@/components/ui/state";
 import { UserManagement } from "@/components/users/user-management";
-
-async function getUsers() {
-  const response = await fetch("http://localhost:3000/api/users", { cache: "no-store" });
-  return response.json();
-}
+import { getUsersData } from "@/lib/admin-data";
 
 export default async function UsersPage() {
   try {
-    const users = await getUsers();
+    const users = await getUsersData();
 
     return (
       <PageWrapper>
