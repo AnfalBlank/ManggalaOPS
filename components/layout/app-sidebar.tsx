@@ -74,8 +74,15 @@ const navItems = [
   },
 ];
 
-export function AppSidebar() {
+export function AppSidebar({ role = "admin" }: { role?: string }) {
   const pathname = usePathname();
+  const visibleItems = navItems.filter((item) => {
+    if (role === "admin") return true;
+    if (role === "finance") return ["/", "/invoices", "/payments", "/finance", "/accounting", "/reports"].includes(item.url);
+    if (role === "sales") return ["/", "/leads", "/projects", "/quotations", "/invoices", "/reports"].includes(item.url);
+    if (role === "project_manager") return ["/", "/projects", "/reports"].includes(item.url);
+    return true;
+  });
 
   return (
     <Sidebar className="border-r-0">
@@ -118,7 +125,7 @@ export function AppSidebar() {
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="gap-1 px-2">
-                {navItems.map((item) => {
+                {visibleItems.map((item) => {
                   const isActive = pathname === item.url;
                   return (
                     <SidebarMenuItem key={item.title}>

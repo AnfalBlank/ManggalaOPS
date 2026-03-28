@@ -2,10 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { RoleSwitcher } from "@/components/auth/role-switcher";
-import { AppSidebar } from "@/components/layout/app-sidebar";
-import { Topbar } from "@/components/layout/topbar";
 import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
@@ -25,16 +21,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex bg-background text-foreground overflow-hidden">
+      <body className="min-h-full bg-background text-foreground overflow-hidden">
         <TooltipProvider>
-          <SidebarProvider>
-            <AppSidebar />
-            <main className="flex-1 flex flex-col h-screen overflow-hidden">
-              <Topbar />
-              <div className="px-4 pt-3"><RoleSwitcher /></div>
-              {children}
-            </main>
-          </SidebarProvider>
+          {children}
           <Toaster position="top-right" richColors />
         </TooltipProvider>
       </body>

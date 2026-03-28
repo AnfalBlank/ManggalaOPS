@@ -73,6 +73,8 @@ export async function getCurrentUser() {
   });
 
   if (!session || (session.expiresAt && new Date(session.expiresAt) < new Date())) {
+    cookieStore.delete(SESSION_COOKIE);
+    cookieStore.delete("manggala_role");
     return null;
   }
 
