@@ -11,6 +11,7 @@ export const users = sqliteTable('users', {
   email: text('email').notNull(),
   passwordHash: text('password_hash').notNull(),
   role: text('role').notNull(),
+  avatarUrl: text('avatar_url'),
   createdAt: integer('created_at', { mode: 'timestamp' }),
 });
 
@@ -21,14 +22,91 @@ export const sessions = sqliteTable('sessions', {
   expiresAt: integer('expires_at', { mode: 'timestamp' }),
 });
 
+export const notifications = sqliteTable('notifications', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  title: text('title').notNull(),
+  message: text('message'),
+  type: text('type').default('info'),
+  targetRole: text('target_role'),
+  isRead: integer('is_read', { mode: 'boolean' }).default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+});
+
+export const chatThreads = sqliteTable('chat_threads', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  title: text('title').notNull(),
+  kind: text('kind').default('direct'),
+  projectId: integer('project_id').references(() => projects.id),
+  createdByUserId: integer('created_by_user_id').references(() => users.id),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+});
+
+export const chatParticipants = sqliteTable('chat_participants', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  threadId: integer('thread_id').references(() => chatThreads.id).notNull(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+});
+
+export const chatMessages = sqliteTable('chat_messages', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  threadId: integer('thread_id').references(() => chatThreads.id).notNull(),
+  senderUserId: integer('sender_user_id').references(() => users.id).notNull(),
+  body: text('body').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+});
+
+export const openingBalances = sqliteTable('opening_balances', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  cashOnHand: real('cash_on_hand').default(0),
+  bankMandiri: real('bank_mandiri').default(0),
+  bankBca: real('bank_bca').default(0),
+  receivables: real('receivables').default(0),
+  fixedAssets: real('fixed_assets').default(0),
+  liabilities: real('liabilities').default(0),
+  equity: real('equity').default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+});
+
+export const appSettings = sqliteTable('app_settings', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  companyName: text('company_name').notNull().default('PT. Manggala Utama Indonesia'),
+  companyEmail: text('company_email').default('admin@manggala-utama.id'),
+  companyPhone: text('company_phone').default('+62 878-8424-1703'),
+  companyAddress: text('company_address').default('Jakarta'),
+  defaultTaxPercent: real('default_tax_percent').default(11),
+  quotationValidityDays: integer('quotation_validity_days').default(7),
+  invoiceDueDays: integer('invoice_due_days').default(14),
+  defaultPaymentMethod: text('default_payment_method').default('CBD'),
+  defaultSignatoryName: text('default_signatory_name').default('Muhammad Hidayat'),
+  defaultSignatoryTitle: text('default_signatory_title').default('Direktur'),
+  defaultCashAccountCode: text('default_cash_account_code').references(() => accounts.code),
+  defaultBankMandiriAccountCode: text('default_bank_mandiri_account_code').references(() => accounts.code),
+  defaultBankBcaAccountCode: text('default_bank_bca_account_code').references(() => accounts.code),
+  defaultReceivableAccountCode: text('default_receivable_account_code').references(() => accounts.code),
+  defaultFixedAssetAccountCode: text('default_fixed_asset_account_code').references(() => accounts.code),
+  defaultLiabilityAccountCode: text('default_liability_account_code').references(() => accounts.code),
+  defaultEquityAccountCode: text('default_equity_account_code').references(() => accounts.code),
+  defaultProjectRevenueAccountCode: text('default_project_revenue_account_code').references(() => accounts.code),
+  defaultNonProjectRevenueAccountCode: text('default_non_project_revenue_account_code').references(() => accounts.code),
+  defaultOperationalExpenseAccountCode: text('default_operational_expense_account_code').references(() => accounts.code),
+  defaultProjectExpenseAccountCode: text('default_project_expense_account_code').references(() => accounts.code),
+  financeApprovalRequired: integer('finance_approval_required', { mode: 'boolean' }).default(true),
+  allowUserSelfReset: integer('allow_user_self_reset', { mode: 'boolean' }).default(false),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+});
+
 // 1. CRM & Core
 export const clients = sqliteTable('clients', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
   contactPerson: text('contact_person'),
+  additionalPic: text('additional_pic'),
   phone: text('phone'),
   email: text('email'),
+  npwp: text('npwp'),
   address: text('address'),
+  notes: text('notes'),
 });
 
 export const leads = sqliteTable('leads', {
@@ -59,6 +137,17 @@ export const quotations = sqliteTable('quotations', {
   projectId: integer('project_id').references(() => projects.id),
   date: integer('date', { mode: 'timestamp' }).notNull(),
   validUntil: integer('valid_until', { mode: 'timestamp' }),
+  paymentMethod: text('payment_method').default('CBD'),
+  attachment: text('attachment'),
+  subject: text('subject'),
+  recipientName: text('recipient_name'),
+  recipientCompany: text('recipient_company'),
+  recipientAddress: text('recipient_address'),
+  introduction: text('introduction'),
+  terms: text('terms'),
+  closingNote: text('closing_note'),
+  signatoryName: text('signatory_name'),
+  signatoryTitle: text('signatory_title'),
   subtotal: real('subtotal'),
   tax: real('tax_ppn'),
   total: real('total'),
@@ -70,6 +159,7 @@ export const quotationItems = sqliteTable('quotation_items', {
   quotationId: integer('quotation_id').references(() => quotations.id).notNull(),
   description: text('description').notNull(),
   qty: integer('qty').notNull(),
+  unit: text('unit').default('Unit'),
   unitPrice: real('unit_price').notNull(),
   amount: real('amount').notNull(),
 });
@@ -81,6 +171,17 @@ export const invoices = sqliteTable('invoices', {
   quotationId: integer('quotation_id').references(() => quotations.id),
   date: integer('date', { mode: 'timestamp' }).notNull(),
   dueDate: integer('due_date', { mode: 'timestamp' }),
+  paymentMethod: text('payment_method').default('CBD'),
+  attachment: text('attachment'),
+  subject: text('subject'),
+  recipientName: text('recipient_name'),
+  recipientCompany: text('recipient_company'),
+  recipientAddress: text('recipient_address'),
+  introduction: text('introduction'),
+  terms: text('terms'),
+  closingNote: text('closing_note'),
+  signatoryName: text('signatory_name'),
+  signatoryTitle: text('signatory_title'),
   subtotal: real('subtotal'),
   tax: real('tax_ppn'),
   total: real('total'),
@@ -92,6 +193,7 @@ export const invoiceItems = sqliteTable('invoice_items', {
   invoiceId: integer('invoice_id').references(() => invoices.id).notNull(),
   description: text('description').notNull(),
   qty: integer('qty').notNull(),
+  unit: text('unit').default('Unit'),
   unitPrice: real('unit_price').notNull(),
   amount: real('amount').notNull(),
 });
@@ -103,6 +205,7 @@ export const payments = sqliteTable('payments', {
   clientId: integer('client_id').references(() => clients.id).notNull(),
   amount: real('amount').notNull(),
   paymentMethod: text('payment_method'),
+  paymentAccountCode: text('payment_account_code').references(() => accounts.code),
   date: integer('date', { mode: 'timestamp' }).notNull(),
   referenceCode: text('reference_code'),
 });
@@ -115,6 +218,7 @@ export const expenses = sqliteTable('expenses', {
   amount: real('amount').notNull(),
   status: text('status').default('Pending'),
   projectId: integer('project_id').references(() => projects.id),
+  paymentAccountCode: text('payment_account_code').references(() => accounts.code),
 });
 
 // 4. Accounting (Double-Entry)

@@ -35,6 +35,13 @@ type ClientOption = {
 type InvoiceOption = {
   id: number;
   code: string;
+  clientId?: number;
+  clientName?: string;
+};
+
+type PaymentAccountOption = {
+  code: string;
+  name: string;
 };
 
 type LeadDialogProps = {
@@ -48,6 +55,7 @@ type InvoiceDialogProps = {
 type PaymentDialogProps = {
   clients: ClientOption[];
   invoices: InvoiceOption[];
+  paymentAccounts?: PaymentAccountOption[];
 };
 
 async function postJson(url: string, body: Record<string, unknown>) {
@@ -121,7 +129,7 @@ export function CreateLeadDialog({ clients }: LeadDialogProps) {
             <Label>Client</Label>
             <Select value={clientId} onValueChange={(value) => setClientId(value ?? "")}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Pilih client" />
+                <SelectValue placeholder="Pilih client">{clients.find((client) => String(client.id) === clientId)?.name}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {clients.map((client) => (
@@ -144,7 +152,7 @@ export function CreateLeadDialog({ clients }: LeadDialogProps) {
             <Label>Status</Label>
             <Select value={status} onValueChange={(value) => setStatus(value ?? "New")}>
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue placeholder="Pilih opsi" />
               </SelectTrigger>
               <SelectContent>
                 {["New", "Follow Up", "Negotiation", "Won", "Lost"].map((item) => (
@@ -217,7 +225,7 @@ export function CreateInvoiceDialog({ clients }: InvoiceDialogProps) {
             <Label>Client</Label>
             <Select value={clientId} onValueChange={(value) => setClientId(value ?? "")}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Pilih client" />
+                <SelectValue placeholder="Pilih client">{clients.find((client) => String(client.id) === clientId)?.name}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {clients.map((client) => (
@@ -255,7 +263,7 @@ export function CreateInvoiceDialog({ clients }: InvoiceDialogProps) {
   );
 }
 
-export function RecordPaymentDialog({ clients, invoices }: PaymentDialogProps) {
+export function RecordPaymentDialog({ clients, invoices, paymentAccounts = [] }: PaymentDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -263,7 +271,9 @@ export function RecordPaymentDialog({ clients, invoices }: PaymentDialogProps) {
   const [invoiceId, setInvoiceId] = useState("");
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Bank Transfer");
+  const [paymentAccountCode, setPaymentAccountCode] = useState(paymentAccounts[0]?.code ?? "1002");
   const [referenceCode, setReferenceCode] = useState("");
+  const filteredInvoices = invoices.filter((invoice) => !clientId || String(invoice.clientId ?? "") === clientId);
 
   const handleSubmit = async () => {
     try {
@@ -273,6 +283,7 @@ export function RecordPaymentDialog({ clients, invoices }: PaymentDialogProps) {
         invoiceId,
         amount,
         paymentMethod,
+        paymentAccountCode,
         referenceCode,
       });
       toast.success("Payment berhasil direkam");
@@ -282,6 +293,7 @@ export function RecordPaymentDialog({ clients, invoices }: PaymentDialogProps) {
       setAmount("");
       setReferenceCode("");
       setPaymentMethod("Bank Transfer");
+      setPaymentAccountCode(paymentAccounts[0]?.code ?? "1002");
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Gagal merekam payment");
@@ -305,7 +317,7 @@ export function RecordPaymentDialog({ clients, invoices }: PaymentDialogProps) {
             <Label>Client</Label>
             <Select value={clientId} onValueChange={(value) => setClientId(value ?? "")}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Pilih client" />
+                <SelectValue placeholder="Pilih client">{clients.find((client) => String(client.id) === clientId)?.name}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {clients.map((client) => (
@@ -320,12 +332,12 @@ export function RecordPaymentDialog({ clients, invoices }: PaymentDialogProps) {
             <Label>Invoice</Label>
             <Select value={invoiceId} onValueChange={(value) => setInvoiceId(value ?? "")}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Pilih invoice" />
+                <SelectValue placeholder="Pilih invoice">{filteredInvoices.find((invoice) => String(invoice.id) === invoiceId)?.code}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {invoices.map((invoice) => (
+                {filteredInvoices.map((invoice) => (
                   <SelectItem key={invoice.id} value={String(invoice.id)}>
-                    {invoice.code}
+                    {invoice.code}{invoice.clientName ? ` — ${invoice.clientName}` : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -334,6 +346,17 @@ export function RecordPaymentDialog({ clients, invoices }: PaymentDialogProps) {
           <div className="grid gap-2">
             <Label htmlFor="payment-amount">Amount</Label>
             <MoneyInput id="payment-amount" value={amount} onChange={setAmount} placeholder="65.000.000" />
+          </div>
+          <div className="grid gap-2">
+            <Label>Akun Penerimaan</Label>
+            <Select value={paymentAccountCode} onValueChange={(value) => setPaymentAccountCode(value ?? "1002")}>
+              <SelectTrigger className="w-full"><SelectValue placeholder="Pilih akun" /></SelectTrigger>
+              <SelectContent>
+                {paymentAccounts.map((account) => (
+                  <SelectItem key={account.code} value={account.code}>{account.code} - {account.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid gap-2">
             <Label htmlFor="payment-method">Payment Method</Label>

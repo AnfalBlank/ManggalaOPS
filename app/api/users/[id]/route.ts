@@ -6,6 +6,15 @@ import { requireRole } from "@/lib/auth";
 import { db } from "@/db";
 import { sessions, users } from "@/db/schema";
 
+const userSelect = {
+  id: users.id,
+  name: users.name,
+  email: users.email,
+  role: users.role,
+  avatarUrl: users.avatarUrl,
+  createdAt: users.createdAt,
+};
+
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireRole(["admin"]);
@@ -13,10 +22,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const userId = Number(id);
     const body = await request.json();
 
-    const updateData: { name?: string; email?: string; role?: string; passwordHash?: string } = {
+    const updateData: { name?: string; email?: string; role?: string; avatarUrl?: string | null; passwordHash?: string } = {
       name: String(body.name ?? "").trim(),
       email: String(body.email ?? "").trim(),
       role: String(body.role ?? "sales").trim(),
+      avatarUrl: String(body.avatarUrl ?? "").trim() || null,
     };
 
     if (body.password) {
@@ -25,7 +35,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     await db.update(users).set(updateData).where(eq(users.id, userId));
-    const data = await db.select({ id: users.id, name: users.name, email: users.email, role: users.role, createdAt: users.createdAt }).from(users).orderBy(desc(users.id));
+    const data = await db.select(userSelect).from(users).orderBy(desc(users.id));
     return NextResponse.json({ ok: true, data });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to update user" }, { status: 500 });
@@ -39,7 +49,7 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
     const userId = Number(id);
     await db.delete(sessions).where(eq(sessions.userId, userId));
     await db.delete(users).where(eq(users.id, userId));
-    const data = await db.select({ id: users.id, name: users.name, email: users.email, role: users.role, createdAt: users.createdAt }).from(users).orderBy(desc(users.id));
+    const data = await db.select(userSelect).from(users).orderBy(desc(users.id));
     return NextResponse.json({ ok: true, data });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to delete user" }, { status: 500 });

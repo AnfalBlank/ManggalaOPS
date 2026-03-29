@@ -1,0 +1,11 @@
+ALTER TABLE `app_settings` ADD COLUMN `default_cash_account_code` text REFERENCES `accounts`(`code`);
+ALTER TABLE `app_settings` ADD COLUMN `default_bank_mandiri_account_code` text REFERENCES `accounts`(`code`);
+ALTER TABLE `app_settings` ADD COLUMN `default_bank_bca_account_code` text REFERENCES `accounts`(`code`);
+ALTER TABLE `app_settings` ADD COLUMN `default_receivable_account_code` text REFERENCES `accounts`(`code`);
+ALTER TABLE `app_settings` ADD COLUMN `default_fixed_asset_account_code` text REFERENCES `accounts`(`code`);
+ALTER TABLE `app_settings` ADD COLUMN `default_liability_account_code` text REFERENCES `accounts`(`code`);
+ALTER TABLE `app_settings` ADD COLUMN `default_equity_account_code` text REFERENCES `accounts`(`code`);
+ALTER TABLE `app_settings` ADD COLUMN `default_project_revenue_account_code` text REFERENCES `accounts`(`code`);
+ALTER TABLE `app_settings` ADD COLUMN `default_non_project_revenue_account_code` text REFERENCES `accounts`(`code`);
+ALTER TABLE `app_settings` ADD COLUMN `default_operational_expense_account_code` text REFERENCES `accounts`(`code`);
+ALTER TABLE `app_settings` ADD COLUMN `default_project_expense_account_code` text REFERENCES `accounts`(`code`);

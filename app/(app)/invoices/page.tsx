@@ -1,5 +1,6 @@
 import { AlertCircle, Banknote, FileCheck, Landmark } from "lucide-react";
 
+import { ClickableStatCard } from "@/components/cards/clickable-stat-card";
 import { InvoiceDialog } from "@/components/forms/invoice-dialogs";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { FilterableInvoicesTable } from "@/components/tables/filterable-lists";
@@ -8,11 +9,13 @@ import { EmptyState, ErrorState } from "@/components/ui/state";
 import { getInvoices } from "@/lib/data";
 import { formatCurrency } from "@/lib/format";
 import { getClientOptions } from "@/lib/options";
+import { getAppSettings } from "@/lib/settings";
 import type { InvoiceListItem } from "@/lib/types";
 
-export default async function InvoicesPage() {
+export default async function InvoicesPage({ searchParams }: { searchParams?: Promise<{ q?: string; period?: string; type?: string }> }) {
   try {
-    const [invoiceRows, clients] = await Promise.all([getInvoices(), getClientOptions()]);
+    const params = (await searchParams) ?? {};
+    const [invoiceRows, clients, settings] = await Promise.all([getInvoices(), getClientOptions(), getAppSettings()]);
     const invoices = invoiceRows as InvoiceListItem[];
     const totalInvoices = invoices.length;
     const totalValue = invoices.reduce((acc, curr) => acc + curr.total, 0);
@@ -30,50 +33,10 @@ export default async function InvoicesPage() {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card className="border-border/60 shadow-sm">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="size-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-                <FileCheck className="size-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground font-medium">Total Invoices</p>
-                <h3 className="text-xl font-bold text-slate-800">{totalInvoices}</h3>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-border/60 shadow-sm">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="size-10 rounded-full bg-purple-50 flex items-center justify-center shrink-0">
-                <Landmark className="size-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground font-medium">Value Issued</p>
-                <h3 className="text-lg md:text-xl font-bold text-slate-800">{formatCurrency(totalValue).replace(',00', '')}</h3>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-border/60 shadow-sm">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="size-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
-                <Banknote className="size-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground font-medium">Total Paid</p>
-                <h3 className="text-lg md:text-xl font-bold text-emerald-600">{formatCurrency(totalPaid).replace(',00', '')}</h3>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-border/60 shadow-sm">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="size-10 rounded-full bg-rose-50 flex items-center justify-center shrink-0">
-                <AlertCircle className="size-5 text-rose-600" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground font-medium">Outstanding</p>
-                <h3 className="text-lg md:text-xl font-bold text-rose-600">{formatCurrency(unpaidValue).replace(',00', '')}</h3>
-              </div>
-            </CardContent>
-          </Card>
+          <ClickableStatCard href="/invoices" title="Total Invoices" value={totalInvoices} hint="Lihat semua invoice" icon={<FileCheck className="size-5" />} accentClassName="bg-blue-50 text-blue-600" />
+          <ClickableStatCard href="/invoices?period=year" title="Value Issued" value={formatCurrency(totalValue).replace(',00', '')} hint="Invoice tahun ini" icon={<Landmark className="size-5" />} accentClassName="bg-purple-50 text-purple-600" />
+          <ClickableStatCard href="/invoices?type=Paid" title="Total Paid" value={formatCurrency(totalPaid).replace(',00', '')} hint="Filter invoice lunas" icon={<Banknote className="size-5" />} accentClassName="bg-emerald-50 text-emerald-600" />
+          <ClickableStatCard href="/invoices?type=Overdue" title="Outstanding" value={formatCurrency(unpaidValue).replace(',00', '')} hint="Butuh follow up" icon={<AlertCircle className="size-5" />} accentClassName="bg-rose-50 text-rose-600" />
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-border p-4 md:p-6">
@@ -83,7 +46,7 @@ export default async function InvoicesPage() {
               description="Belum ada invoice yang diterbitkan. Setelah sales atau finance membuat invoice, datanya akan tampil di sini."
             />
           ) : (
-            <FilterableInvoicesTable invoices={invoices} clients={clients} />
+            <FilterableInvoicesTable invoices={invoices} clients={clients} settings={{ companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, defaultSignatoryName: settings.defaultSignatoryName, defaultSignatoryTitle: settings.defaultSignatoryTitle }} filters={{ initialQuery: params.q, initialPeriod: (params.period as "all" | "30d" | "month" | "year") ?? "all", initialType: params.type ?? "all" }} />
           )}
         </div>
       </PageWrapper>

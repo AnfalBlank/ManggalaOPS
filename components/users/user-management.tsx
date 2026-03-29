@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
+import { DetailDialog, formatDateSafe } from "@/components/forms/entity-detail-dialogs";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -114,9 +115,19 @@ export function UserManagement({ users }: { users: UserRow[] }) {
                 <TableCell className="font-medium">{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{roleOptions.find((item) => item.value === user.role)?.label ?? user.role}</TableCell>
-                <TableCell>{user.createdAt ? format(new Date(user.createdAt), "dd MMM yyyy") : "-"}</TableCell>
+                <TableCell>{formatDateSafe(user.createdAt ? String(user.createdAt) : null)}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
+                    <DetailDialog
+                      title={`Detail User #${user.id}`}
+                      description="Ringkasan lengkap data user"
+                      rows={[
+                        { label: "Name", value: user.name },
+                        { label: "Email", value: user.email },
+                        { label: "Role", value: roleOptions.find((item) => item.value === user.role)?.label ?? user.role },
+                        { label: "Created", value: formatDateSafe(String(user.createdAt)) },
+                      ]}
+                    />
                     <UserDialog user={user} />
                     <Button variant="outline" size="sm" className="text-destructive" onClick={async () => {
                       if (!confirm(`Hapus user ${user.email}?`)) return;

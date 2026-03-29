@@ -30,6 +30,15 @@ export type ProjectListItem = {
   deadline: string | null;
 };
 
+export type QuotationItemRow = {
+  id: number;
+  description: string;
+  qty: number;
+  unit: string | null;
+  unitPrice: number;
+  amount: number;
+};
+
 export type QuotationListItem = {
   id: number;
   code: string;
@@ -39,10 +48,31 @@ export type QuotationListItem = {
   projectName: string | null;
   date: string | null;
   validUntil: string | null;
+  paymentMethod: string | null;
+  attachment: string | null;
+  subject: string | null;
+  recipientName: string | null;
+  recipientCompany: string | null;
+  recipientAddress: string | null;
+  introduction: string | null;
+  terms: string | null;
+  closingNote: string | null;
+  signatoryName: string | null;
+  signatoryTitle: string | null;
   subtotal: number;
   tax: number;
   total: number;
   status: string;
+  items: QuotationItemRow[];
+};
+
+export type InvoiceItemRow = {
+  id: number;
+  description: string;
+  qty: number;
+  unit: string | null;
+  unitPrice: number;
+  amount: number;
 };
 
 export type InvoiceListItem = {
@@ -55,12 +85,24 @@ export type InvoiceListItem = {
   quotationId: number | null;
   date: string | null;
   dueDate: string | null;
+  paymentMethod: string | null;
+  attachment: string | null;
+  subject: string | null;
+  recipientName: string | null;
+  recipientCompany: string | null;
+  recipientAddress: string | null;
+  introduction: string | null;
+  terms: string | null;
+  closingNote: string | null;
+  signatoryName: string | null;
+  signatoryTitle: string | null;
   subtotal: number;
   tax: number;
   total: number;
   amountPaid: number;
   outstandingAmount: number;
   status: string;
+  items: InvoiceItemRow[];
 };
 
 export type PaymentListItem = {
@@ -72,6 +114,7 @@ export type PaymentListItem = {
   clientName: string;
   amount: number;
   paymentMethod: string | null;
+  paymentAccountCode?: string | null;
   date: string | null;
   referenceCode: string | null;
 };

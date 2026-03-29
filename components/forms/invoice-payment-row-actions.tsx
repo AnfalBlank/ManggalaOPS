@@ -16,7 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import type { InvoiceListItem, PaymentListItem } from "@/lib/types";
 
 type ClientOption = { id: number; name: string };
-type InvoiceOption = { id: number; code: string };
+type InvoiceOption = { id: number; code: string; clientId?: number; clientName?: string };
+type PaymentAccountOption = { code: string; name: string };
 
 async function requestJson(url: string, method: "PATCH" | "DELETE", body?: Record<string, unknown>) {
   const response = await fetch(url, {
@@ -67,14 +68,16 @@ export function InvoiceRowActions({ row, clients }: { row: InvoiceListItem; clie
   );
 }
 
-export function PaymentRowActions({ row, clients, invoices }: { row: PaymentListItem; clients: ClientOption[]; invoices: InvoiceOption[] }) {
+export function PaymentRowActions({ row, clients, invoices, paymentAccounts = [] }: { row: PaymentListItem; clients: ClientOption[]; invoices: InvoiceOption[]; paymentAccounts?: PaymentAccountOption[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [clientId, setClientId] = useState(String(row.clientId));
   const [invoiceId, setInvoiceId] = useState(String(row.invoiceId));
   const [amount, setAmount] = useState(String(row.amount));
   const [paymentMethod, setPaymentMethod] = useState(row.paymentMethod ?? "");
+  const [paymentAccountCode, setPaymentAccountCode] = useState(row.paymentAccountCode ?? paymentAccounts[0]?.code ?? "1002");
   const [referenceCode, setReferenceCode] = useState(row.referenceCode ?? "");
+  const filteredInvoices = invoices.filter((invoice) => !clientId || String(invoice.clientId ?? "") === clientId);
 
   return (
     <div className="flex justify-end gap-2 flex-wrap">
@@ -88,6 +91,7 @@ export function PaymentRowActions({ row, clients, invoices }: { row: PaymentList
           { label: "Date", value: formatDateSafe(row.date) },
           { label: "Amount", value: formatCurrency(row.amount) },
           { label: "Method", value: row.paymentMethod ?? "-" },
+          { label: "Akun Masuk", value: paymentAccounts.find((account) => account.code === row.paymentAccountCode)?.name ?? row.paymentAccountCode ?? "-" },
           { label: "Reference", value: row.referenceCode ?? "-" },
         ]}
       />
@@ -99,9 +103,10 @@ export function PaymentRowActions({ row, clients, invoices }: { row: PaymentList
             <DialogDescription>Perbarui data pembayaran masuk.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
-            <div className="grid gap-2"><Label>Client</Label><Select value={clientId} onValueChange={(value) => setClientId(value ?? "")}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent>{clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}</SelectContent></Select></div>
-            <div className="grid gap-2"><Label>Invoice</Label><Select value={invoiceId} onValueChange={(value) => setInvoiceId(value ?? "")}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent>{invoices.map((invoice) => <SelectItem key={invoice.id} value={String(invoice.id)}>{invoice.code}</SelectItem>)}</SelectContent></Select></div>
+            <div className="grid gap-2"><Label>Client</Label><Select value={clientId} onValueChange={(value) => { setClientId(value ?? ""); setInvoiceId(""); }}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih client">{clients.find((client) => String(client.id) === clientId)?.name}</SelectValue></SelectTrigger><SelectContent>{clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="grid gap-2"><Label>Invoice</Label><Select value={invoiceId} onValueChange={(value) => setInvoiceId(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih invoice">{filteredInvoices.find((invoice) => String(invoice.id) === invoiceId)?.code}</SelectValue></SelectTrigger><SelectContent>{filteredInvoices.map((invoice) => <SelectItem key={invoice.id} value={String(invoice.id)}>{invoice.code}{invoice.clientName ? ` — ${invoice.clientName}` : ""}</SelectItem>)}</SelectContent></Select></div>
             <div className="grid gap-2"><Label>Amount</Label><MoneyInput value={amount} onChange={setAmount} placeholder="10.000.000" /></div>
+            <div className="grid gap-2"><Label>Akun Penerimaan</Label><Select value={paymentAccountCode} onValueChange={(value) => setPaymentAccountCode(value ?? "1002")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih akun penerimaan" /></SelectTrigger><SelectContent>{paymentAccounts.map((account) => <SelectItem key={account.code} value={account.code}>{account.code} - {account.name}</SelectItem>)}</SelectContent></Select></div>
             <div className="grid gap-2"><Label>Payment Method</Label><Input value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)} /></div>
             <div className="grid gap-2"><Label>Reference Code</Label><Input value={referenceCode} onChange={(event) => setReferenceCode(event.target.value)} /></div>
           </div>
@@ -109,7 +114,7 @@ export function PaymentRowActions({ row, clients, invoices }: { row: PaymentList
             <Button variant="outline" onClick={() => setOpen(false)}>Batal</Button>
             <Button onClick={async () => {
               try {
-                await requestJson(`/api/payments/${row.id}`, "PATCH", { clientId, invoiceId, amount, paymentMethod, referenceCode });
+                await requestJson(`/api/payments/${row.id}`, "PATCH", { clientId, invoiceId, amount, paymentMethod, paymentAccountCode, referenceCode });
                 toast.success("Payment diupdate");
                 setOpen(false);
                 router.refresh();

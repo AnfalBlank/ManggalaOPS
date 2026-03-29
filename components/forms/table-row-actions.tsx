@@ -41,6 +41,7 @@ type ClientOption = {
 type InvoiceOption = {
   id: number;
   code: string;
+  clientName?: string;
 };
 
 type LeadRow = {
@@ -138,7 +139,7 @@ export function LeadRowActions({ row, clients }: { row: LeadRow; clients: Client
               <div className="grid gap-2">
                 <Label>Client</Label>
                 <Select value={clientId} onValueChange={(value) => setClientId(value ?? "") }>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Pilih client" /></SelectTrigger>
                   <SelectContent>
                     {clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}
                   </SelectContent>
@@ -155,7 +156,7 @@ export function LeadRowActions({ row, clients }: { row: LeadRow; clients: Client
               <div className="grid gap-2">
                 <Label>Status</Label>
                 <Select value={status} onValueChange={(value) => setStatus(value ?? "New") }>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Pilih data" /></SelectTrigger>
                   <SelectContent>
                     {["New", "Follow Up", "Negotiation", "Won", "Lost"].map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}
                   </SelectContent>
@@ -226,7 +227,7 @@ export function InvoiceRowActions({ row, clients }: { row: InvoiceRow; clients: 
               <div className="grid gap-2">
                 <Label>Client</Label>
                 <Select value={clientId} onValueChange={(value) => setClientId(value ?? "") }>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Pilih client" /></SelectTrigger>
                   <SelectContent>
                     {clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}
                   </SelectContent>
@@ -311,7 +312,7 @@ export function PaymentRowActions({ row, clients, invoices }: { row: PaymentRow;
               <div className="grid gap-2">
                 <Label>Client</Label>
                 <Select value={clientId} onValueChange={(value) => setClientId(value ?? "") }>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Pilih client" /></SelectTrigger>
                   <SelectContent>
                     {clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}
                   </SelectContent>
@@ -320,9 +321,9 @@ export function PaymentRowActions({ row, clients, invoices }: { row: PaymentRow;
               <div className="grid gap-2">
                 <Label>Invoice</Label>
                 <Select value={invoiceId} onValueChange={(value) => setInvoiceId(value ?? "") }>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Pilih invoice" /></SelectTrigger>
                   <SelectContent>
-                    {invoices.map((invoice) => <SelectItem key={invoice.id} value={String(invoice.id)}>{invoice.code}</SelectItem>)}
+                    {invoices.map((invoice) => <SelectItem key={invoice.id} value={String(invoice.id)}>{invoice.code}{invoice.clientName ? ` — ${invoice.clientName}` : ""}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

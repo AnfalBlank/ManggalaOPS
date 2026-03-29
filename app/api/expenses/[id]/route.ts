@@ -1,9 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { expenses, journalEntries, journals } from "@/db/schema";
 import { parseMoneyInput } from "@/lib/money";
+
+async function getAccountBalance(accountCode: string) {
+  const rows = await db.select({ balance: sql<number>`coalesce(sum(${journalEntries.debit}) - sum(${journalEntries.credit}), 0)` }).from(journalEntries).where(eq(journalEntries.accountCode, accountCode));
+  return rows[0]?.balance ?? 0;
+}
+
+async function ensureSufficientBalance(accountCode: string, amount: number, expenseId?: number) {
+  const balance = await getAccountBalance(accountCode);
+  const currentExpense = expenseId ? await db.query.expenses.findFirst({ where: eq(expenses.id, expenseId) }) : null;
+  const reimbursed = currentExpense?.paymentAccountCode === accountCode ? currentExpense.amount : 0;
+  const effectiveBalance = balance + reimbursed;
+  if (amount > effectiveBalance) {
+    throw new Error(`Saldo akun pembayaran tidak cukup. Tersedia ${effectiveBalance.toLocaleString("id-ID")}, butuh ${amount.toLocaleString("id-ID")}.`);
+  }
+}
 
 async function upsertExpenseJournal(expenseId: number) {
   const expense = await db.query.expenses.findFirst({ where: eq(expenses.id, expenseId) });
@@ -26,7 +41,7 @@ async function upsertExpenseJournal(expenseId: number) {
   await db.delete(journalEntries).where(eq(journalEntries.journalId, journalId));
   await db.insert(journalEntries).values([
     { journalId, accountCode: expense.projectId ? "5002" : "5001", debit: expense.amount, credit: 0 },
-    { journalId, accountCode: "1002", debit: 0, credit: expense.amount },
+    { journalId, accountCode: expense.paymentAccountCode || "1002", debit: 0, credit: expense.amount },
   ]);
 }
 
@@ -42,14 +57,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const { id } = await params;
     const expenseId = Number(id);
     const body = await request.json();
+    const amount = parseMoneyInput(body.amount);
+    const paymentAccountCode = String(body.paymentAccountCode ?? "1002").trim() || "1002";
+
+    await ensureSufficientBalance(paymentAccountCode, amount, expenseId);
 
     await db.update(expenses).set({
       date: body.date ? new Date(body.date) : new Date(),
       category: String(body.category ?? "").trim(),
       description: String(body.description ?? "").trim(),
-      amount: parseMoneyInput(body.amount),
+      amount,
       status: String(body.status ?? "Approved").trim() || "Approved",
       projectId: body.projectId ? Number(body.projectId) : null,
+      paymentAccountCode,
     }).where(eq(expenses.id, expenseId));
 
     await upsertExpenseJournal(expenseId);

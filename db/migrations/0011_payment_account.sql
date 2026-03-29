@@ -1,0 +1,1 @@
+ALTER TABLE `payments` ADD COLUMN `payment_account_code` text REFERENCES `accounts`(`code`);

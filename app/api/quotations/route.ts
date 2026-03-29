@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/db";
-import { quotations } from "@/db/schema";
+import { quotationItems, quotations } from "@/db/schema";
 import { getQuotations } from "@/lib/data";
 import { parseMoneyInput } from "@/lib/money";
 
@@ -21,24 +21,49 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const clientId = Number(body.clientId);
-    const subtotal = parseMoneyInput(body.subtotal);
-    const tax = parseMoneyInput(body.tax);
-    const total = parseMoneyInput(body.total) || subtotal + tax;
+    const items = (Array.isArray(body.items) ? body.items : []) as Array<{ description?: string; qty?: number | string; unit?: string; unitPrice?: number | string; amount?: number | string }>;
+    const subtotal = items.reduce((sum: number, item) => sum + parseMoneyInput(item.amount), 0);
+    const taxPercent = Math.max(Number(body.taxPercent ?? 0) || 0, 0);
+    const tax = Math.round((subtotal * taxPercent) / 100);
+    const total = subtotal + tax;
 
-    if (!clientId || total <= 0) {
-      return NextResponse.json({ error: "clientId dan total wajib diisi" }, { status: 400 });
+    if (!clientId || total <= 0 || items.length === 0) {
+      return NextResponse.json({ error: "clientId, items, dan total wajib diisi" }, { status: 400 });
     }
 
-    await db.insert(quotations).values({
+    const inserted = await db.insert(quotations).values({
       clientId,
       projectId: body.projectId ? Number(body.projectId) : null,
       date: new Date(),
       validUntil: body.validUntil ? new Date(body.validUntil) : null,
+      paymentMethod: String(body.paymentMethod ?? "CBD").trim() || "CBD",
+      attachment: String(body.attachment ?? "").trim() || null,
+      subject: String(body.subject ?? "").trim() || null,
+      recipientName: String(body.recipientName ?? "").trim() || null,
+      recipientCompany: String(body.recipientCompany ?? "").trim() || null,
+      recipientAddress: String(body.recipientAddress ?? "").trim() || null,
+      introduction: String(body.introduction ?? "").trim() || null,
+      terms: String(body.terms ?? "").trim() || null,
+      closingNote: String(body.closingNote ?? "").trim() || null,
+      signatoryName: String(body.signatoryName ?? "").trim() || null,
+      signatoryTitle: String(body.signatoryTitle ?? "").trim() || null,
       subtotal,
       tax,
       total,
       status: String(body.status ?? "Draft").trim() || "Draft",
-    });
+    }).returning({ id: quotations.id });
+
+    const quotationId = inserted[0]?.id;
+    if (quotationId) {
+      await db.insert(quotationItems).values(items.map((item) => ({
+        quotationId,
+        description: String(item.description ?? "").trim(),
+        qty: Number(item.qty ?? 0),
+        unit: String(item.unit ?? "Unit").trim() || "Unit",
+        unitPrice: parseMoneyInput(item.unitPrice),
+        amount: parseMoneyInput(item.amount),
+      })));
+    }
 
     return NextResponse.json({ ok: true, data: await getQuotations() });
   } catch (error) {

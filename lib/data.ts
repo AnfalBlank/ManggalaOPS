@@ -2,10 +2,12 @@ import { desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   clients,
+  invoiceItems,
   invoices,
   leads,
   payments,
   projects,
+  quotationItems,
   quotations,
 } from "@/db/schema";
 import { toIsoString } from "@/lib/db-utils";
@@ -18,6 +20,21 @@ import type {
   ProjectListItem,
   QuotationListItem,
 } from "@/lib/types";
+
+export async function getClients() {
+  const rows = await db.select().from(clients).orderBy(desc(clients.id));
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    contactPerson: row.contactPerson,
+    additionalPic: row.additionalPic,
+    phone: row.phone,
+    email: row.email,
+    npwp: row.npwp,
+    address: row.address,
+    notes: row.notes,
+  }));
+}
 
 export async function getLeads(): Promise<LeadListItem[]> {
   const rows = await db
@@ -93,6 +110,17 @@ export async function getQuotations(): Promise<QuotationListItem[]> {
       projectName: projects.name,
       date: quotations.date,
       validUntil: quotations.validUntil,
+      paymentMethod: quotations.paymentMethod,
+      attachment: quotations.attachment,
+      subject: quotations.subject,
+      recipientName: quotations.recipientName,
+      recipientCompany: quotations.recipientCompany,
+      recipientAddress: quotations.recipientAddress,
+      introduction: quotations.introduction,
+      terms: quotations.terms,
+      closingNote: quotations.closingNote,
+      signatoryName: quotations.signatoryName,
+      signatoryTitle: quotations.signatoryTitle,
       subtotal: quotations.subtotal,
       tax: quotations.tax,
       total: quotations.total,
@@ -103,6 +131,18 @@ export async function getQuotations(): Promise<QuotationListItem[]> {
     .leftJoin(projects, eq(quotations.projectId, projects.id))
     .orderBy(desc(quotations.id));
 
+  const itemRows = await db
+    .select({
+      id: quotationItems.id,
+      quotationId: quotationItems.quotationId,
+      description: quotationItems.description,
+      qty: quotationItems.qty,
+      unit: quotationItems.unit,
+      unitPrice: quotationItems.unitPrice,
+      amount: quotationItems.amount,
+    })
+    .from(quotationItems);
+
   return rows.map((row) => ({
     id: row.id,
     code: formatDocumentNumber("QUO", row.id),
@@ -112,10 +152,31 @@ export async function getQuotations(): Promise<QuotationListItem[]> {
     projectName: row.projectName,
     date: toIsoString(row.date),
     validUntil: toIsoString(row.validUntil),
+    paymentMethod: row.paymentMethod,
+    attachment: row.attachment,
+    subject: row.subject,
+    recipientName: row.recipientName,
+    recipientCompany: row.recipientCompany,
+    recipientAddress: row.recipientAddress,
+    introduction: row.introduction,
+    terms: row.terms,
+    closingNote: row.closingNote,
+    signatoryName: row.signatoryName,
+    signatoryTitle: row.signatoryTitle,
     subtotal: row.subtotal ?? 0,
     tax: row.tax ?? 0,
     total: row.total ?? 0,
     status: row.status ?? "Draft",
+    items: itemRows
+      .filter((item) => item.quotationId === row.id)
+      .map((item) => ({
+        id: item.id,
+        description: item.description,
+        qty: item.qty,
+        unit: item.unit,
+        unitPrice: item.unitPrice,
+        amount: item.amount,
+      })),
   }));
 }
 
@@ -139,6 +200,17 @@ export async function getInvoices(): Promise<InvoiceListItem[]> {
       quotationId: invoices.quotationId,
       date: invoices.date,
       dueDate: invoices.dueDate,
+      paymentMethod: invoices.paymentMethod,
+      attachment: invoices.attachment,
+      subject: invoices.subject,
+      recipientName: invoices.recipientName,
+      recipientCompany: invoices.recipientCompany,
+      recipientAddress: invoices.recipientAddress,
+      introduction: invoices.introduction,
+      terms: invoices.terms,
+      closingNote: invoices.closingNote,
+      signatoryName: invoices.signatoryName,
+      signatoryTitle: invoices.signatoryTitle,
       subtotal: invoices.subtotal,
       tax: invoices.tax,
       total: invoices.total,
@@ -149,6 +221,18 @@ export async function getInvoices(): Promise<InvoiceListItem[]> {
     .leftJoin(projects, eq(invoices.projectId, projects.id))
     .leftJoin(paymentTotals, eq(invoices.id, paymentTotals.invoiceId))
     .orderBy(desc(invoices.id));
+
+  const itemRows = await db
+    .select({
+      id: invoiceItems.id,
+      invoiceId: invoiceItems.invoiceId,
+      description: invoiceItems.description,
+      qty: invoiceItems.qty,
+      unit: invoiceItems.unit,
+      unitPrice: invoiceItems.unitPrice,
+      amount: invoiceItems.amount,
+    })
+    .from(invoiceItems);
 
   return rows.map((row) => {
     const total = row.total ?? 0;
@@ -172,12 +256,33 @@ export async function getInvoices(): Promise<InvoiceListItem[]> {
       quotationId: row.quotationId,
       date: toIsoString(row.date),
       dueDate: toIsoString(row.dueDate),
+      paymentMethod: row.paymentMethod,
+      attachment: row.attachment,
+      subject: row.subject,
+      recipientName: row.recipientName,
+      recipientCompany: row.recipientCompany,
+      recipientAddress: row.recipientAddress,
+      introduction: row.introduction,
+      terms: row.terms,
+      closingNote: row.closingNote,
+      signatoryName: row.signatoryName,
+      signatoryTitle: row.signatoryTitle,
       subtotal: row.subtotal ?? 0,
       tax: row.tax ?? 0,
       total,
       amountPaid,
       outstandingAmount,
       status,
+      items: itemRows
+        .filter((item) => item.invoiceId === row.id)
+        .map((item) => ({
+          id: item.id,
+          description: item.description,
+          qty: item.qty,
+          unit: item.unit,
+          unitPrice: item.unitPrice,
+          amount: item.amount,
+        })),
     };
   });
 }
@@ -191,6 +296,7 @@ export async function getPayments(): Promise<PaymentListItem[]> {
       clientName: clients.name,
       amount: payments.amount,
       paymentMethod: payments.paymentMethod,
+      paymentAccountCode: payments.paymentAccountCode,
       date: payments.date,
       referenceCode: payments.referenceCode,
     })
@@ -207,6 +313,7 @@ export async function getPayments(): Promise<PaymentListItem[]> {
     clientName: row.clientName,
     amount: row.amount,
     paymentMethod: row.paymentMethod,
+    paymentAccountCode: row.paymentAccountCode,
     date: toIsoString(row.date),
     referenceCode: row.referenceCode,
   }));

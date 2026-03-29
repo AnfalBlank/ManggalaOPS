@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import {
@@ -8,8 +8,10 @@ import {
   journals,
   payments,
   projects,
+  quotationItems,
   quotations,
 } from "@/db/schema";
+import { getAccountMapping } from "@/lib/account-mapping";
 
 export async function acceptQuotationAndCreateProject(quotationId: number) {
   const quotation = await db.query.quotations.findFirst({
@@ -53,6 +55,7 @@ export async function acceptQuotationAndCreateProject(quotationId: number) {
 }
 
 export async function upsertInvoiceJournal(invoiceId: number) {
+  const mapping = await getAccountMapping();
   const invoice = await db.query.invoices.findFirst({ where: eq(invoices.id, invoiceId) });
   if (!invoice) throw new Error("Invoice tidak ditemukan");
 
@@ -75,8 +78,8 @@ export async function upsertInvoiceJournal(invoiceId: number) {
 
   await db.delete(journalEntries).where(eq(journalEntries.journalId, journalId));
   await db.insert(journalEntries).values([
-    { journalId, accountCode: "1101", debit: invoice.total ?? 0, credit: 0 },
-    { journalId, accountCode: invoice.projectId ? "4001" : "4002", debit: 0, credit: invoice.subtotal ?? 0 },
+    { journalId, accountCode: mapping.receivable, debit: invoice.total ?? 0, credit: 0 },
+    { journalId, accountCode: invoice.projectId ? mapping.projectRevenue : mapping.nonProjectRevenue, debit: 0, credit: invoice.subtotal ?? 0 },
     { journalId, accountCode: "2101", debit: 0, credit: invoice.tax ?? 0 },
   ]);
 
@@ -110,13 +113,32 @@ export async function createInvoiceFromQuotation(quotationId: number) {
   const invoiceId = insertedInvoice[0]?.id;
 
   if (invoiceId) {
-    await db.insert(invoiceItems).values({
-      invoiceId,
-      description: `Invoice from quotation #${quotation.id}`,
-      qty: 1,
-      unitPrice: quotation.total ?? 0,
-      amount: quotation.total ?? 0,
+    const quoteItems = await db.query.quotationItems.findMany({
+      where: eq(quotationItems.quotationId, quotation.id),
     });
+
+    if (quoteItems.length > 0) {
+      await db.insert(invoiceItems).values(
+        quoteItems.map((item) => ({
+          invoiceId,
+          description: item.description,
+          qty: item.qty,
+          unit: item.unit ?? "Unit",
+          unitPrice: item.unitPrice,
+          amount: item.amount,
+        })),
+      );
+    } else {
+      await db.insert(invoiceItems).values({
+        invoiceId,
+        description: `Invoice from quotation #${quotation.id}`,
+        qty: 1,
+        unit: "Lot",
+        unitPrice: quotation.subtotal ?? quotation.total ?? 0,
+        amount: quotation.subtotal ?? quotation.total ?? 0,
+      });
+    }
+
     await upsertInvoiceJournal(invoiceId);
   }
 
@@ -132,6 +154,7 @@ export async function upsertPaymentJournal(paymentId: number) {
     throw new Error("Payment tidak ditemukan");
   }
 
+  const mapping = await getAccountMapping();
   const existingJournal = await db.query.journals.findFirst({
     where: eq(journals.referenceId, `payment:${paymentId}`),
   });
@@ -159,13 +182,13 @@ export async function upsertPaymentJournal(paymentId: number) {
   await db.insert(journalEntries).values([
     {
       journalId,
-      accountCode: "1002",
+      accountCode: payment.paymentAccountCode || mapping.bankMandiri,
       debit: payment.amount,
       credit: 0,
     },
     {
       journalId,
-      accountCode: "1101",
+      accountCode: mapping.receivable,
       debit: 0,
       credit: payment.amount,
     },
@@ -197,11 +220,14 @@ export async function deleteInvoiceJournal(invoiceId: number) {
 }
 
 export async function getFinanceSummary() {
-  const [incomeRows, expenseRows] = await Promise.all([
+  const mapping = await getAccountMapping();
+  const [incomeRows, expenseRows, balanceRows] = await Promise.all([
     db.select({ total: sql<number>`coalesce(sum(${payments.amount}), 0)`.as("total") }).from(payments),
     db.select({ total: sql<number>`coalesce(sum(amount), 0)`.as("total") }).from(sql`expenses`),
+    db.select({ accountCode: journalEntries.accountCode, balance: sql<number>`coalesce(sum(${journalEntries.debit}) - sum(${journalEntries.credit}), 0)`.as("balance") }).from(journalEntries).where(inArray(journalEntries.accountCode, [mapping.cash, mapping.bankMandiri, mapping.bankBca, mapping.receivable, mapping.fixedAsset, mapping.liability, mapping.equity])).groupBy(journalEntries.accountCode),
   ]);
 
+  const balances = Object.fromEntries(balanceRows.map((row) => [row.accountCode, row.balance]));
   const totalIncome = incomeRows[0]?.total ?? 0;
   const totalExpense = expenseRows[0]?.total ?? 0;
 
@@ -209,5 +235,12 @@ export async function getFinanceSummary() {
     totalIncome,
     totalExpense,
     netCashFlow: totalIncome - totalExpense,
+    totalRevenue: totalIncome,
+    totalAssets: (balances[mapping.cash] ?? 0) + (balances[mapping.bankMandiri] ?? 0) + (balances[mapping.bankBca] ?? 0) + (balances[mapping.receivable] ?? 0) + (balances[mapping.fixedAsset] ?? 0),
+    totalLiabilities: Math.abs(balances[mapping.liability] ?? 0),
+    totalEquityProxy: Math.abs(balances[mapping.equity] ?? 0) + (totalIncome - totalExpense),
+    cashOnHand: balances[mapping.cash] ?? 0,
+    bankBalance: (balances[mapping.bankMandiri] ?? 0) + (balances[mapping.bankBca] ?? 0),
+    receivables: balances[mapping.receivable] ?? 0,
   };
 }

@@ -20,8 +20,9 @@ export async function RoleGuard({
 
   if (!allow.includes(role)) {
     return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-        Role aktif <span className="font-semibold">{labels[role]}</span> tidak punya akses ke halaman ini.
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900 shadow-sm">
+        <div className="font-semibold mb-1">Akses dibatasi untuk role ini</div>
+        <div>Role aktif <span className="font-semibold">{labels[role]}</span> tidak punya izin membuka halaman ini. Silakan gunakan akun dengan role yang sesuai.</div>
       </div>
     );
   }

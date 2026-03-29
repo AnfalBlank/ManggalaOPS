@@ -9,7 +9,7 @@ import { users } from "@/db/schema";
 export async function GET() {
   try {
     await requireRole(["admin"]);
-    const data = await db.select({ id: users.id, name: users.name, email: users.email, role: users.role, createdAt: users.createdAt }).from(users).orderBy(desc(users.id));
+    const data = await db.select({ id: users.id, name: users.name, email: users.email, role: users.role, avatarUrl: users.avatarUrl, createdAt: users.createdAt }).from(users).orderBy(desc(users.id));
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to fetch users" }, { status: 403 });
@@ -28,10 +28,11 @@ export async function POST(request: NextRequest) {
       email: String(body.email ?? "").trim(),
       passwordHash,
       role: String(body.role ?? "sales").trim(),
+      avatarUrl: String(body.avatarUrl ?? "").trim() || null,
       createdAt: new Date(),
     });
 
-    const data = await db.select({ id: users.id, name: users.name, email: users.email, role: users.role, createdAt: users.createdAt }).from(users).orderBy(desc(users.id));
+    const data = await db.select({ id: users.id, name: users.name, email: users.email, role: users.role, avatarUrl: users.avatarUrl, createdAt: users.createdAt }).from(users).orderBy(desc(users.id));
     return NextResponse.json({ ok: true, data });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to create user" }, { status: 500 });

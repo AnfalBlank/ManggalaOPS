@@ -12,8 +12,8 @@ import { Label } from "@/components/ui/label";
 export function LoginForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("admin@manggala.co.id");
-  const [password, setPassword] = useState("Admin123!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   return (
     <form

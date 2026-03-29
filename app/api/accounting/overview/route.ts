@@ -24,11 +24,13 @@ export async function GET() {
           date: journals.date,
           description: journals.description,
           accountCode: journalEntries.accountCode,
+          accountName: accounts.name,
           debit: journalEntries.debit,
           credit: journalEntries.credit,
         })
         .from(journals)
         .innerJoin(journalEntries, eq(journals.id, journalEntries.journalId))
+        .leftJoin(accounts, eq(accounts.code, journalEntries.accountCode))
         .orderBy(desc(journals.id), asc(journalEntries.id)),
     ]);
 

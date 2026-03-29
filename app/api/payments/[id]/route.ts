@@ -31,6 +31,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         clientId,
         amount,
         paymentMethod: String(body.paymentMethod ?? "").trim() || null,
+        paymentAccountCode: String(body.paymentAccountCode ?? "1002").trim() || "1002",
         referenceCode: String(body.referenceCode ?? "").trim() || null,
       })
       .where(eq(payments.id, paymentId));

@@ -13,13 +13,15 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen w-full bg-background">
+    <SidebarProvider defaultOpen={true} className="block">
+      <div className="relative h-screen w-full overflow-hidden bg-background">
         <AppSidebar role={user.role} user={{ name: user.name, email: user.email }} />
-        <main className="flex min-w-0 flex-1 flex-col h-screen overflow-hidden">
-          <Topbar user={{ name: user.name, email: user.email, role: user.role }} />
-          {children}
-        </main>
+        <div className="flex h-screen w-full md:pl-72">
+          <main className="flex min-w-0 flex-1 flex-col h-screen overflow-hidden">
+            <Topbar user={{ name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl ?? undefined }} />
+            {children}
+          </main>
+        </div>
       </div>
     </SidebarProvider>
   );

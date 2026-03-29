@@ -6,6 +6,7 @@ import { getPayments } from "@/lib/data";
 import { upsertPaymentJournal } from "@/lib/business";
 import { parseMoneyInput } from "@/lib/money";
 import { ensurePaymentMatchesInvoice } from "@/lib/validators";
+import { createNotification } from "@/lib/notifications";
 
 export async function GET() {
   try {
@@ -26,6 +27,7 @@ export async function POST(request: NextRequest) {
     const clientId = Number(body.clientId);
     const amount = parseMoneyInput(body.amount);
     const paymentMethod = String(body.paymentMethod ?? "").trim() || null;
+    const paymentAccountCode = String(body.paymentAccountCode ?? "1002").trim() || "1002";
     const referenceCode = String(body.referenceCode ?? "").trim() || null;
 
     if (!invoiceId || !clientId || amount <= 0) {
@@ -42,12 +44,14 @@ export async function POST(request: NextRequest) {
       clientId,
       amount,
       paymentMethod,
+      paymentAccountCode,
       date: new Date(),
       referenceCode,
     }).returning({ id: payments.id });
 
     if (inserted[0]?.id) {
       await upsertPaymentJournal(inserted[0].id);
+      await createNotification({ title: "Payment baru tercatat", message: `Pembayaran invoice #${invoiceId} sebesar ${amount.toLocaleString('id-ID')} berhasil dicatat.`, type: "success", targetRole: "finance" });
     }
 
     const data = await getPayments();

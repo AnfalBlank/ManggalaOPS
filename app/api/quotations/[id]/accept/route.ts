@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { acceptQuotationAndCreateProject, createInvoiceFromQuotation } from "@/lib/business";
+import { createNotification } from "@/lib/notifications";
 
 export async function POST(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -9,6 +10,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
 
     const project = await acceptQuotationAndCreateProject(quotationId);
     const invoice = await createInvoiceFromQuotation(quotationId);
+    await createNotification({ title: "Quotation accepted", message: `Quotation #${quotationId} berhasil diubah menjadi project #${project.projectId} dan invoice #${invoice.invoiceId}.`, type: "success", targetRole: "sales" });
 
     return NextResponse.json({
       ok: true,

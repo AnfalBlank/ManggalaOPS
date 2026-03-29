@@ -16,6 +16,7 @@ import {
   Users,
   FolderKanban,
   FileSignature,
+  MessageSquareMore,
   FileText,
   Banknote,
   LineChart,
@@ -23,15 +24,28 @@ import {
   PieChart,
   Settings,
   UserCog,
+  Building2,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+import { canAccessPath } from "@/lib/role-access";
 
 const navItems = [
   {
     title: "Dashboard",
     url: "/",
     icon: LayoutDashboard,
+  },
+  {
+    title: "Chat",
+    url: "/chat",
+    icon: MessageSquareMore,
+  },
+  {
+    title: "Clients",
+    url: "/clients",
+    icon: Building2,
   },
   {
     title: "Leads",
@@ -82,16 +96,11 @@ const navItems = [
 
 export function AppSidebar({ role = "admin", user }: { role?: string; user?: { name: string; email: string } }) {
   const pathname = usePathname();
-  const visibleItems = navItems.filter((item) => {
-    if (role === "admin") return true;
-    if (role === "finance") return ["/", "/invoices", "/payments", "/finance", "/accounting", "/reports"].includes(item.url);
-    if (role === "sales") return ["/", "/leads", "/projects", "/quotations", "/invoices", "/reports"].includes(item.url);
-    if (role === "project_manager") return ["/", "/projects", "/reports"].includes(item.url);
-    return true;
-  });
+  const normalizedRole = (role ?? "admin") as "admin" | "finance" | "sales" | "project_manager";
+  const visibleItems = navItems.filter((item) => canAccessPath(normalizedRole, item.url));
 
   return (
-    <Sidebar className="hidden border-r-0 md:flex md:w-72 md:min-w-72" collapsible="none">
+    <Sidebar className="fixed inset-y-0 left-0 z-40 hidden border-r-0 shadow-xl md:flex md:w-72 md:min-w-72" collapsible="none">
       {/* 
         We use a solid dark blue base with a very subtle gradient towards the bottom/right 
         to add depth without making it look "flashy".
@@ -165,7 +174,7 @@ export function AppSidebar({ role = "admin", user }: { role?: string; user?: { n
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="gap-1 px-2">
-                <SidebarMenuItem>
+                {canAccessPath(normalizedRole, "/settings") ? <SidebarMenuItem>
                   <SidebarMenuButton 
                     render={<Link href="/settings" />}
                     className="h-10 rounded-lg flex items-center gap-3 px-3 transition-all duration-200 text-slate-400 group hover:bg-slate-800/50 hover:text-slate-200"
@@ -173,7 +182,7 @@ export function AppSidebar({ role = "admin", user }: { role?: string; user?: { n
                     <Settings className="size-[18px] text-slate-500 group-hover:text-slate-300 transition-colors" />
                     <span className="text-sm">Settings</span>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
+                </SidebarMenuItem> : null}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

@@ -10,6 +10,12 @@ type ReceiptPayload = {
   client: string;
   amount: number;
   description: string;
+  companyName?: string | null;
+  companyEmail?: string | null;
+  companyPhone?: string | null;
+  companyAddress?: string | null;
+  signatoryName?: string | null;
+  signatoryTitle?: string | null;
 };
 
 export function DownloadKwitansiButton({ payload }: { payload: ReceiptPayload }) {

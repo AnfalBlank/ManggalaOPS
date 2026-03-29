@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -82,14 +82,43 @@ export function InvoiceDialog({ clients, invoice }: { clients: ClientOption[]; i
   const [signatoryName, setSignatoryName] = useState(invoice?.signatoryName ?? "Adiatma Pasau");
   const [signatoryTitle, setSignatoryTitle] = useState(invoice?.signatoryTitle ?? "Manager Marketing");
   const [tax, setTax] = useState(invoice ? String(invoice.tax) : "");
+  const [defaultTaxPercent, setDefaultTaxPercent] = useState(11);
   const [items, setItems] = useState<Array<{ description: string; qty: string; unit: string; unitPrice: string }>>(
     invoice?.items?.length
       ? invoice.items.map((item) => ({ description: item.description, qty: String(item.qty), unit: item.unit || "Unit", unitPrice: String(item.unitPrice) }))
       : [{ description: "", qty: "1", unit: "Unit", unitPrice: "" }],
   );
 
+  useEffect(() => {
+    if (!open || invoice) return;
+    let active = true;
+    fetch("/api/settings")
+      .then((response) => response.ok ? response.json() : null)
+      .then((settings) => {
+        if (!active || !settings) return;
+        setPaymentMethod(String(settings.defaultPaymentMethod ?? "CBD"));
+        setDefaultTaxPercent(Number(settings.defaultTaxPercent ?? 11) || 11);
+        setAttachment("-");
+        setSubject("Invoice");
+        setRecipientAddress(String(settings.companyAddress ?? "Di tempat") || "Di tempat");
+        setIntroduction(`Bersama ini kami sampaikan invoice/tagihan dari ${settings.companyName ?? "PT. Manggala Utama Indonesia"} atas pekerjaan atau pengadaan yang telah kami laksanakan dengan rincian sebagai berikut:`);
+        setTerms(`Pembayaran sesuai metode yang disepakati\nMohon mencantumkan nomor invoice pada transfer\nInvoice jatuh tempo ${settings.invoiceDueDays ?? 14} hari`);
+        const nextDueDate = new Date();
+        nextDueDate.setDate(nextDueDate.getDate() + Number(settings.invoiceDueDays ?? 14));
+        setDueDate(nextDueDate.toISOString().slice(0, 10));
+      })
+      .catch(() => null);
+    return () => { active = false; };
+  }, [invoice, open]);
+
   const computedItems = useMemo(() => items.map((item) => ({ ...item, amount: parseMoneyInput(item.unitPrice) * Number(item.qty || 0) })), [items]);
   const subtotal = useMemo(() => computedItems.reduce((sum, item) => sum + item.amount, 0), [computedItems]);
+
+  useEffect(() => {
+    if (invoice) return;
+    setTax(String(Math.round((subtotal * defaultTaxPercent) / 100)));
+  }, [defaultTaxPercent, invoice, subtotal]);
+
   const total = useMemo(() => subtotal + parseMoneyInput(tax), [subtotal, tax]);
 
   return (
@@ -104,7 +133,7 @@ export function InvoiceDialog({ clients, invoice }: { clients: ClientOption[]; i
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2"><Label>Client</Label><Select value={clientId} onValueChange={(value) => setClientId(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih client" /></SelectTrigger><SelectContent>{clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}</SelectContent></Select></div>
             <div className="grid gap-2"><Label>Due Date</Label><Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
-            <div className="grid gap-2"><Label>Payment Method</Label><Select value={paymentMethod} onValueChange={(value) => setPaymentMethod(value ?? "CBD")}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="CBD">CBD</SelectItem><SelectItem value="Term">Term</SelectItem></SelectContent></Select></div>
+            <div className="grid gap-2"><Label>Payment Method</Label><Select value={paymentMethod} onValueChange={(value) => setPaymentMethod(value ?? "CBD")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih opsi" /></SelectTrigger><SelectContent><SelectItem value="CBD">CBD</SelectItem><SelectItem value="Term">Term</SelectItem></SelectContent></Select></div>
             <div className="grid gap-2"><Label>PPN</Label><RupiahInput value={tax} onChange={setTax} placeholder="8.250.000" /></div>
           </div>
 

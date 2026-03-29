@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { sessions, users } from "@/db/schema";
-import type { AppRole } from "@/lib/auth";
+export type AppRole = "admin" | "finance" | "sales" | "project_manager";
 
 const SESSION_COOKIE = "manggala_session";
 
@@ -37,13 +37,7 @@ export async function loginWithPassword(email: string, password: string) {
   cookieStore.set(SESSION_COOKIE, sessionId, {
     httpOnly: true,
     sameSite: "lax",
-    path: "/",
-    expires: expiresAt,
-  });
-
-  cookieStore.set("manggala_role", user.role as AppRole, {
-    httpOnly: false,
-    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
     path: "/",
     expires: expiresAt,
   });
@@ -60,7 +54,6 @@ export async function logoutSession() {
   }
 
   cookieStore.delete(SESSION_COOKIE);
-  cookieStore.delete("manggala_role");
 }
 
 export async function getCurrentUser() {
@@ -74,7 +67,6 @@ export async function getCurrentUser() {
 
   if (!session || (session.expiresAt && new Date(session.expiresAt) < new Date())) {
     cookieStore.delete(SESSION_COOKIE);
-    cookieStore.delete("manggala_role");
     return null;
   }
 

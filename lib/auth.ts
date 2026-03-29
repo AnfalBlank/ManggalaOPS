@@ -1,6 +1,7 @@
-import { cookies } from "next/headers";
+import type { AppRole as SessionRole } from "@/lib/session-auth";
+import { getCurrentUser } from "@/lib/session-auth";
 
-export type AppRole = "admin" | "finance" | "sales" | "project_manager";
+export type AppRole = SessionRole;
 
 export const roleLabels: Record<AppRole, string> = {
   admin: "Admin",
@@ -10,13 +11,16 @@ export const roleLabels: Record<AppRole, string> = {
 };
 
 export async function getCurrentRole(): Promise<AppRole> {
-  const cookieStore = await cookies();
-  const role = cookieStore.get("manggala_role")?.value as AppRole | undefined;
-  return role && role in roleLabels ? role : "admin";
+  const user = await getCurrentUser();
+  return (user?.role as AppRole | undefined) ?? "sales";
 }
 
 export async function requireRole(allowed: AppRole[]) {
-  const role = await getCurrentRole();
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+  const role = user.role as AppRole;
   if (!allowed.includes(role)) {
     throw new Error(`Akses ditolak untuk role ${roleLabels[role]}`);
   }
