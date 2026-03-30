@@ -120,3 +120,10 @@ curl -X POST http://localhost:3000/api/seed
 - PPN Keluaran diambil dari invoice
 - PPN Masukan diambil dari expense/pembelian taxable
 - Quotation tidak dihitung sebagai objek final di laporan pajak
+
+
+## Repo Standards
+
+- License: Proprietary / internal use only
+- CI: GitHub Actions build check on push and pull request
+- Issue & PR templates sudah disiapkan untuk workflow tim
