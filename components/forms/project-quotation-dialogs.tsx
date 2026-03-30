@@ -190,7 +190,7 @@ export function QuotationDialog({ clients, projects, quotation }: { clients: Cli
           <Button disabled={loading || !clientId || total <= 0 || computedItems.some((item) => !item.description || item.amount <= 0)} onClick={async () => {
             try {
               setLoading(true);
-              await send(quotation ? `/api/quotations/${quotation.id}` : "/api/quotations", quotation ? "PATCH" : "POST", { clientId, projectId: projectId === "none" ? null : projectId, subtotal, tax: taxAmount, total, status, paymentMethod, validUntil, attachment, subject, recipientName, recipientCompany, recipientAddress, introduction, terms, closingNote, signatoryName, signatoryTitle, items: computedItems.map((item) => ({ description: item.description, qty: Number(item.qty || 0), unit: item.unit || "Unit", unitPrice: parseMoneyInput(item.unitPrice), amount: item.amount })) });
+              await send(quotation ? `/api/quotations/${quotation.id}` : "/api/quotations", quotation ? "PATCH" : "POST", { clientId, projectId: projectId === "none" ? null : projectId, taxPercent: normalizedTaxPercent, status, paymentMethod, validUntil, attachment, subject, recipientName, recipientCompany, recipientAddress, introduction, terms, closingNote, signatoryName, signatoryTitle, items: computedItems.map((item) => ({ description: item.description, qty: Number(item.qty || 0), unit: item.unit || "Unit", unitPrice: parseMoneyInput(item.unitPrice), amount: item.amount })) });
               toast.success(quotation ? "Quotation diupdate" : "Quotation dibuat");
               setOpen(false);
               router.refresh();

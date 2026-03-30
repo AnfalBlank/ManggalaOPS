@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { quotationItems, quotations } from "@/db/schema";
 import { getQuotations } from "@/lib/data";
 import { parseMoneyInput } from "@/lib/money";
+import { computeOutputTax, normalizeTaxPercent } from "@/lib/output-tax";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -13,9 +14,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const body = await request.json();
     const items = (Array.isArray(body.items) ? body.items : []) as Array<{ description?: string; qty?: number | string; unit?: string; unitPrice?: number | string; amount?: number | string }>;
     const subtotal = items.reduce((sum: number, item) => sum + parseMoneyInput(item.amount), 0);
-    const taxPercent = Math.max(Number(body.taxPercent ?? 0) || 0, 0);
-    const tax = Math.round((subtotal * taxPercent) / 100);
-    const total = subtotal + tax;
+    const { tax, total } = computeOutputTax(subtotal, normalizeTaxPercent(body.taxPercent, 11));
 
     await db.update(quotations).set({
       clientId: Number(body.clientId),

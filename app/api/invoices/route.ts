@@ -6,6 +6,7 @@ import { upsertInvoiceJournal } from "@/lib/business";
 import { getInvoices } from "@/lib/data";
 import { parseMoneyInput } from "@/lib/money";
 import { createNotification } from "@/lib/notifications";
+import { computeOutputTax, normalizeTaxPercent } from "@/lib/output-tax";
 
 export async function GET() {
   try {
@@ -25,8 +26,7 @@ export async function POST(request: NextRequest) {
     const clientId = Number(body.clientId);
     const items = (Array.isArray(body.items) ? body.items : []) as Array<{ description?: string; qty?: number | string; unit?: string; unitPrice?: number | string; amount?: number | string }>;
     const subtotal = items.reduce((sum: number, item) => sum + parseMoneyInput(item.amount), 0);
-    const tax = parseMoneyInput(body.tax);
-    const total = subtotal + tax;
+    const { tax, total } = computeOutputTax(subtotal, normalizeTaxPercent(body.taxPercent, 11));
     const dueDate = body.dueDate ? new Date(body.dueDate) : null;
 
     if (!clientId || items.length === 0 || subtotal <= 0) {

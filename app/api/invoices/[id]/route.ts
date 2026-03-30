@@ -7,6 +7,7 @@ import { deleteInvoiceJournal, upsertInvoiceJournal } from "@/lib/business";
 import { getInvoices } from "@/lib/data";
 import { parseMoneyInput } from "@/lib/money";
 import { ensureInvoiceCanBeDeleted, ensureInvoiceCanBeUpdated } from "@/lib/validators";
+import { computeOutputTax, normalizeTaxPercent } from "@/lib/output-tax";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -15,8 +16,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const body = await request.json();
     const items = (Array.isArray(body.items) ? body.items : []) as Array<{ description?: string; qty?: number | string; unit?: string; unitPrice?: number | string; amount?: number | string }>;
     const subtotal = items.reduce((sum: number, item) => sum + parseMoneyInput(item.amount), 0);
-    const tax = parseMoneyInput(body.tax);
-    const total = subtotal + tax;
+    const { tax, total } = computeOutputTax(subtotal, normalizeTaxPercent(body.taxPercent, 11));
 
     await ensureInvoiceCanBeUpdated(invoiceId, total);
 

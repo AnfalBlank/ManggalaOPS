@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { quotationItems, quotations } from "@/db/schema";
 import { getQuotations } from "@/lib/data";
 import { parseMoneyInput } from "@/lib/money";
+import { computeOutputTax, normalizeTaxPercent } from "@/lib/output-tax";
 
 export async function GET() {
   try {
@@ -23,9 +24,7 @@ export async function POST(request: NextRequest) {
     const clientId = Number(body.clientId);
     const items = (Array.isArray(body.items) ? body.items : []) as Array<{ description?: string; qty?: number | string; unit?: string; unitPrice?: number | string; amount?: number | string }>;
     const subtotal = items.reduce((sum: number, item) => sum + parseMoneyInput(item.amount), 0);
-    const taxPercent = Math.max(Number(body.taxPercent ?? 0) || 0, 0);
-    const tax = Math.round((subtotal * taxPercent) / 100);
-    const total = subtotal + tax;
+    const { tax, total } = computeOutputTax(subtotal, normalizeTaxPercent(body.taxPercent, 11));
 
     if (!clientId || total <= 0 || items.length === 0) {
       return NextResponse.json({ error: "clientId, items, dan total wajib diisi" }, { status: 400 });

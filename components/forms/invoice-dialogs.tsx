@@ -81,7 +81,7 @@ export function InvoiceDialog({ clients, invoice }: { clients: ClientOption[]; i
   const [closingNote, setClosingNote] = useState(invoice?.closingNote ?? "Demikian invoice ini kami sampaikan. Atas perhatian dan kerjasamanya kami ucapkan terima kasih.");
   const [signatoryName, setSignatoryName] = useState(invoice?.signatoryName ?? "Adiatma Pasau");
   const [signatoryTitle, setSignatoryTitle] = useState(invoice?.signatoryTitle ?? "Manager Marketing");
-  const [tax, setTax] = useState(invoice ? String(invoice.tax) : "");
+  const [taxPercent, setTaxPercent] = useState(invoice && invoice.subtotal ? String(Number(((invoice.tax / invoice.subtotal) * 100).toFixed(2))) : "11");
   const [defaultTaxPercent, setDefaultTaxPercent] = useState(11);
   const selectedClientName = clients.find((client) => String(client.id) === clientId)?.name;
   const [items, setItems] = useState<Array<{ description: string; qty: string; unit: string; unitPrice: string }>>(
@@ -98,7 +98,8 @@ export function InvoiceDialog({ clients, invoice }: { clients: ClientOption[]; i
       .then((settings) => {
         if (!active || !settings) return;
         setPaymentMethod(String(settings.defaultPaymentMethod ?? "CBD"));
-        setDefaultTaxPercent(Number(settings.defaultTaxPercent ?? 11) || 11);
+        const nextTaxPercent = Number(settings.defaultTaxPercent ?? 11) || 11;
+        setDefaultTaxPercent(nextTaxPercent);
         setAttachment("-");
         setSubject("Invoice");
         setRecipientAddress(String(settings.companyAddress ?? "Di tempat") || "Di tempat");
@@ -117,10 +118,16 @@ export function InvoiceDialog({ clients, invoice }: { clients: ClientOption[]; i
 
   useEffect(() => {
     if (invoice) return;
-    setTax(String(Math.round((subtotal * defaultTaxPercent) / 100)));
-  }, [defaultTaxPercent, invoice, subtotal]);
+    setTaxPercent(String(defaultTaxPercent));
+  }, [defaultTaxPercent, invoice]);
 
-  const total = useMemo(() => subtotal + parseMoneyInput(tax), [subtotal, tax]);
+  const normalizedTaxPercent = useMemo(() => {
+    const raw = Number(String(taxPercent).replace(",", "."));
+    if (!Number.isFinite(raw) || raw < 0) return 0;
+    return raw;
+  }, [taxPercent]);
+  const tax = useMemo(() => Math.round((subtotal * normalizedTaxPercent) / 100), [subtotal, normalizedTaxPercent]);
+  const total = useMemo(() => subtotal + tax, [subtotal, tax]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -135,7 +142,7 @@ export function InvoiceDialog({ clients, invoice }: { clients: ClientOption[]; i
             <div className="grid gap-2"><Label>Client</Label><Select value={clientId} onValueChange={(value) => setClientId(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih client">{selectedClientName}</SelectValue></SelectTrigger><SelectContent>{clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}</SelectContent></Select></div>
             <div className="grid gap-2"><Label>Due Date</Label><Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
             <div className="grid gap-2"><Label>Payment Method</Label><Select value={paymentMethod} onValueChange={(value) => setPaymentMethod(value ?? "CBD")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih opsi" /></SelectTrigger><SelectContent><SelectItem value="CBD">CBD</SelectItem><SelectItem value="Term">Term</SelectItem></SelectContent></Select></div>
-            <div className="grid gap-2"><Label>PPN</Label><RupiahInput value={tax} onChange={setTax} placeholder="8.250.000" /></div>
+            <div className="grid gap-2"><Label>PPN (%)</Label><Input type="number" min="0" step="0.01" value={taxPercent} onChange={(e) => setTaxPercent(e.target.value)} placeholder="11" /></div>
           </div>
 
           <div className="rounded-xl border p-4 space-y-4">
@@ -180,7 +187,7 @@ export function InvoiceDialog({ clients, invoice }: { clients: ClientOption[]; i
 
           <div className="grid gap-2 rounded-xl border bg-muted/30 p-4 text-sm">
             <div className="flex justify-between"><span>Subtotal</span><span className="font-medium">Rp {formatMoneyInput(subtotal)}</span></div>
-            <div className="flex justify-between"><span>PPN</span><span className="font-medium">Rp {formatMoneyInput(tax)}</span></div>
+            <div className="flex justify-between"><span>PPN ({normalizedTaxPercent}%)</span><span className="font-medium">Rp {formatMoneyInput(tax)}</span></div>
             <div className="flex justify-between text-base font-semibold"><span>Total Invoice</span><span>Rp {formatMoneyInput(total)}</span></div>
           </div>
         </div>
@@ -203,7 +210,7 @@ export function InvoiceDialog({ clients, invoice }: { clients: ClientOption[]; i
                 closingNote,
                 signatoryName,
                 signatoryTitle,
-                tax,
+                taxPercent: normalizedTaxPercent,
                 items: computedItems.map((item) => ({ description: item.description, qty: Number(item.qty || 0), unit: item.unit, unitPrice: item.unitPrice, amount: item.amount })),
               });
               toast.success(invoice ? "Invoice diupdate" : "Invoice ditambahkan");
