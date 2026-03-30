@@ -77,14 +77,16 @@ export function FinanceOverview({
         />
 
         <div className="w-full overflow-x-auto pb-4 rounded-xl border mt-4">
-          <Table className="min-w-[800px]">
+          <Table className="min-w-[1050px]">
             <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
               <TableRow className="hover:bg-transparent">
                 <TableHead className="w-[120px] rounded-tl-xl text-xs uppercase tracking-wider">Expense ID</TableHead>
                 <TableHead className="text-xs uppercase tracking-wider">Date</TableHead>
                 <TableHead className="text-xs uppercase tracking-wider">Category</TableHead>
                 <TableHead className="text-xs uppercase tracking-wider">Description</TableHead>
-                <TableHead className="text-right text-xs uppercase tracking-wider">Amount (IDR)</TableHead>
+                <TableHead className="text-right text-xs uppercase tracking-wider">DPP</TableHead>
+                <TableHead className="text-right text-xs uppercase tracking-wider">PPN</TableHead>
+                <TableHead className="text-right text-xs uppercase tracking-wider">Total (IDR)</TableHead>
                 <TableHead className="text-xs uppercase tracking-wider">Akun Bayar</TableHead>
                 <TableHead className="text-center text-xs uppercase tracking-wider">Status</TableHead>
                 <TableHead className="text-right w-[120px] rounded-tr-xl text-xs uppercase tracking-wider">Actions</TableHead>
@@ -97,6 +99,8 @@ export function FinanceOverview({
                   <TableCell className="text-sm py-4">{format(new Date(expense.date), "dd MMM yyyy")}</TableCell>
                   <TableCell className="py-4 font-medium text-slate-700"><div className="flex items-center gap-2"><CreditCard className="size-4 text-muted-foreground" />{expense.category}</div></TableCell>
                   <TableCell className="text-sm py-4 max-w-[250px] truncate" title={expense.description}>{expense.description}</TableCell>
+                  <TableCell className="text-right py-4 text-foreground">{formatCurrency(expense.baseAmount ?? expense.amount)}</TableCell>
+                  <TableCell className="text-right py-4 text-foreground">{formatCurrency(expense.taxAmount ?? 0)}</TableCell>
                   <TableCell className="text-right font-medium py-4 text-foreground">{formatCurrency(expense.amount)}</TableCell>
                   <TableCell className="py-4 text-sm">{expense.paymentAccountName ?? expense.paymentAccountCode ?? "-"}</TableCell>
                   <TableCell className="text-center py-4"><Badge>{expense.status}</Badge></TableCell>

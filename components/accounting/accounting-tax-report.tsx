@@ -70,7 +70,7 @@ export function AccountingTaxReport({ rows }: { rows: TaxRow[] }) {
               <TableRow key={`${row.source}-${index}`}>
                 <TableCell>{row.date}</TableCell>
                 <TableCell>{row.source}</TableCell>
-                <TableCell>{row.type}</TableCell>
+                <TableCell><span className={row.type === "PPN Masukan" ? "text-amber-700 font-medium" : "text-rose-700 font-medium"}>{row.type}</span></TableCell>
                 <TableCell>{row.client}</TableCell>
                 <TableCell className="text-right">{formatCurrency(row.dpp)}</TableCell>
                 <TableCell className="text-right">{formatCurrency(row.ppn)}</TableCell>
