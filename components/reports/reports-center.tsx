@@ -66,7 +66,7 @@ export function ReportsCenter({ financeRows, salesRows, projectRows, taxRows }: 
     {
       id: "tax",
       title: "Tax & Compliance",
-      description: "PPN from invoices and quotations in the selected period.",
+      description: "PPN from issued invoices in the selected period.",
       icon: PiggyBank,
       color: "text-amber-600",
       bg: "bg-amber-50",

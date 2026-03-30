@@ -1,15 +1,14 @@
 import { ReportsCenter } from "@/components/reports/reports-center";
-import { getInvoices, getLeads, getPayments, getProjects, getQuotations } from "@/lib/data";
+import { getInvoices, getLeads, getPayments, getProjects } from "@/lib/data";
 import { getFinanceOverviewData } from "@/lib/admin-data";
 
 export default async function ReportsPage() {
-  const [finance, leads, invoices, payments, projects, quotations] = await Promise.all([
+  const [finance, leads, invoices, payments, projects] = await Promise.all([
     getFinanceOverviewData(),
     getLeads(),
     getInvoices(),
     getPayments(),
     getProjects(),
-    getQuotations(),
   ]);
 
   const financeRows = finance.recentExpenses.map((expense) => ({
@@ -37,10 +36,7 @@ export default async function ReportsPage() {
     progress: project.progress,
   }));
 
-  const taxRows = [
-    ...quotations.map((quotation) => ({ date: quotation.date, source: quotation.code, type: "Quotation", client: quotation.clientName, tax: quotation.tax, total: quotation.total })),
-    ...invoices.map((invoice) => ({ date: invoice.date, source: invoice.code, type: "Invoice", client: invoice.clientName, tax: invoice.tax, total: invoice.total })),
-  ];
+  const taxRows = invoices.map((invoice) => ({ date: invoice.date, source: invoice.code, type: "Invoice", client: invoice.clientName, tax: invoice.tax, total: invoice.total }));
 
   return <ReportsCenter financeRows={financeRows} salesRows={salesRows} projectRows={projectRows} taxRows={taxRows} />;
 }
