@@ -1,83 +1,122 @@
 # ManggalaOPS
 
-ERP/CRM dashboard for PT. Manggala Utama Indonesia built with Next.js, Drizzle ORM, and Turso/libSQL.
+ERP/CRM dashboard untuk PT. Manggala Utama Indonesia, dibangun dengan Next.js, Drizzle ORM, dan Turso/libSQL.
 
-## Requirements
+## Fitur Utama
+
+- Manajemen client, lead, project
+- Quotation & invoice dengan perhitungan PPN
+- Finance & expense tracking
+- Accounting, journal, dan tax report
+- Internal chat dan notifikasi
+
+## Kebutuhan
 
 - Node.js 20+
 - npm
-- Turso database URL and auth token
+- Database Turso/libSQL
 
-## Environment Setup
+## Setup Environment
 
-1. Copy the example env file:
+1. Copy file contoh env:
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-2. Fill in these values in `.env.local`:
+2. Isi `.env.local`:
 
 ```env
 TURSO_DATABASE_URL=libsql://your-database-name.turso.io
 TURSO_AUTH_TOKEN=your_turso_auth_token
 ```
 
-## Database Setup
-
-Push the schema to Turso:
+## Instalasi
 
 ```bash
-npm run db:push
+npm install
 ```
 
-(Optional) generate migration files:
+## Jalankan Lokal
+
+```bash
+npm run dev
+```
+
+App akan tersedia di:
+- <http://localhost:3000>
+
+## Setup Database
+
+### Untuk database yang sudah pernah dipakai
+Gunakan patch migration aman:
+
+```bash
+npm run db:apply
+```
+
+Script ini sekarang:
+- membedakan bootstrap DB kosong vs patch DB existing
+- memakai migration journal
+- tidak mengulang file migration yang sudah pernah diproses
+
+### Untuk database baru / kosong
+Tetap bisa pakai:
+
+```bash
+npm run db:apply
+```
+
+### Opsional
+Generate drizzle artifacts:
 
 ```bash
 npm run db:generate
 ```
 
-Seed starter data:
+Push schema via drizzle:
+
+```bash
+npm run db:push
+```
+
+Buka Drizzle Studio:
+
+```bash
+npm run db:studio
+```
+
+## Seed Data
+
+Kalau database masih kosong:
 
 ```bash
 npm run dev
-# in another terminal
+# terminal lain
 curl -X POST http://localhost:3000/api/seed
 ```
 
-## Run Locally
+## Script yang Tersedia
 
-```bash
-npm install
-npm run dev
-```
-
-Open <http://localhost:3000>
-
-## Available Scripts
-
-- `npm run dev` — start dev server
+- `npm run dev` — jalankan local dev server
 - `npm run build` — production build
-- `npm run start` — run production server
-- `npm run lint` — run ESLint
+- `npm run start` — jalankan production server
+- `npm run lint` — ESLint
 - `npm run db:generate` — generate drizzle artifacts
-- `npm run db:migrate` — run drizzle migrations
-- `npm run db:push` — push schema to Turso/libSQL
-- `npm run db:studio` — open Drizzle Studio
+- `npm run db:check` — cek drift schema
+- `npm run db:push` — push schema via drizzle
+- `npm run db:apply` — apply migration SQL lokal dengan journal
+- `npm run db:up` — drizzle up
+- `npm run db:studio` — buka Drizzle Studio
 
-## API Endpoints
+## Catatan Repo
 
-- `GET /api/health`
-- `GET /api/dashboard`
-- `GET /api/leads`
-- `GET /api/projects`
-- `GET /api/quotations`
-- `GET /api/invoices`
-- `GET /api/payments`
-- `POST /api/seed`
+- File `.env*` tidak ikut git
+- File database lokal (`*.db`) di-ignore
+- Repo ini memakai GitHub private untuk source utama
 
-## Notes
+## Catatan Teknis
 
-- The app requires `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` for build/runtime.
-- Main operational pages already read live data from Drizzle queries.
-- If the database is empty, run the seed endpoint once.
+- PPN Keluaran diambil dari invoice
+- PPN Masukan diambil dari expense/pembelian taxable
+- Quotation tidak dihitung sebagai objek final di laporan pajak
