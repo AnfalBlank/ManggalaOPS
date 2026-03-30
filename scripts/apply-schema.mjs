@@ -14,6 +14,7 @@ if (!url || !authToken) {
 
 const migrationsDir = new URL("../db/migrations/", import.meta.url);
 const client = createClient({ url, authToken });
+const MIGRATION_JOURNAL_TABLE = "_schema_migrations";
 
 async function listMigrationFiles() {
   return (await fs.readdir(migrationsDir))
@@ -64,6 +65,30 @@ async function runStatements(file, statements, { quietSkip = true } = {}) {
   return { applied, skipped };
 }
 
+async function ensureMigrationJournalTable() {
+  await client.execute(`CREATE TABLE IF NOT EXISTS ${MIGRATION_JOURNAL_TABLE} (
+    id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+    filename text NOT NULL UNIQUE,
+    applied_at integer NOT NULL
+  )`);
+}
+
+async function getAppliedMigrationFilenames() {
+  if (!(await tableExists(MIGRATION_JOURNAL_TABLE))) {
+    return new Set();
+  }
+
+  const result = await client.execute(`SELECT filename FROM ${MIGRATION_JOURNAL_TABLE}`);
+  return new Set(result.rows.map((row) => String(row.filename)));
+}
+
+async function recordAppliedMigration(filename) {
+  await client.execute({
+    sql: `INSERT OR IGNORE INTO ${MIGRATION_JOURNAL_TABLE} (filename, applied_at) VALUES (?, ?)` ,
+    args: [filename, Date.now()],
+  });
+}
+
 async function bootstrapEmptyDatabase(files) {
   const bootstrapFile = files.find((file) => file.startsWith("0000_"));
   if (!bootstrapFile) {
@@ -89,28 +114,34 @@ async function patchExistingDatabase(files) {
 const files = await listMigrationFiles();
 const hasAccountsTable = await tableExists("accounts");
 
-const patchFiles = hasAccountsTable
+const candidateFiles = hasAccountsTable
   ? await patchExistingDatabase(files)
   : await bootstrapEmptyDatabase(files);
+
+await ensureMigrationJournalTable();
+const appliedFilenames = await getAppliedMigrationFilenames();
+const pendingFiles = candidateFiles.filter((file) => !appliedFilenames.has(file));
 
 let totalApplied = 0;
 let totalSkipped = 0;
 let touchedFiles = 0;
 
-for (const file of patchFiles) {
+for (const file of pendingFiles) {
   const sql = await fs.readFile(new URL(`../db/migrations/${file}`, import.meta.url), "utf8");
   const statements = splitStatements(sql);
   const result = await runStatements(file, statements, { quietSkip: true });
 
-  if (result.applied > 0 || result.skipped > 0) {
-    touchedFiles += 1;
-  }
+  touchedFiles += 1;
   totalApplied += result.applied;
   totalSkipped += result.skipped;
 
+  await recordAppliedMigration(file);
+
   if (result.applied > 0) {
     console.log(`APPLY ${file}: ${result.applied} statement(s)`);
+  } else {
+    console.log(`MARK ${file}: no new statements applied`);
   }
 }
 
-console.log(`Done. Applied ${totalApplied} statement(s), skipped ${totalSkipped} duplicate/existing statement(s), checked ${touchedFiles} migration file(s).`);
+console.log(`Done. Applied ${totalApplied} statement(s), skipped ${totalSkipped} duplicate/existing statement(s), processed ${touchedFiles} new migration file(s).`);
