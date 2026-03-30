@@ -34,7 +34,6 @@ for (const file of migrationFiles) {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (message.includes('already exists') || message.includes('duplicate column name')) {
-        console.log(`Skip ${file}: ${message}`);
         continue;
       }
       throw error;
