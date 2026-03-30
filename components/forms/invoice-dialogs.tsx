@@ -83,6 +83,7 @@ export function InvoiceDialog({ clients, invoice }: { clients: ClientOption[]; i
   const [signatoryTitle, setSignatoryTitle] = useState(invoice?.signatoryTitle ?? "Manager Marketing");
   const [tax, setTax] = useState(invoice ? String(invoice.tax) : "");
   const [defaultTaxPercent, setDefaultTaxPercent] = useState(11);
+  const selectedClientName = clients.find((client) => String(client.id) === clientId)?.name;
   const [items, setItems] = useState<Array<{ description: string; qty: string; unit: string; unitPrice: string }>>(
     invoice?.items?.length
       ? invoice.items.map((item) => ({ description: item.description, qty: String(item.qty), unit: item.unit || "Unit", unitPrice: String(item.unitPrice) }))
@@ -131,7 +132,7 @@ export function InvoiceDialog({ clients, invoice }: { clients: ClientOption[]; i
         </DialogHeader>
         <div className="grid gap-6">
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="grid gap-2"><Label>Client</Label><Select value={clientId} onValueChange={(value) => setClientId(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih client" /></SelectTrigger><SelectContent>{clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="grid gap-2"><Label>Client</Label><Select value={clientId} onValueChange={(value) => setClientId(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih client">{selectedClientName}</SelectValue></SelectTrigger><SelectContent>{clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}</SelectContent></Select></div>
             <div className="grid gap-2"><Label>Due Date</Label><Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
             <div className="grid gap-2"><Label>Payment Method</Label><Select value={paymentMethod} onValueChange={(value) => setPaymentMethod(value ?? "CBD")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih opsi" /></SelectTrigger><SelectContent><SelectItem value="CBD">CBD</SelectItem><SelectItem value="Term">Term</SelectItem></SelectContent></Select></div>
             <div className="grid gap-2"><Label>PPN</Label><RupiahInput value={tax} onChange={setTax} placeholder="8.250.000" /></div>
