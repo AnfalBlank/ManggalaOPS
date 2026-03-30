@@ -30,6 +30,7 @@ export default async function FinancePage({ searchParams }: { searchParams?: Pro
             totalExpense={data.totalExpense}
             netCashFlow={data.netCashFlow}
             recentExpenses={data.recentExpenses}
+            projects={data.projects}
             filters={{ initialQuery: params.q, initialPeriod: (params.period as "all" | "30d" | "month" | "year") ?? "all", initialType: params.type ?? "all" }}
           />
         </RoleGuard>
