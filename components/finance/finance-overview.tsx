@@ -20,7 +20,7 @@ const expenseTypeOptions = [
   { label: "Office", value: "Office" },
 ];
 
-type ExpenseRow = { id: number; date: Date; category: string; description: string; amount: number; status: string | null; projectId: number | null; paymentAccountCode?: string | null; paymentAccountName?: string | null };
+type ExpenseRow = { id: number; date: Date; category: string; description: string; amount: number; taxMode?: string | null; taxPercent?: number | null; taxAmount?: number | null; baseAmount?: number | null; status: string | null; projectId: number | null; paymentAccountCode?: string | null; paymentAccountName?: string | null };
 
 export function FinanceOverview({
   totalIncome,

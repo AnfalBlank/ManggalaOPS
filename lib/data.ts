@@ -7,6 +7,7 @@ import {
   leads,
   payments,
   projects,
+  expenses,
   quotationItems,
   quotations,
 } from "@/db/schema";
@@ -285,6 +286,25 @@ export async function getInvoices(): Promise<InvoiceListItem[]> {
         })),
     };
   });
+}
+
+export async function getExpenses() {
+  const rows = await db.select().from(expenses).orderBy(desc(expenses.id));
+
+  return rows.map((row) => ({
+    id: row.id,
+    date: toIsoString(row.date),
+    category: row.category,
+    description: row.description,
+    amount: row.amount,
+    taxMode: row.taxMode,
+    taxPercent: row.taxPercent ?? 0,
+    taxAmount: row.taxAmount ?? 0,
+    baseAmount: row.baseAmount ?? row.amount,
+    status: row.status,
+    projectId: row.projectId,
+    paymentAccountCode: row.paymentAccountCode,
+  }));
 }
 
 export async function getPayments(): Promise<PaymentListItem[]> {

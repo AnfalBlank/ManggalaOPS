@@ -10,6 +10,7 @@ export const DEFAULT_COA = [
   { code: "1101", name: "Piutang Usaha", type: "Asset", normalBalance: "Debit" },
   { code: "1201", name: "Aset Tetap", type: "Asset", normalBalance: "Debit" },
   { code: "2001", name: "Hutang Usaha", type: "Liability", normalBalance: "Credit" },
+  { code: "1301", name: "PPN Masukan", type: "Asset", normalBalance: "Debit" },
   { code: "2101", name: "PPN Keluaran", type: "Liability", normalBalance: "Credit" },
   { code: "3001", name: "Modal", type: "Equity", normalBalance: "Credit" },
   { code: "4001", name: "Pendapatan Project", type: "Revenue", normalBalance: "Credit" },

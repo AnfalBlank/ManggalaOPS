@@ -23,6 +23,8 @@ export function AccountingTaxReport({ rows }: { rows: TaxRow[] }) {
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
 
   const filtered = useMemo(() => rows.filter((row) => withinRange(row.date, startDate, endDate)), [endDate, rows, startDate]);
+  const totalPpnKeluaran = filtered.filter((row) => row.type === "PPN Keluaran").reduce((sum, row) => sum + row.ppn, 0);
+  const totalPpnMasukan = filtered.filter((row) => row.type === "PPN Masukan").reduce((sum, row) => sum + row.ppn, 0);
   const totalDpp = filtered.reduce((sum, row) => sum + row.dpp, 0);
   const totalPpn = filtered.reduce((sum, row) => sum + row.ppn, 0);
   const totalGrand = filtered.reduce((sum, row) => sum + row.total, 0);
@@ -33,7 +35,7 @@ export function AccountingTaxReport({ rows }: { rows: TaxRow[] }) {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground">Laporan Pajak</h2>
-          <p className="text-sm text-muted-foreground">Rekap formal DPP, PPN, dan nilai transaksi kena pajak dari sumber Invoice serta Quotation Accepted.</p>
+          <p className="text-sm text-muted-foreground">Rekap formal PPN Keluaran dan PPN Masukan dari invoice, quotation accepted, serta pembelian/expense kena pajak.</p>
         </div>
         <div className="flex gap-2"><TaxReportPdfButton rows={filtered} periodLabel={periodLabel} /></div>
       </div>
@@ -43,10 +45,11 @@ export function AccountingTaxReport({ rows }: { rows: TaxRow[] }) {
         <div className="space-y-2"><Label>Periode Akhir</Label><Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
         <div className="rounded-xl border border-blue-200 bg-blue-50/40 p-4"><div className="text-xs text-muted-foreground uppercase tracking-wide">Total DPP</div><div className="text-lg font-bold text-blue-700">{formatCurrency(totalDpp)}</div></div>
-        <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4"><div className="text-xs text-muted-foreground uppercase tracking-wide">Total PPN</div><div className="text-lg font-bold text-amber-700">{formatCurrency(totalPpn)}</div></div>
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4"><div className="text-xs text-muted-foreground uppercase tracking-wide">Total Nilai</div><div className="text-lg font-bold text-emerald-700">{formatCurrency(totalGrand)}</div></div>
+        <div className="rounded-xl border border-rose-200 bg-rose-50/40 p-4"><div className="text-xs text-muted-foreground uppercase tracking-wide">PPN Keluaran</div><div className="text-lg font-bold text-rose-700">{formatCurrency(totalPpnKeluaran)}</div></div>
+        <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4"><div className="text-xs text-muted-foreground uppercase tracking-wide">PPN Masukan</div><div className="text-lg font-bold text-amber-700">{formatCurrency(totalPpnMasukan)}</div></div>
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4"><div className="text-xs text-muted-foreground uppercase tracking-wide">Selisih Pajak</div><div className="text-lg font-bold text-emerald-700">{formatCurrency(totalPpnKeluaran - totalPpnMasukan)}</div></div>
       </div>
 
       <div className="w-full overflow-x-auto rounded-xl border">

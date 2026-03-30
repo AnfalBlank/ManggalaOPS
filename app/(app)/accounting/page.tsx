@@ -10,19 +10,22 @@ import { ErrorState } from "@/components/ui/state";
 import { getAccountingOverviewData } from "@/lib/admin-data";
 import { buildFinancialSummary } from "@/lib/accounting-summary";
 import { getAccountMapping } from "@/lib/account-mapping";
-import { getInvoices, getQuotations } from "@/lib/data";
+import { getExpenses, getInvoices, getQuotations } from "@/lib/data";
 import { getOpeningBalance } from "@/lib/opening-balance";
 
 export default async function AccountingPage({ searchParams }: { searchParams?: Promise<{ q?: string; period?: string; type?: string }> }) {
   try {
     const params = (await searchParams) ?? {};
-    const [data, invoices, quotations, openingBalance, mapping] = await Promise.all([getAccountingOverviewData(), getInvoices(), getQuotations(), getOpeningBalance(), getAccountMapping()]);
+    const [data, invoices, quotations, expenses, openingBalance, mapping] = await Promise.all([getAccountingOverviewData(), getInvoices(), getQuotations(), getExpenses(), getOpeningBalance(), getAccountMapping()]);
 
     const taxRows = [
       ...quotations
         .filter((quotation) => quotation.status === "Accepted")
-        .map((quotation) => ({ date: quotation.date ?? "", source: quotation.code, client: quotation.clientName, dpp: quotation.subtotal, ppn: quotation.tax, total: quotation.total, type: "Quotation Accepted" })),
-      ...invoices.map((invoice) => ({ date: invoice.date ?? "", source: invoice.code, client: invoice.clientName, dpp: invoice.subtotal, ppn: invoice.tax, total: invoice.total, type: "Invoice" })),
+        .map((quotation) => ({ date: quotation.date ?? "", source: quotation.code, client: quotation.clientName, dpp: quotation.subtotal, ppn: quotation.tax, total: quotation.total, type: "PPN Keluaran" as const })),
+      ...invoices.map((invoice) => ({ date: invoice.date ?? "", source: invoice.code, client: invoice.clientName, dpp: invoice.subtotal, ppn: invoice.tax, total: invoice.total, type: "PPN Keluaran" as const })),
+      ...expenses
+        .filter((expense) => (expense.taxAmount ?? 0) > 0)
+        .map((expense) => ({ date: expense.date ?? "", source: `EXP-${String(expense.id).padStart(4, "0")}`, client: expense.description, dpp: expense.baseAmount ?? expense.amount, ppn: expense.taxAmount ?? 0, total: expense.amount, type: "PPN Masukan" as const })),
     ].filter((row) => row.date);
 
     const financialSummary = buildFinancialSummary(data.accounts, mapping);
