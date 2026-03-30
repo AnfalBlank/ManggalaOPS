@@ -14,7 +14,7 @@ type ThreadRow = { id: number; title: string; kind: string; latestMessage: strin
 type MessageRow = { id: number; body: string; createdAt?: string | null; senderUserId: number; senderName: string };
 
 type UserOption = { id: number; name: string };
-type ProjectOption = { id: number; name: string };
+type ProjectOption = { id: number; name: string; clientName?: string };
 
 export function ChatCenter({ users, projects }: { users: UserOption[]; projects: ProjectOption[] }) {
   const [threads, setThreads] = useState<ThreadRow[]>([]);
@@ -27,6 +27,7 @@ export function ChatCenter({ users, projects }: { users: UserOption[]; projects:
   const [projectId, setProjectId] = useState("");
 
   const selectedThread = useMemo(() => threads.find((thread) => thread.id === selectedThreadId) ?? null, [selectedThreadId, threads]);
+  const selectedProjectName = projects.find((project) => String(project.id) === projectId)?.name;
 
   const loadThreads = async () => {
     const response = await fetch('/api/chat');
@@ -64,7 +65,7 @@ export function ChatCenter({ users, projects }: { users: UserOption[]; projects:
           </div>
           <div className="space-y-2"><Label>Judul Chat</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Contoh: Broadcast Tim Sales" /></div>
           {chatType === "direct" ? <div className="space-y-2"><Label>Pilih User</Label><Select value={targetUserId} onValueChange={(value) => setTargetUserId(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih user" /></SelectTrigger><SelectContent>{users.map((user) => <SelectItem key={user.id} value={String(user.id)}>{user.name}</SelectItem>)}</SelectContent></Select></div> : null}
-          {chatType === "project" ? <div className="space-y-2"><Label>Pilih Project</Label><Select value={projectId} onValueChange={(value) => setProjectId(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih project" /></SelectTrigger><SelectContent>{projects.map((project) => <SelectItem key={project.id} value={String(project.id)}>{project.name}</SelectItem>)}</SelectContent></Select></div> : null}
+          {chatType === "project" ? <div className="space-y-2"><Label>Pilih Project</Label><Select value={projectId} onValueChange={(value) => setProjectId(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih project">{selectedProjectName}</SelectValue></SelectTrigger><SelectContent>{projects.map((project) => <SelectItem key={project.id} value={String(project.id)}>{project.name}{project.clientName ? ` — ${project.clientName}` : ""}</SelectItem>)}</SelectContent></Select></div> : null}
           <Button className="w-full" onClick={async () => {
             const body = chatType === 'direct'
               ? { action: 'create-direct', title: title || 'Direct Chat', userIds: targetUserId ? [Number(targetUserId)] : [] }

@@ -45,6 +45,7 @@ export function LeadRowActions({ row, clients }: { row: LeadRow; clients: Client
   const [serviceName, setServiceName] = useState(row.serviceName);
   const [estimatedValue, setEstimatedValue] = useState(String(row.estimatedValue));
   const [status, setStatus] = useState(row.status);
+  const selectedClientName = clients.find((client) => String(client.id) === clientId)?.name;
 
   const handleSave = async () => {
     try {
@@ -92,7 +93,7 @@ export function LeadRowActions({ row, clients }: { row: LeadRow; clients: Client
             <DialogDescription>Perbarui data lead yang sudah ada.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
-            <div className="grid gap-2"><Label>Client</Label><Select value={clientId} onValueChange={(value) => setClientId(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih client" /></SelectTrigger><SelectContent>{clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="grid gap-2"><Label>Client</Label><Select value={clientId} onValueChange={(value) => setClientId(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih client">{selectedClientName}</SelectValue></SelectTrigger><SelectContent>{clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}</SelectContent></Select></div>
             <div className="grid gap-2"><Label>Service Need</Label><Input value={serviceName} onChange={(event) => setServiceName(event.target.value)} /></div>
             <div className="grid gap-2"><Label>Estimated Value</Label><MoneyInput value={estimatedValue} onChange={setEstimatedValue} placeholder="111.000.000" /></div>
             <div className="grid gap-2"><Label>Status</Label><Select value={status} onValueChange={(value) => setStatus(value ?? "New")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih opsi" /></SelectTrigger><SelectContent>{["New", "Follow Up", "Negotiation", "Won", "Lost"].map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select></div>

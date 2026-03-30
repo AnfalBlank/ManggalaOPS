@@ -53,6 +53,7 @@ export function CreateExpenseDialog({ paymentAccounts = [], projects = [] }: { p
   const [projectId, setProjectId] = useState("none");
 
   const selectedAccount = paymentAccounts.find((account) => account.code === paymentAccountCode);
+  const selectedProjectLabel = projectId === "none" ? "Tanpa project" : projects.find((project) => String(project.id) === projectId)?.name;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -66,7 +67,7 @@ export function CreateExpenseDialog({ paymentAccounts = [], projects = [] }: { p
           <div className="grid gap-2"><Label>Tanggal</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
           <div className="grid gap-2"><Label>Kategori</Label><Select value={category} onValueChange={(value) => setCategory(value ?? "Operational")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih opsi" /></SelectTrigger><SelectContent>{expenseCategoryOptions.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}<SelectItem value="__custom">Lainnya...</SelectItem></SelectContent></Select></div>
           {category === "__custom" ? <div className="grid gap-2"><Label>Kategori Baru</Label><Input value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} placeholder="Contoh: Legal / Perizinan" /></div> : null}
-          <div className="grid gap-2"><Label>Project (opsional)</Label><Select value={projectId} onValueChange={(value) => setProjectId(value ?? "none")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih project" /></SelectTrigger><SelectContent><SelectItem value="none">Tanpa project</SelectItem>{projects.map((project) => <SelectItem key={project.id} value={String(project.id)}>{project.name}{project.clientName ? ` — ${project.clientName}` : ""}</SelectItem>)}</SelectContent></Select></div>
+          <div className="grid gap-2"><Label>Project (opsional)</Label><Select value={projectId} onValueChange={(value) => setProjectId(value ?? "none")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih project">{selectedProjectLabel}</SelectValue></SelectTrigger><SelectContent><SelectItem value="none">Tanpa project</SelectItem>{projects.map((project) => <SelectItem key={project.id} value={String(project.id)}>{project.name}{project.clientName ? ` — ${project.clientName}` : ""}</SelectItem>)}</SelectContent></Select></div>
           <div className="grid gap-2"><Label>Deskripsi</Label><Input value={description} onChange={(e) => setDescription(e.target.value)} /></div>
           <div className="grid gap-2"><Label>Nominal</Label><RupiahInput value={amount} onChange={setAmount} placeholder="1500000" /></div>
           <div className="grid gap-2"><Label>Dibayar dari akun</Label><Select value={paymentAccountCode} onValueChange={(value) => setPaymentAccountCode(value ?? "1001")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih opsi" /></SelectTrigger><SelectContent>{paymentAccounts.map((account) => <SelectItem key={account.code} value={account.code}>{account.code} - {account.name}</SelectItem>)}</SelectContent></Select></div>
@@ -110,6 +111,7 @@ export function ExpenseRowActions({ expense, paymentAccounts = [], projects = []
 
   const canSave = useMemo(() => description && parseMoneyInput(amount) > 0, [description, amount]);
   const selectedProject = projects.find((project) => String(project.id) === String(expense.projectId));
+  const selectedProjectLabel = projectId === "none" ? "Tanpa project" : projects.find((project) => String(project.id) === projectId)?.name;
   const selectedAccount = paymentAccounts.find((account) => account.code === (expense.paymentAccountCode ?? paymentAccountCode));
 
   return (
@@ -144,7 +146,7 @@ export function ExpenseRowActions({ expense, paymentAccounts = [], projects = []
             <div className="grid gap-2"><Label>Tanggal</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
             <div className="grid gap-2"><Label>Kategori</Label><Select value={expenseCategoryOptions.includes(category as never) ? category : "__custom"} onValueChange={(value) => setCategory(value ?? "Operational")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih opsi" /></SelectTrigger><SelectContent>{expenseCategoryOptions.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}<SelectItem value="__custom">Lainnya...</SelectItem></SelectContent></Select></div>
             {(!expenseCategoryOptions.includes(category as never) || category === "__custom") ? <div className="grid gap-2"><Label>Kategori Baru</Label><Input value={category === "__custom" ? "" : category} onChange={(e) => setCategory(e.target.value)} placeholder="Contoh: Legal / Perizinan" /></div> : null}
-            <div className="grid gap-2"><Label>Project (opsional)</Label><Select value={projectId} onValueChange={(value) => setProjectId(value ?? "none")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih project" /></SelectTrigger><SelectContent><SelectItem value="none">Tanpa project</SelectItem>{projects.map((project) => <SelectItem key={project.id} value={String(project.id)}>{project.name}{project.clientName ? ` — ${project.clientName}` : ""}</SelectItem>)}</SelectContent></Select></div>
+            <div className="grid gap-2"><Label>Project (opsional)</Label><Select value={projectId} onValueChange={(value) => setProjectId(value ?? "none")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih project">{selectedProjectLabel}</SelectValue></SelectTrigger><SelectContent><SelectItem value="none">Tanpa project</SelectItem>{projects.map((project) => <SelectItem key={project.id} value={String(project.id)}>{project.name}{project.clientName ? ` — ${project.clientName}` : ""}</SelectItem>)}</SelectContent></Select></div>
             <div className="grid gap-2"><Label>Deskripsi</Label><Input value={description} onChange={(e) => setDescription(e.target.value)} /></div>
             <div className="grid gap-2"><Label>Nominal</Label><RupiahInput value={amount} onChange={setAmount} placeholder="1500000" /></div>
             <div className="grid gap-2"><Label>Dibayar dari akun</Label><Select value={paymentAccountCode} onValueChange={(value) => setPaymentAccountCode(value ?? "1001")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih opsi" /></SelectTrigger><SelectContent>{paymentAccounts.map((account) => <SelectItem key={account.code} value={account.code}>{account.code} - {account.name}</SelectItem>)}</SelectContent></Select></div>

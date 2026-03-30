@@ -97,6 +97,7 @@ export function LeadRowActions({ row, clients }: { row: LeadRow; clients: Client
   const [serviceName, setServiceName] = useState(row.serviceName);
   const [estimatedValue, setEstimatedValue] = useState(String(row.estimatedValue));
   const [status, setStatus] = useState(row.status);
+  const selectedClientName = clients.find((client) => String(client.id) === clientId)?.name;
 
   const handleDelete = async () => {
     if (!confirm(`Hapus lead ${row.serviceName}?`)) return;
@@ -139,7 +140,7 @@ export function LeadRowActions({ row, clients }: { row: LeadRow; clients: Client
               <div className="grid gap-2">
                 <Label>Client</Label>
                 <Select value={clientId} onValueChange={(value) => setClientId(value ?? "") }>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Pilih client" /></SelectTrigger>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Pilih client">{selectedClientName}</SelectValue></SelectTrigger>
                   <SelectContent>
                     {clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}
                   </SelectContent>
@@ -182,6 +183,7 @@ export function InvoiceRowActions({ row, clients }: { row: InvoiceRow; clients: 
   const [subtotal, setSubtotal] = useState(String(row.subtotal));
   const [tax, setTax] = useState(String(row.tax));
   const [dueDate, setDueDate] = useState(row.dueDate ? row.dueDate.slice(0, 10) : "");
+  const selectedClientName = clients.find((client) => String(client.id) === clientId)?.name;
 
   const total = useMemo(() => parseMoneyInput(subtotal) + parseMoneyInput(tax), [subtotal, tax]);
 
@@ -227,7 +229,7 @@ export function InvoiceRowActions({ row, clients }: { row: InvoiceRow; clients: 
               <div className="grid gap-2">
                 <Label>Client</Label>
                 <Select value={clientId} onValueChange={(value) => setClientId(value ?? "") }>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Pilih client" /></SelectTrigger>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Pilih client">{selectedClientName}</SelectValue></SelectTrigger>
                   <SelectContent>
                     {clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}
                   </SelectContent>
@@ -269,6 +271,8 @@ export function PaymentRowActions({ row, clients, invoices }: { row: PaymentRow;
   const [amount, setAmount] = useState(String(row.amount));
   const [paymentMethod, setPaymentMethod] = useState(row.paymentMethod ?? "");
   const [referenceCode, setReferenceCode] = useState(row.referenceCode ?? "");
+  const selectedClientName = clients.find((client) => String(client.id) === clientId)?.name;
+  const selectedInvoiceCode = invoices.find((invoice) => String(invoice.id) === invoiceId)?.code;
 
   const handleDelete = async () => {
     if (!confirm(`Hapus payment #${row.id}?`)) return;
@@ -312,7 +316,7 @@ export function PaymentRowActions({ row, clients, invoices }: { row: PaymentRow;
               <div className="grid gap-2">
                 <Label>Client</Label>
                 <Select value={clientId} onValueChange={(value) => setClientId(value ?? "") }>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Pilih client" /></SelectTrigger>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Pilih client">{selectedClientName}</SelectValue></SelectTrigger>
                   <SelectContent>
                     {clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}
                   </SelectContent>
@@ -321,7 +325,7 @@ export function PaymentRowActions({ row, clients, invoices }: { row: PaymentRow;
               <div className="grid gap-2">
                 <Label>Invoice</Label>
                 <Select value={invoiceId} onValueChange={(value) => setInvoiceId(value ?? "") }>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Pilih invoice" /></SelectTrigger>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Pilih invoice">{selectedInvoiceCode}</SelectValue></SelectTrigger>
                   <SelectContent>
                     {invoices.map((invoice) => <SelectItem key={invoice.id} value={String(invoice.id)}>{invoice.code}{invoice.clientName ? ` — ${invoice.clientName}` : ""}</SelectItem>)}
                   </SelectContent>
