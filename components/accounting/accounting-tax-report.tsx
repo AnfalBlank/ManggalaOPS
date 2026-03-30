@@ -35,7 +35,7 @@ export function AccountingTaxReport({ rows }: { rows: TaxRow[] }) {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground">Laporan Pajak</h2>
-          <p className="text-sm text-muted-foreground">Rekap formal PPN Keluaran dan PPN Masukan dari invoice, quotation accepted, serta pembelian/expense kena pajak.</p>
+          <p className="text-sm text-muted-foreground">Rekap formal PPN Keluaran dari invoice dan PPN Masukan dari pembelian/expense kena pajak.</p>
         </div>
         <div className="flex gap-2"><TaxReportPdfButton rows={filtered} periodLabel={periodLabel} /></div>
       </div>

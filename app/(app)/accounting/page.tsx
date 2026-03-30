@@ -10,18 +10,15 @@ import { ErrorState } from "@/components/ui/state";
 import { getAccountingOverviewData } from "@/lib/admin-data";
 import { buildFinancialSummary } from "@/lib/accounting-summary";
 import { getAccountMapping } from "@/lib/account-mapping";
-import { getExpenses, getInvoices, getQuotations } from "@/lib/data";
+import { getExpenses, getInvoices } from "@/lib/data";
 import { getOpeningBalance } from "@/lib/opening-balance";
 
 export default async function AccountingPage({ searchParams }: { searchParams?: Promise<{ q?: string; period?: string; type?: string }> }) {
   try {
     const params = (await searchParams) ?? {};
-    const [data, invoices, quotations, expenses, openingBalance, mapping] = await Promise.all([getAccountingOverviewData(), getInvoices(), getQuotations(), getExpenses(), getOpeningBalance(), getAccountMapping()]);
+    const [data, invoices, expenses, openingBalance, mapping] = await Promise.all([getAccountingOverviewData(), getInvoices(), getExpenses(), getOpeningBalance(), getAccountMapping()]);
 
     const taxRows = [
-      ...quotations
-        .filter((quotation) => quotation.status === "Accepted")
-        .map((quotation) => ({ date: quotation.date ?? "", source: quotation.code, client: quotation.clientName, dpp: quotation.subtotal, ppn: quotation.tax, total: quotation.total, type: "PPN Keluaran" as const })),
       ...invoices.map((invoice) => ({ date: invoice.date ?? "", source: invoice.code, client: invoice.clientName, dpp: invoice.subtotal, ppn: invoice.tax, total: invoice.total, type: "PPN Keluaran" as const })),
       ...expenses
         .filter((expense) => (expense.taxAmount ?? 0) > 0)
