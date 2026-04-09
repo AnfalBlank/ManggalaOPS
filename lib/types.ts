@@ -36,6 +36,10 @@ export type QuotationItemRow = {
   qty: number;
   unit: string | null;
   unitPrice: number;
+  unitCost: number;
+  itemCost: number;
+  itemMargin: number;
+  itemMarginPercentage: number;
   amount: number;
 };
 
@@ -62,6 +66,9 @@ export type QuotationListItem = {
   subtotal: number;
   tax: number;
   total: number;
+  subtotalCost: number;
+  totalMargin: number;
+  marginPercentage: number;
   status: string;
   items: QuotationItemRow[];
 };

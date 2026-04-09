@@ -22,8 +22,16 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const clientId = Number(body.clientId);
-    const items = (Array.isArray(body.items) ? body.items : []) as Array<{ description?: string; qty?: number | string; unit?: string; unitPrice?: number | string; amount?: number | string }>;
+    const items = (Array.isArray(body.items) ? body.items : []) as Array<{ description?: string; qty?: number | string; unit?: string; unitPrice?: number | string; unitCost?: number | string; amount?: number | string }>;
     const subtotal = items.reduce((sum: number, item) => sum + parseMoneyInput(item.amount), 0);
+
+    const subtotalCost = items.reduce((sum: number, item) => {
+      const cost = parseMoneyInput(item.unitCost ?? 0);
+      return sum + (cost * Number(item.qty ?? 0));
+    }, 0);
+    const totalMargin = subtotal - subtotalCost;
+    const marginPercentage = subtotal > 0 ? (totalMargin / subtotal) * 100 : 0;
+
     const { tax, total } = computeOutputTax(subtotal, normalizeTaxPercent(body.taxPercent, 11));
 
     if (!clientId || total <= 0 || items.length === 0) {
@@ -49,6 +57,9 @@ export async function POST(request: NextRequest) {
       subtotal,
       tax,
       total,
+      subtotalCost,
+      totalMargin,
+      marginPercentage,
       status: String(body.status ?? "Draft").trim() || "Draft",
     }).returning({ id: quotations.id });
 
@@ -60,6 +71,7 @@ export async function POST(request: NextRequest) {
         qty: Number(item.qty ?? 0),
         unit: String(item.unit ?? "Unit").trim() || "Unit",
         unitPrice: parseMoneyInput(item.unitPrice),
+        unitCost: parseMoneyInput(item.unitCost ?? 0),
         amount: parseMoneyInput(item.amount),
       })));
     }

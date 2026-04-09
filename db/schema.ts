@@ -151,6 +151,9 @@ export const quotations = sqliteTable('quotations', {
   subtotal: real('subtotal'),
   tax: real('tax_ppn'),
   total: real('total'),
+  subtotalCost: real('subtotal_cost').default(0),
+  totalMargin: real('total_margin').default(0),
+  marginPercentage: real('margin_percentage').default(0),
   status: text('status').default('Draft'),
 });
 
@@ -161,6 +164,7 @@ export const quotationItems = sqliteTable('quotation_items', {
   qty: integer('qty').notNull(),
   unit: text('unit').default('Unit'),
   unitPrice: real('unit_price').notNull(),
+  unitCost: real('unit_cost').default(0),
   amount: real('amount').notNull(),
 });
 

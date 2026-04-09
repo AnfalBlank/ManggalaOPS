@@ -125,6 +125,9 @@ export async function getQuotations(): Promise<QuotationListItem[]> {
       subtotal: quotations.subtotal,
       tax: quotations.tax,
       total: quotations.total,
+      subtotalCost: quotations.subtotalCost,
+      totalMargin: quotations.totalMargin,
+      marginPercentage: quotations.marginPercentage,
       status: quotations.status,
     })
     .from(quotations)
@@ -140,6 +143,7 @@ export async function getQuotations(): Promise<QuotationListItem[]> {
       qty: quotationItems.qty,
       unit: quotationItems.unit,
       unitPrice: quotationItems.unitPrice,
+      unitCost: quotationItems.unitCost,
       amount: quotationItems.amount,
     })
     .from(quotationItems);
@@ -167,17 +171,29 @@ export async function getQuotations(): Promise<QuotationListItem[]> {
     subtotal: row.subtotal ?? 0,
     tax: row.tax ?? 0,
     total: row.total ?? 0,
+    subtotalCost: row.subtotalCost ?? 0,
+    totalMargin: row.totalMargin ?? 0,
+    marginPercentage: row.marginPercentage ?? 0,
     status: row.status ?? "Draft",
     items: itemRows
       .filter((item) => item.quotationId === row.id)
-      .map((item) => ({
-        id: item.id,
-        description: item.description,
-        qty: item.qty,
-        unit: item.unit,
-        unitPrice: item.unitPrice,
-        amount: item.amount,
-      })),
+      .map((item) => {
+        const itemCost = (item.unitCost ?? 0) * item.qty;
+        const itemMargin = item.amount - itemCost;
+        const itemMarginPercentage = item.amount > 0 ? (itemMargin / item.amount) * 100 : 0;
+        return {
+          id: item.id,
+          description: item.description,
+          qty: item.qty,
+          unit: item.unit,
+          unitPrice: item.unitPrice,
+          unitCost: item.unitCost ?? 0,
+          itemCost,
+          itemMargin,
+          itemMarginPercentage,
+          amount: item.amount,
+        };
+      }),
   }));
 }
 

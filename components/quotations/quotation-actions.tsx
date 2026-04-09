@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 import { DownloadQuotationButton } from "@/components/pdf/download-quotation-button";
 import { QuotationRowActions } from "@/components/forms/project-quotation-row-actions";
@@ -77,6 +78,8 @@ export function QuotationActionsTable({
               <TableHead>Client & Project</TableHead>
               <TableHead>Dates</TableHead>
               <TableHead className="text-right">Total</TableHead>
+              <TableHead className="text-right">Margin</TableHead>
+              <TableHead className="text-right">Margin %</TableHead>
               <TableHead className="text-center">Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -88,6 +91,8 @@ export function QuotationActionsTable({
                 <TableCell>{quote.clientName}<div className="text-xs text-muted-foreground">{quote.projectName ?? "-"}</div></TableCell>
                 <TableCell>{quote.date ? format(new Date(quote.date), "dd MMM yyyy") : "-"}<div className="text-xs text-muted-foreground">Valid {quote.validUntil ? format(new Date(quote.validUntil), "dd MMM yyyy") : "-"}</div></TableCell>
                 <TableCell className="text-right">{formatCurrency(quote.total)}</TableCell>
+                <TableCell className={cn("text-right font-medium", quote.totalMargin >= 0 ? "text-green-600" : "text-red-600")}>{formatCurrency(quote.totalMargin)}</TableCell>
+                <TableCell className={cn("text-right font-medium", quote.totalMargin >= 0 ? "text-green-600" : "text-red-600")}>{quote.marginPercentage.toFixed(1)}%</TableCell>
                 <TableCell className="text-center"><Badge>{quote.status}</Badge></TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2 flex-wrap">
