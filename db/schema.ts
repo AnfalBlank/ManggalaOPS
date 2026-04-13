@@ -251,3 +251,16 @@ export const journalEntries = sqliteTable('journal_entries', {
   debit: real('debit').default(0),
   credit: real('credit').default(0),
 });
+
+// 5. Tools & Utilities
+export const estimations = sqliteTable('estimations', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  buyPrice: real('buy_price').notNull(),
+  sellPrice: real('sell_price').notNull(),
+  qty: integer('qty').notNull(),
+  buyIncludePpn: integer('buy_include_ppn', { mode: 'boolean' }).notNull(),
+  sellIncludePpn: integer('sell_include_ppn', { mode: 'boolean' }).notNull(),
+  ppnRate: real('ppn_rate').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+});
