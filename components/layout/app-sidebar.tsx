@@ -25,6 +25,7 @@ import {
   Settings,
   UserCog,
   Building2,
+  Calculator,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -81,6 +82,11 @@ const navItems = [
     title: "Accounting",
     url: "/accounting",
     icon: BookMarked,
+  },
+  {
+    title: "Calculator P&L",
+    url: "/calculator",
+    icon: Calculator,
   },
   {
     title: "Reports",
