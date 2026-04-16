@@ -136,6 +136,7 @@ export function generateQuotationPDF(data: QuotationPdfData) {
       formatCurrency(item.amount),
     ]),
     theme: "grid",
+    margin: { bottom: 25 },
     styles: {
       font: "helvetica",
       fontSize: 9,
@@ -176,6 +177,11 @@ export function generateQuotationPDF(data: QuotationPdfData) {
 
   y = ((doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? y) + 8;
 
+  if (y > 210) {
+    doc.addPage();
+    y = 20;
+  }
+
   doc.setFont("helvetica", "bolditalic");
   doc.setFontSize(11);
   doc.text("Term and Conditions", 14, y);
@@ -185,11 +191,13 @@ export function generateQuotationPDF(data: QuotationPdfData) {
     .split("\n")
     .filter(Boolean);
   terms.forEach((term) => {
+    if (y > 265) { doc.addPage(); y = 20; }
     doc.text(`• ${term}`, 18, y);
     y += 6;
   });
 
   y += 5;
+  if (y > 250) { doc.addPage(); y = 20; }
   y = drawWrappedText(
     doc,
     data.closingNote ||
@@ -200,6 +208,7 @@ export function generateQuotationPDF(data: QuotationPdfData) {
   );
 
   y += 12;
+  if (y > 240) { doc.addPage(); y = 30; }
   doc.text("Hormat Kami,", 145, y);
   y += 24;
   doc.setFont("helvetica", "bold");
@@ -208,11 +217,27 @@ export function generateQuotationPDF(data: QuotationPdfData) {
   doc.setFont("helvetica", "normal");
   doc.text(data.signatoryTitle || "Manager Marketing", 145, y);
 
-  doc.setFillColor(19, 70, 122);
-  doc.rect(0, 287, 210, 10, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(8);
-  doc.text(`${companyName}  •  ${companyEmail}  •  ${companyAddress}`, 14, 293);
+  const pageCount = (doc as any).internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    
+    // Top banner
+    doc.setFillColor(19, 70, 122);
+    doc.rect(0, 0, 210, 8, "F");
+    doc.setFillColor(47, 128, 237);
+    doc.rect(0, 8, 210, 4, "F");
+
+    // Bottom banner & footer
+    doc.setFillColor(19, 70, 122);
+    doc.rect(0, 287, 210, 10, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text(`${companyName}  •  ${companyEmail}  •  ${companyAddress}`, 14, 293);
+    
+    // Page number
+    doc.text(`Page ${i} of ${pageCount}`, 196, 293, { align: "right" });
+  }
 
   doc.save(`${letterNumber.replace(/\//g, "-")}.pdf`);
 }

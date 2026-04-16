@@ -151,6 +151,7 @@ export function generateInvoiceLetterPDF(data: InvoicePdfData) {
       formatCurrency(item.amount),
     ]),
     theme: "grid",
+    margin: { bottom: 25 },
     styles: {
       font: "helvetica",
       fontSize: 9,
@@ -177,6 +178,11 @@ export function generateInvoiceLetterPDF(data: InvoicePdfData) {
   });
 
   y = ((doc as JsPdfWithLastAutoTable).lastAutoTable?.finalY ?? y) + 8;
+  
+  if (y > 200) {
+    doc.addPage();
+    y = 20;
+  }
 
   const summaryX = 124;
   const summaryWidth = 72;
@@ -211,21 +217,44 @@ export function generateInvoiceLetterPDF(data: InvoicePdfData) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
 
+  doc.text("Pembayaran ditransfer ke rekening berikut:", 14, notesY);
+  notesY += 5;
+  doc.setFont("helvetica", "bold");
+  doc.text("Bank Mandiri", 14, notesY);
+  notesY += 5;
+  doc.setFont("helvetica", "normal");
+  doc.text("a.n. PT. Manggala Utama Indonesia", 14, notesY);
+  notesY += 5;
+  doc.text("No. Rekening: 1660 0070 95094", 14, notesY);
+  notesY += 8;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10.5);
+  doc.text("Catatan", 14, notesY);
+  notesY += 6;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+
   const terms = (data.terms || "Pembayaran sesuai metode yang disepakati\nMohon mencantumkan nomor invoice pada transfer\nInvoice dianggap sah tanpa tanda tangan basah")
     .split("\n")
     .filter(Boolean);
   terms.forEach((term) => {
+    if (notesY > 265) { doc.addPage(); notesY = 20; }
     doc.text(`• ${term}`, 16, notesY);
     notesY += 5;
   });
 
   if (data.closingNote) {
+    if (notesY > 260) { doc.addPage(); notesY = 20; }
     notesY += 3;
-    notesY = drawWrappedText(doc, data.closingNote, 14, notesY, 100, 5);
+    notesY = drawWrappedText(doc, data.closingNote, 14, notesY, 182, 5);
   }
 
   let signY = Math.max(notesY + 12, y + summaryRows.length * summaryRowHeight + 18);
-  if (signY > 250) signY = 250;
+  if (signY > 250) {
+    doc.addPage();
+    signY = 30;
+  }
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
@@ -239,11 +268,25 @@ export function generateInvoiceLetterPDF(data: InvoicePdfData) {
   doc.setFont("helvetica", "normal");
   doc.text(data.signatoryTitle || "Manager Marketing", 135, signY);
 
-  doc.setFillColor(14, 77, 146);
-  doc.rect(0, 287, 210, 10, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(8);
-  doc.text(`${companyName}  •  ${companyEmail}  •  ${companyPhone}`, 14, 293);
+  const pageCount = (doc as any).internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    
+    // Top banner
+    doc.setFillColor(14, 77, 146);
+    doc.rect(0, 0, 210, 10, "F");
+
+    // Bottom banner & footer
+    doc.setFillColor(14, 77, 146);
+    doc.rect(0, 287, 210, 10, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text(`${companyName}  •  ${companyEmail}  •  ${companyPhone}`, 14, 293);
+    
+    // Page number
+    doc.text(`Page ${i} of ${pageCount}`, 196, 293, { align: "right" });
+  }
 
   doc.save(`${letterNumber.replace(/\//g, "-")}.pdf`);
 }
