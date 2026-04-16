@@ -61,8 +61,10 @@ function buildLetterNumber(id: string, date: Date) {
 }
 
 async function fetchImageAsBase64(url: string): Promise<string> {
-  const absoluteUrl = url.startsWith("http") ? url : `${window.location.origin}${url}`;
-  console.log("Fetching image from:", absoluteUrl);
+  // Convert /uploads/ to /api/uploads/ to bypass static serving issues
+  const proxyUrl = url.replace(/^\/uploads\//, "/api/uploads/");
+  const absoluteUrl = proxyUrl.startsWith("http") ? proxyUrl : `${window.location.origin}${proxyUrl}`;
+  console.log("Fetching image from (Proxy):", absoluteUrl);
   
   const response = await fetch(absoluteUrl);
   if (!response.ok) {
