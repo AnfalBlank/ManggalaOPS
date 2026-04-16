@@ -15,9 +15,9 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider defaultOpen={true}>
       <AppSidebar role={user.role} user={{ name: user.name, email: user.email }} />
-      <SidebarInset className="flex flex-col h-screen overflow-hidden">
+      <SidebarInset className="flex flex-col h-screen">
         <Topbar user={{ name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl ?? undefined }} />
-        <main className="flex-1 overflow-hidden">
+        <main className="flex-1 overflow-y-auto">
           {children}
         </main>
       </SidebarInset>
