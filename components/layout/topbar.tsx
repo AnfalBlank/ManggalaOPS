@@ -1,6 +1,7 @@
 "use client";
 
-import { Menu, Search } from "lucide-react";
+import { Search } from "lucide-react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 import { ChatMenu } from "@/components/layout/chat-menu";
 import { NotificationsMenu } from "@/components/layout/notifications-menu";
@@ -17,11 +18,9 @@ const roleLabels: Record<string, string> = {
 export function Topbar({ user }: { user?: { name: string; email: string; role: string; avatarUrl?: string } }) {
 
   return (
-    <header className="sticky top-0 z-30 w-full flex items-center h-16 px-4 md:px-6 border-b bg-white/95 backdrop-blur shrink-0">
+    <header className="sticky top-0 z-30 w-full flex items-center h-16 px-4 border-b bg-white/95 backdrop-blur shrink-0 overflow-x-hidden">
       <div className="flex items-center gap-2 min-w-0">
-        <button type="button" className="inline-flex md:hidden items-center justify-center rounded-md border p-2 text-muted-foreground">
-          <Menu className="size-4" />
-        </button>
+        <SidebarTrigger className="md:hidden" />
         <div className="w-1 h-4 bg-border mx-2 hidden sm:block"></div>
         <div className="hidden lg:flex items-center text-sm text-muted-foreground font-medium w-64 min-w-0">
           <Search className="size-4 mr-2" />

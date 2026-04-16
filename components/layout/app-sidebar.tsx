@@ -106,7 +106,7 @@ export function AppSidebar({ role = "admin", user }: { role?: string; user?: { n
   const visibleItems = navItems.filter((item) => canAccessPath(normalizedRole, item.url));
 
   return (
-    <Sidebar className="fixed inset-y-0 left-0 z-40 hidden border-r-0 shadow-xl md:flex md:w-72 md:min-w-72" collapsible="none">
+    <Sidebar className="border-r-0 shadow-xl" variant="sidebar">
       {/* 
         We use a solid dark blue base with a very subtle gradient towards the bottom/right 
         to add depth without making it look "flashy".
