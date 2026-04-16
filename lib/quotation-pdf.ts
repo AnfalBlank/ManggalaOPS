@@ -61,12 +61,23 @@ function buildLetterNumber(id: string, date: Date) {
 }
 
 async function fetchImageAsBase64(url: string): Promise<string> {
-  const response = await fetch(url);
+  const absoluteUrl = url.startsWith("http") ? url : `${window.location.origin}${url}`;
+  console.log("Fetching image from:", absoluteUrl);
+  
+  const response = await fetch(absoluteUrl);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+  }
+  
   const blob = await response.blob();
+  if (!blob.type.startsWith("image/")) {
+    throw new Error(`Fetched resource is not an image: ${blob.type}`);
+  }
+
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
+    reader.onerror = () => reject(new Error("Failed to read image blob"));
     reader.readAsDataURL(blob);
   });
 }
@@ -252,11 +263,12 @@ export async function generateQuotationPDF(data: QuotationPdfData) {
       const baseX = col === 0 ? 14 : 14 + imgWidth + 12;
       
       try {
+        console.log("Processing image for item:", item.description);
         const b64 = await fetchImageAsBase64(item.imageUrl!);
-        // Ensure standard image processing layout
-        doc.addImage(b64, "JPEG", baseX, currentY, imgWidth, imgHeight);
+        // Use AUTO to support multiple formats (JPEG, PNG, etc.)
+        doc.addImage(b64, "AUTO", baseX, currentY, imgWidth, imgHeight);
       } catch (err) {
-        console.error("Failed to load image:", item.imageUrl);
+        console.error("Failed to load image for item:", item.description, err);
         doc.setDrawColor(200);
         doc.rect(baseX, currentY, imgWidth, imgHeight);
         doc.setFont("helvetica", "normal");
