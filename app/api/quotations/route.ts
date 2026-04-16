@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
         unitPrice: parseMoneyInput(item.unitPrice),
         unitCost: parseMoneyInput(item.unitCost ?? 0),
         amount: parseMoneyInput(item.amount),
+        imageUrl: item.imageUrl ? String(item.imageUrl).trim() : null,
       })));
     }
 

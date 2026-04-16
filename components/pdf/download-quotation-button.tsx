@@ -1,19 +1,30 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { useState } from "react";
+import { Download, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { generateQuotationPDF, type QuotationPdfData } from "@/lib/quotation-pdf";
 
 export function DownloadQuotationButton({ payload }: { payload: QuotationPdfData }) {
+  const [loading, setLoading] = useState(false);
+
   return (
     <Button
       variant="outline"
       size="sm"
       className="h-8 px-3"
-      onClick={() => generateQuotationPDF(payload)}
+      disabled={loading}
+      onClick={async () => {
+        try {
+          setLoading(true);
+          await generateQuotationPDF(payload);
+        } finally {
+          setLoading(false);
+        }
+      }}
     >
-      <Download className="size-4" /> PDF
+      {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Download className="size-4 mr-2" />} PDF
     </Button>
   );
 }

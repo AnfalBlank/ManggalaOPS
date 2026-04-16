@@ -166,6 +166,7 @@ export const quotationItems = sqliteTable('quotation_items', {
   unitPrice: real('unit_price').notNull(),
   unitCost: real('unit_cost').default(0),
   amount: real('amount').notNull(),
+  imageUrl: text('image_url'),
 });
 
 export const invoices = sqliteTable('invoices', {

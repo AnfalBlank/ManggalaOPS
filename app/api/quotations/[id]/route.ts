@@ -24,42 +24,45 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { tax, total } = computeOutputTax(subtotal, normalizeTaxPercent(body.taxPercent, 11));
 
-    await db.update(quotations).set({
-      clientId: Number(body.clientId),
-      projectId: body.projectId ? Number(body.projectId) : null,
-      validUntil: body.validUntil ? new Date(body.validUntil) : null,
-      paymentMethod: String(body.paymentMethod ?? "CBD").trim() || "CBD",
-      attachment: String(body.attachment ?? "").trim() || null,
-      subject: String(body.subject ?? "").trim() || null,
-      recipientName: String(body.recipientName ?? "").trim() || null,
-      recipientCompany: String(body.recipientCompany ?? "").trim() || null,
-      recipientAddress: String(body.recipientAddress ?? "").trim() || null,
-      introduction: String(body.introduction ?? "").trim() || null,
-      terms: String(body.terms ?? "").trim() || null,
-      closingNote: String(body.closingNote ?? "").trim() || null,
-      signatoryName: String(body.signatoryName ?? "").trim() || null,
-      signatoryTitle: String(body.signatoryTitle ?? "").trim() || null,
-      subtotal,
-      tax,
-      total,
-      subtotalCost,
-      totalMargin,
-      marginPercentage,
-      status: String(body.status ?? "Draft").trim() || "Draft",
-    }).where(eq(quotations.id, quotationId));
+    await db.transaction(async (tx) => {
+      await tx.update(quotations).set({
+        clientId: Number(body.clientId),
+        projectId: body.projectId ? Number(body.projectId) : null,
+        validUntil: body.validUntil ? new Date(body.validUntil) : null,
+        paymentMethod: String(body.paymentMethod ?? "CBD").trim() || "CBD",
+        attachment: String(body.attachment ?? "").trim() || null,
+        subject: String(body.subject ?? "").trim() || null,
+        recipientName: String(body.recipientName ?? "").trim() || null,
+        recipientCompany: String(body.recipientCompany ?? "").trim() || null,
+        recipientAddress: String(body.recipientAddress ?? "").trim() || null,
+        introduction: String(body.introduction ?? "").trim() || null,
+        terms: String(body.terms ?? "").trim() || null,
+        closingNote: String(body.closingNote ?? "").trim() || null,
+        signatoryName: String(body.signatoryName ?? "").trim() || null,
+        signatoryTitle: String(body.signatoryTitle ?? "").trim() || null,
+        subtotal,
+        tax,
+        total,
+        subtotalCost,
+        totalMargin,
+        marginPercentage,
+        status: String(body.status ?? "Draft").trim() || "Draft",
+      }).where(eq(quotations.id, quotationId));
 
-    await db.delete(quotationItems).where(eq(quotationItems.quotationId, quotationId));
-    if (items.length > 0) {
-      await db.insert(quotationItems).values(items.map((item) => ({
-        quotationId,
-        description: String(item.description ?? "").trim(),
-        qty: Number(item.qty ?? 0),
-        unit: String(item.unit ?? "Unit").trim() || "Unit",
-        unitPrice: parseMoneyInput(item.unitPrice),
-        unitCost: parseMoneyInput(item.unitCost ?? 0),
-        amount: parseMoneyInput(item.amount),
-      })));
-    }
+      await tx.delete(quotationItems).where(eq(quotationItems.quotationId, quotationId));
+      if (items.length > 0) {
+        await tx.insert(quotationItems).values(items.map((item) => ({
+          quotationId,
+          description: String(item.description ?? "").trim(),
+          qty: Number(item.qty ?? 0),
+          unit: String(item.unit ?? "Unit").trim() || "Unit",
+          unitPrice: parseMoneyInput(item.unitPrice),
+          unitCost: parseMoneyInput(item.unitCost ?? 0),
+          amount: parseMoneyInput(item.amount),
+          imageUrl: item.imageUrl ? String(item.imageUrl).trim() : null,
+        })));
+      }
+    });
 
     return NextResponse.json({ ok: true, data: await getQuotations() });
   } catch (error) {

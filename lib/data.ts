@@ -145,6 +145,7 @@ export async function getQuotations(): Promise<QuotationListItem[]> {
       unitPrice: quotationItems.unitPrice,
       unitCost: quotationItems.unitCost,
       amount: quotationItems.amount,
+      imageUrl: quotationItems.imageUrl,
     })
     .from(quotationItems);
 
@@ -192,6 +193,7 @@ export async function getQuotations(): Promise<QuotationListItem[]> {
           itemMargin,
           itemMarginPercentage,
           amount: item.amount,
+          imageUrl: item.imageUrl,
         };
       }),
   }));

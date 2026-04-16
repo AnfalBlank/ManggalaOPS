@@ -41,6 +41,7 @@ export type QuotationItemRow = {
   itemMargin: number;
   itemMarginPercentage: number;
   amount: number;
+  imageUrl?: string | null;
 };
 
 export type QuotationListItem = {

@@ -8,6 +8,7 @@ export type QuotationPdfItem = {
   unit?: string | null;
   unitPrice: number;
   amount: number;
+  imageUrl?: string | null;
 };
 
 export type QuotationPdfData = {
@@ -59,7 +60,18 @@ function buildLetterNumber(id: string, date: Date) {
   return `${number}/MUI/SP/${toRomanMonth(date.getMonth() + 1)}/${date.getFullYear()}`;
 }
 
-export function generateQuotationPDF(data: QuotationPdfData) {
+async function fetchImageAsBase64(url: string): Promise<string> {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+export async function generateQuotationPDF(data: QuotationPdfData) {
   const doc = new jsPDF("p", "mm", "a4");
   const letterNumber = buildLetterNumber(data.id, data.date);
 
@@ -216,6 +228,55 @@ export function generateQuotationPDF(data: QuotationPdfData) {
   y += 5;
   doc.setFont("helvetica", "normal");
   doc.text(data.signatoryTitle || "Manager Marketing", 145, y);
+
+  const itemsWithImages = data.items.filter(item => item.imageUrl);
+  if (itemsWithImages.length > 0) {
+    doc.addPage();
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text("LAMPIRAN FOTO", 105, 25, { align: "center" });
+    
+    let currentY = 40;
+    let col = 0; 
+    const imgWidth = 85; 
+    const imgHeight = 85;
+
+    for (const item of itemsWithImages) {
+      if (currentY + imgHeight + 15 > 270) {
+        doc.addPage();
+        currentY = 25;
+        col = 0;
+      }
+      
+      const baseX = col === 0 ? 14 : 14 + imgWidth + 12;
+      
+      try {
+        const b64 = await fetchImageAsBase64(item.imageUrl!);
+        // Ensure standard image processing layout
+        doc.addImage(b64, "JPEG", baseX, currentY, imgWidth, imgHeight);
+      } catch (err) {
+        console.error("Failed to load image:", item.imageUrl);
+        doc.setDrawColor(200);
+        doc.rect(baseX, currentY, imgWidth, imgHeight);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(150, 150, 150);
+        doc.text("Gambar tak termuat", baseX + imgWidth/2, currentY + imgHeight/2, { align: "center" });
+      }
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(0, 0, 0);
+      drawWrappedText(doc, item.description.split("\n")[0] || "", baseX, currentY + imgHeight + 5, imgWidth);
+      
+      col++;
+      if (col > 1) {
+        col = 0;
+        currentY += imgHeight + 20;
+      }
+    }
+  }
 
   const pageCount = (doc as any).internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
