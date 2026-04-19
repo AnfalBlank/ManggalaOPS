@@ -254,6 +254,37 @@ export const journalEntries = sqliteTable('journal_entries', {
 });
 
 // 5. Tools & Utilities
+export const officeLocations = sqliteTable('office_locations', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  latitude: real('latitude').notNull(),
+  longitude: real('longitude').notNull(),
+  radiusMeters: integer('radius_meters').default(100),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+});
+
+export const attendance = sqliteTable('attendance', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  date: text('date').notNull(),
+  clockIn: integer('clock_in', { mode: 'timestamp' }),
+  clockOut: integer('clock_out', { mode: 'timestamp' }),
+  clockInLatitude: real('clock_in_latitude'),
+  clockInLongitude: real('clock_in_longitude'),
+  clockOutLatitude: real('clock_out_latitude'),
+  clockOutLongitude: real('clock_out_longitude'),
+  clockInPhoto: text('clock_in_photo'),
+  clockOutPhoto: text('clock_out_photo'),
+  clockInLocationId: integer('clock_in_location_id').references(() => officeLocations.id),
+  clockOutLocationId: integer('clock_out_location_id').references(() => officeLocations.id),
+  clockInDistance: real('clock_in_distance'),
+  clockOutDistance: real('clock_out_distance'),
+  status: text('status').default('present'),
+  notes: text('notes'),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+});
+
 export const estimations = sqliteTable('estimations', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),

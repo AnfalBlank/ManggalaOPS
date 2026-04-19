@@ -26,6 +26,7 @@ import {
   UserCog,
   Building2,
   Calculator,
+  Clock,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -42,6 +43,11 @@ const navItems = [
     title: "Chat",
     url: "/chat",
     icon: MessageSquareMore,
+  },
+  {
+    title: "Absensi",
+    url: "/attendance",
+    icon: Clock,
   },
   {
     title: "Clients",
