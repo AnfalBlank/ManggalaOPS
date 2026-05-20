@@ -1,14 +1,30 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { useState } from "react";
+import { Download, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { generateInvoiceLetterPDF, type InvoicePdfData } from "@/lib/invoice-pdf";
 
 export function DownloadInvoiceLetterButton({ payload }: { payload: InvoicePdfData }) {
+  const [loading, setLoading] = useState(false);
+
   return (
-    <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => generateInvoiceLetterPDF(payload)}>
-      <Download className="size-4" /> PDF
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-8 px-3"
+      disabled={loading}
+      onClick={async () => {
+        try {
+          setLoading(true);
+          await generateInvoiceLetterPDF(payload);
+        } finally {
+          setLoading(false);
+        }
+      }}
+    >
+      {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Download className="size-4 mr-2" />} PDF
     </Button>
   );
 }

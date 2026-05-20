@@ -1,4 +1,4 @@
-import { desc, eq, isNull, or } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, or } from "drizzle-orm";
 
 import { db } from "@/db";
 import { notifications } from "@/db/schema";
@@ -16,13 +16,17 @@ export async function createNotification(input: { title: string; message?: strin
 }
 
 export async function getNotificationsForRole(role: AppRole) {
-  return db.select().from(notifications).where(or(eq(notifications.targetRole, role), isNull(notifications.targetRole))).orderBy(desc(notifications.id)).limit(20);
+  return db
+    .select()
+    .from(notifications)
+    .where(or(eq(notifications.targetRole, role), isNull(notifications.targetRole)))
+    .orderBy(desc(notifications.id))
+    .limit(20);
 }
 
 export async function markAllNotificationsRead(role: AppRole) {
   const rows = await getNotificationsForRole(role);
   const ids = rows.filter((row) => !row.isRead).map((row) => row.id);
-  for (const id of ids) {
-    await db.update(notifications).set({ isRead: true }).where(eq(notifications.id, id));
-  }
+  if (ids.length === 0) return;
+  await db.update(notifications).set({ isRead: true }).where(and(inArray(notifications.id, ids)));
 }

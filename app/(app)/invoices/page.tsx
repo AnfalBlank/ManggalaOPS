@@ -46,7 +46,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams?: Pr
               description="Belum ada invoice yang diterbitkan. Setelah sales atau finance membuat invoice, datanya akan tampil di sini."
             />
           ) : (
-            <FilterableInvoicesTable invoices={invoices} clients={clients} settings={{ companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, defaultSignatoryName: settings.defaultSignatoryName, defaultSignatoryTitle: settings.defaultSignatoryTitle }} filters={{ initialQuery: params.q, initialPeriod: (params.period as "all" | "30d" | "month" | "year") ?? "all", initialType: params.type ?? "all" }} />
+            <FilterableInvoicesTable invoices={invoices} clients={clients} settings={{ companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, defaultSignatoryName: settings.defaultSignatoryName, defaultSignatoryTitle: settings.defaultSignatoryTitle, signatureImageUrl: settings.signatureImageUrl, stampImageUrl: settings.stampImageUrl }} filters={{ initialQuery: params.q, initialPeriod: (params.period as "all" | "30d" | "month" | "year") ?? "all", initialType: params.type ?? "all" }} />
           )}
         </div>
       </PageWrapper>

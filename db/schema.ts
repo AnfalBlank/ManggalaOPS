@@ -8,7 +8,7 @@ import {
 export const users = sqliteTable('users', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
-  email: text('email').notNull(),
+  email: text('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
   role: text('role').notNull(),
   avatarUrl: text('avatar_url'),
@@ -93,6 +93,8 @@ export const appSettings = sqliteTable('app_settings', {
   defaultProjectExpenseAccountCode: text('default_project_expense_account_code').references(() => accounts.code),
   financeApprovalRequired: integer('finance_approval_required', { mode: 'boolean' }).default(true),
   allowUserSelfReset: integer('allow_user_self_reset', { mode: 'boolean' }).default(false),
+  signatureImageUrl: text('signature_image_url'),
+  stampImageUrl: text('stamp_image_url'),
   updatedAt: integer('updated_at', { mode: 'timestamp' }),
 });
 
@@ -251,6 +253,53 @@ export const journalEntries = sqliteTable('journal_entries', {
   accountCode: text('account_code').references(() => accounts.code).notNull(),
   debit: real('debit').default(0),
   credit: real('credit').default(0),
+});
+
+// 4b. Delivery Orders (Surat Jalan)
+export const deliveryOrders = sqliteTable('delivery_orders', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  clientId: integer('client_id').references(() => clients.id).notNull(),
+  projectId: integer('project_id').references(() => projects.id),
+  invoiceId: integer('invoice_id').references(() => invoices.id),
+  quotationId: integer('quotation_id').references(() => quotations.id),
+  date: integer('date', { mode: 'timestamp' }).notNull(),
+  vehicleNumber: text('vehicle_number'),
+  driverName: text('driver_name'),
+  shippingMethod: text('shipping_method'),
+  recipientName: text('recipient_name'),
+  recipientCompany: text('recipient_company'),
+  recipientAddress: text('recipient_address'),
+  recipientPhone: text('recipient_phone'),
+  subject: text('subject'),
+  introduction: text('introduction'),
+  notes: text('notes'),
+  closingNote: text('closing_note'),
+  signatoryName: text('signatory_name'),
+  signatoryTitle: text('signatory_title'),
+  status: text('status').default('Draft'),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+});
+
+export const deliveryOrderItems = sqliteTable('delivery_order_items', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  deliveryOrderId: integer('delivery_order_id').references(() => deliveryOrders.id).notNull(),
+  description: text('description').notNull(),
+  qty: integer('qty').notNull(),
+  unit: text('unit').default('Unit'),
+  serialNumber: text('serial_number'),
+  notes: text('notes'),
+});
+
+// 4c. Audit log for destructive / high-risk actions
+export const auditLog = sqliteTable('audit_log', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id').references(() => users.id),
+  action: text('action').notNull(),
+  entity: text('entity'),
+  entityId: text('entity_id'),
+  payload: text('payload'),
+  ip: text('ip'),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
 });
 
 // 5. Tools & Utilities

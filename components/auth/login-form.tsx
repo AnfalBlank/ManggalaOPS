@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, LogIn } from "lucide-react";
 import { toast } from "sonner";
 
@@ -11,9 +11,13 @@ import { Label } from "@/components/ui/label";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") || "/";
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const disabled = loading || !email.trim() || password.length < 1;
 
   return (
     <form
@@ -25,16 +29,18 @@ export function LoginForm() {
           const response = await fetch("/api/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
           });
-          const payload = await response.json();
+          const payload = await response.json().catch(() => ({}));
           if (!response.ok) {
             toast.error(payload.error ?? "Login gagal");
             return;
           }
-          toast.success(`Masuk sebagai ${payload.user.name}`);
-          router.push("/");
+          toast.success(`Masuk sebagai ${payload.user?.name ?? "user"}`);
+          router.push(next.startsWith("/") ? next : "/");
           router.refresh();
+        } catch {
+          toast.error("Terjadi kesalahan saat login");
         } finally {
           setLoading(false);
         }
@@ -42,13 +48,28 @@ export function LoginForm() {
     >
       <div className="grid gap-2">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+        <Input
+          id="email"
+          type="email"
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+        />
       </div>
       <div className="grid gap-2">
         <Label htmlFor="password">Password</Label>
-        <Input id="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
+        <Input
+          id="password"
+          type="password"
+          autoComplete="current-password"
+          required
+          minLength={8}
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+        />
       </div>
-      <Button type="submit" className="w-full gap-2" disabled={loading}>
+      <Button type="submit" className="w-full gap-2" disabled={disabled}>
         {loading ? <Loader2 className="size-4 animate-spin" /> : <LogIn className="size-4" />} Masuk
       </Button>
     </form>

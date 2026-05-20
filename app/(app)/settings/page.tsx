@@ -29,6 +29,8 @@ export default async function SettingsPage() {
     defaultProjectExpenseAccountCode: settingsRow.defaultProjectExpenseAccountCode ?? "5002",
     financeApprovalRequired: settingsRow.financeApprovalRequired ?? true,
     allowUserSelfReset: settingsRow.allowUserSelfReset ?? false,
+    signatureImageUrl: settingsRow.signatureImageUrl ?? null,
+    stampImageUrl: settingsRow.stampImageUrl ?? null,
   };
 
   return (

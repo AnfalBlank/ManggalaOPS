@@ -35,6 +35,8 @@ type SettingsData = {
   defaultProjectExpenseAccountCode: string;
   financeApprovalRequired: boolean;
   allowUserSelfReset: boolean;
+  signatureImageUrl: string | null;
+  stampImageUrl: string | null;
 };
 
 const accountOptions = [
@@ -122,6 +124,62 @@ export function SettingsPanel({ initialSettings }: { initialSettings: SettingsDa
         <CardContent className="space-y-4 text-sm text-muted-foreground">
           <label className="flex items-center justify-between gap-4"><div><Label>Finance Approval</Label><p className="text-xs text-muted-foreground">Wajib approval manual untuk perubahan finance penting.</p></div><input type="checkbox" checked={settings.financeApprovalRequired} onChange={(e) => update("financeApprovalRequired", e.target.checked)} className="h-4 w-4" /></label>
           <label className="flex items-center justify-between gap-4"><div><Label>User Self Reset</Label><p className="text-xs text-muted-foreground">Izinkan user reset password sendiri.</p></div><input type="checkbox" checked={settings.allowUserSelfReset} onChange={(e) => update("allowUserSelfReset", e.target.checked)} className="h-4 w-4" /></label>
+
+          <div className="border-t pt-4 space-y-4">
+            <h4 className="font-semibold text-sm text-foreground">Tanda Tangan & Stempel Digital</h4>
+            <p className="text-xs text-muted-foreground">Upload gambar tanda tangan dan stempel perusahaan. Akan ditampilkan otomatis di PDF invoice, quotation, dan kwitansi.</p>
+            <div className="grid gap-3">
+              <div className="grid gap-2">
+                <Label>Tanda Tangan (PNG/JPG, bg transparan direkomendasikan)</Label>
+                <div className="flex items-center gap-3">
+                  {settings.signatureImageUrl ? (
+                    <img src={settings.signatureImageUrl.replace(/^\/uploads\//, "/api/uploads/")} alt="Signature" className="h-12 border rounded p-1 bg-white" />
+                  ) : <span className="text-xs text-muted-foreground italic">Belum diupload</span>}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="text-xs"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const form = new FormData();
+                      form.append("file", file);
+                      const res = await fetch("/api/upload", { method: "POST", body: form });
+                      const data = await res.json();
+                      if (res.ok && data.url) {
+                        update("signatureImageUrl", data.url);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label>Stempel Perusahaan (PNG/JPG, bg transparan direkomendasikan)</Label>
+                <div className="flex items-center gap-3">
+                  {settings.stampImageUrl ? (
+                    <img src={settings.stampImageUrl.replace(/^\/uploads\//, "/api/uploads/")} alt="Stamp" className="h-12 border rounded p-1 bg-white" />
+                  ) : <span className="text-xs text-muted-foreground italic">Belum diupload</span>}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="text-xs"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const form = new FormData();
+                      form.append("file", file);
+                      const res = await fetch("/api/upload", { method: "POST", body: form });
+                      const data = await res.json();
+                      if (res.ok && data.url) {
+                        update("stampImageUrl", data.url);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="pt-4 flex flex-col gap-2"><Button disabled={saving} onClick={save}>{saving ? "Menyimpan..." : "Simpan Settings"}</Button></div>
         </CardContent>
       </Card>

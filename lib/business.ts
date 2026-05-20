@@ -13,6 +13,8 @@ import {
 } from "@/db/schema";
 import { getAccountMapping } from "@/lib/account-mapping";
 
+const VAT_OUTPUT_ACCOUNT_CODE = "2101";
+
 export async function acceptQuotationAndCreateProject(quotationId: number) {
   const quotation = await db.query.quotations.findFirst({
     where: eq(quotations.id, quotationId),
@@ -80,7 +82,7 @@ export async function upsertInvoiceJournal(invoiceId: number) {
   await db.insert(journalEntries).values([
     { journalId, accountCode: mapping.receivable, debit: invoice.total ?? 0, credit: 0 },
     { journalId, accountCode: invoice.projectId ? mapping.projectRevenue : mapping.nonProjectRevenue, debit: 0, credit: invoice.subtotal ?? 0 },
-    { journalId, accountCode: "2101", debit: 0, credit: invoice.tax ?? 0 },
+    { journalId, accountCode: VAT_OUTPUT_ACCOUNT_CODE, debit: 0, credit: invoice.tax ?? 0 },
   ]);
 
   return { journalId };

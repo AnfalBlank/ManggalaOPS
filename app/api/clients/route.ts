@@ -2,39 +2,42 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/db";
 import { clients } from "@/db/schema";
+import { ensure, nullableTrim, toErrorResponse, trimString } from "@/lib/api-helpers";
+import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
 import { getClients } from "@/lib/data";
 
 export async function GET() {
   try {
+    await requireRole(["admin", "finance", "sales", "project_manager"]);
     const data = await getClients();
     return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch clients" },
-      { status: 500 },
-    );
+    return toErrorResponse(error, "Failed to fetch clients");
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    await requireRole(["admin", "sales"]);
+    const { user } = await requireRole(["admin", "sales"]);
     const body = await request.json();
+    const name = trimString(body.name, 200);
+    ensure(name.length > 0, "Nama client wajib diisi");
 
-    await db.insert(clients).values({
-      name: String(body.name ?? "").trim(),
-      contactPerson: String(body.contactPerson ?? "").trim() || null,
-      additionalPic: String(body.additionalPic ?? "").trim() || null,
-      phone: String(body.phone ?? "").trim() || null,
-      email: String(body.email ?? "").trim() || null,
-      npwp: String(body.npwp ?? "").trim() || null,
-      address: String(body.address ?? "").trim() || null,
-      notes: String(body.notes ?? "").trim() || null,
-    });
+    const inserted = await db.insert(clients).values({
+      name,
+      contactPerson: nullableTrim(body.contactPerson, 200),
+      additionalPic: nullableTrim(body.additionalPic, 200),
+      phone: nullableTrim(body.phone, 50),
+      email: nullableTrim(body.email, 200),
+      npwp: nullableTrim(body.npwp, 50),
+      address: nullableTrim(body.address, 1000),
+      notes: nullableTrim(body.notes, 2000),
+    }).returning({ id: clients.id });
 
+    await audit({ userId: user.id, action: "client.create", entity: "client", entityId: inserted[0]?.id, payload: { name } });
     return NextResponse.json({ ok: true, data: await getClients() });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to create client" }, { status: 500 });
+    return toErrorResponse(error, "Failed to create client");
   }
 }

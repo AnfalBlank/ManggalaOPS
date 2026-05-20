@@ -3,9 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/db";
 import { accounts, journalEntries, journals } from "@/db/schema";
+import { toErrorResponse } from "@/lib/api-helpers";
+import { requireRole } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
+    await requireRole(["admin", "finance"]);
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
@@ -15,6 +18,10 @@ export async function GET(request: NextRequest) {
 
     const start = new Date(`${startDate}T00:00:00.000Z`);
     const end = new Date(`${endDate}T23:59:59.999Z`);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return NextResponse.json({ error: "Format tanggal tidak valid" }, { status: 400 });
+    }
 
     const [periodRows, cutoffRows] = await Promise.all([
       db
@@ -45,6 +52,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ periodAccounts: periodRows, cutoffAccounts: cutoffRows, startDate, endDate });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to build executive report" }, { status: 500 });
+    return toErrorResponse(error, "Failed to build executive report");
   }
 }

@@ -50,7 +50,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams?: Pr
               description="Belum ada pembayaran tercatat. Setelah finance merekam pembayaran, daftar payment akan muncul di sini."
             />
           ) : (
-            <FilterablePaymentsTable payments={payments} clients={clients} invoices={invoices} settings={{ companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, defaultSignatoryName: settings.defaultSignatoryName, defaultSignatoryTitle: settings.defaultSignatoryTitle }} filters={{ initialQuery: params.q, initialPeriod: (params.period as "all" | "30d" | "month" | "year") ?? "all", initialType: params.type ?? "all" }} />
+            <FilterablePaymentsTable payments={payments} clients={clients} invoices={invoices} settings={{ companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, defaultSignatoryName: settings.defaultSignatoryName, defaultSignatoryTitle: settings.defaultSignatoryTitle, signatureImageUrl: settings.signatureImageUrl, stampImageUrl: settings.stampImageUrl }} filters={{ initialQuery: params.q, initialPeriod: (params.period as "all" | "30d" | "month" | "year") ?? "all", initialType: params.type ?? "all" }} />
           )}
         </div>
       </PageWrapper>

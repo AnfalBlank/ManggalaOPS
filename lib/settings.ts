@@ -31,6 +31,8 @@ export async function getAppSettings() {
     defaultProjectExpenseAccountCode: "5002",
     financeApprovalRequired: true,
     allowUserSelfReset: false,
+    signatureImageUrl: null,
+    stampImageUrl: null,
     updatedAt: new Date(),
   };
 }

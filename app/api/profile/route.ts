@@ -2,9 +2,11 @@ import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
+import { ensure, toErrorResponse, trimString } from "@/lib/api-helpers";
+import { audit } from "@/lib/audit";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { getCurrentUser } from "@/lib/session-auth";
+import { getCurrentUser, validatePasswordStrength } from "@/lib/session-auth";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -25,21 +27,28 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const updateData: { name?: string; email?: string; avatarUrl?: string | null; passwordHash?: string } = {
-      name: String(body.name ?? user.name).trim(),
-      email: String(body.email ?? user.email).trim(),
-      avatarUrl: String(body.avatarUrl ?? user.avatarUrl ?? "").trim() || null,
+    const name = trimString(body.name ?? user.name, 200);
+    const email = trimString(body.email ?? user.email, 200).toLowerCase();
+    ensure(name.length > 0, "Nama wajib diisi");
+    ensure(email.length > 0, "Email wajib diisi");
+
+    const updateData: { name: string; email: string; avatarUrl: string | null; passwordHash?: string } = {
+      name,
+      email,
+      avatarUrl: trimString(body.avatarUrl ?? user.avatarUrl ?? "", 500) || null,
     };
 
     if (body.password) {
+      validatePasswordStrength(String(body.password));
       updateData.passwordHash = await bcrypt.hash(String(body.password), 10);
     }
 
     await db.update(users).set(updateData).where(eq(users.id, user.id));
+    await audit({ userId: user.id, action: "profile.update", entity: "user", entityId: user.id });
     const updated = await db.query.users.findFirst({ where: eq(users.id, user.id) });
 
     return NextResponse.json({ ok: true, user: updated });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to update profile" }, { status: 500 });
+    return toErrorResponse(error, "Failed to update profile");
   }
 }

@@ -8,6 +8,18 @@ import { Button } from "@/components/ui/button";
 import { Trash2, Save, FolderOpen, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+type EstimationRow = {
+  id: number;
+  name: string;
+  buyPrice: number;
+  sellPrice: number;
+  qty: number;
+  buyIncludePpn: boolean;
+  sellIncludePpn: boolean;
+  ppnRate: number;
+  createdAt?: string | number | null;
+};
+
 export function CalculatorPnL() {
   const [name, setName] = useState("");
   const [buyPrice, setBuyPrice] = useState<number | "">("");
@@ -17,7 +29,7 @@ export function CalculatorPnL() {
   const [sellIncludePpn, setSellIncludePpn] = useState(false);
   const [ppnRate, setPpnRate] = useState<number | "">(11);
 
-  const [estimations, setEstimations] = useState<any[]>([]);
+  const [estimations, setEstimations] = useState<EstimationRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -91,7 +103,7 @@ export function CalculatorPnL() {
     }
   };
 
-  const handleLoad = (est: any) => {
+  const handleLoad = (est: EstimationRow) => {
     setName(est.name);
     setBuyPrice(est.buyPrice);
     setSellPrice(est.sellPrice);

@@ -2,49 +2,42 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/db";
 import { leads } from "@/db/schema";
+import { ensure, ensurePositiveInt, toErrorResponse, trimString } from "@/lib/api-helpers";
+import { audit } from "@/lib/audit";
+import { requireRole } from "@/lib/auth";
 import { getLeads } from "@/lib/data";
+import { parseMoneyInput } from "@/lib/money";
 
 export async function GET() {
   try {
+    await requireRole(["admin", "finance", "sales", "project_manager"]);
     const data = await getLeads();
     return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch leads" },
-      { status: 500 },
-    );
+    return toErrorResponse(error, "Failed to fetch leads");
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const { user } = await requireRole(["admin", "sales"]);
     const body = await request.json();
-    const clientId = Number(body.clientId);
-    const serviceName = String(body.serviceName ?? "").trim();
-    const estimatedValue = Number(body.estimatedValue ?? 0);
-    const status = String(body.status ?? "New").trim() || "New";
+    const clientId = ensurePositiveInt(body.clientId, "clientId");
+    const serviceName = trimString(body.serviceName, 500);
+    ensure(serviceName.length > 0, "serviceName wajib diisi");
+    const status = trimString(body.status, 50) || "New";
 
-    if (!clientId || !serviceName) {
-      return NextResponse.json(
-        { error: "clientId and serviceName are required" },
-        { status: 400 },
-      );
-    }
-
-    await db.insert(leads).values({
+    const inserted = await db.insert(leads).values({
       clientId,
       serviceName,
-      estimatedValue,
+      estimatedValue: parseMoneyInput(body.estimatedValue),
       status,
       createdAt: new Date(),
-    });
+    }).returning({ id: leads.id });
 
-    const data = await getLeads();
-    return NextResponse.json({ ok: true, data });
+    await audit({ userId: user.id, action: "lead.create", entity: "lead", entityId: inserted[0]?.id, payload: { serviceName, status } });
+    return NextResponse.json({ ok: true, data: await getLeads() });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create lead" },
-      { status: 500 },
-    );
+    return toErrorResponse(error, "Failed to create lead");
   }
 }
