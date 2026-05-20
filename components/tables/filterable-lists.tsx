@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { TableFilterBar } from "@/components/filters/table-filter-bar";
 import { DownloadInvoiceLetterButton } from "@/components/pdf/download-invoice-letter-button";
 import { DownloadKwitansiButton } from "@/components/pdf/download-kwitansi-button";
+import { GenerateDeliveryFromInvoiceButton } from "@/components/pdf/generate-delivery-from-invoice-button";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -23,7 +24,7 @@ import { isWithinPeriod, type FilterPeriod } from "@/lib/view-filters";
 
 type ClientOption = { id: number; name: string };
 type InvoiceOption = { id: number; code: string };
-type DocumentSettings = { companyName?: string | null; companyEmail?: string | null; companyPhone?: string | null; companyAddress?: string | null; defaultSignatoryName?: string | null; defaultSignatoryTitle?: string | null };
+type DocumentSettings = { companyName?: string | null; companyEmail?: string | null; companyPhone?: string | null; companyAddress?: string | null; defaultSignatoryName?: string | null; defaultSignatoryTitle?: string | null; signatureImageUrl?: string | null; stampImageUrl?: string | null };
 
 type TableFilterState = {
   initialQuery?: string;
@@ -187,7 +188,8 @@ export function FilterableInvoicesTable({ invoices, clients, settings, filters }
                 <TableCell className="text-center"><Badge>{invoice.status}</Badge></TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <DownloadInvoiceLetterButton payload={{ id: invoice.code, client: invoice.clientName, project: invoice.projectName ?? "-", date: invoice.date ? new Date(invoice.date) : new Date(), dueDate: invoice.dueDate ? new Date(invoice.dueDate) : null, companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, paymentMethod: invoice.paymentMethod, attachment: invoice.attachment, subject: invoice.subject, recipientName: invoice.recipientName, recipientCompany: invoice.recipientCompany, recipientAddress: invoice.recipientAddress, introduction: invoice.introduction, terms: invoice.terms, closingNote: invoice.closingNote, signatoryName: invoice.signatoryName || settings.defaultSignatoryName, signatoryTitle: invoice.signatoryTitle || settings.defaultSignatoryTitle, items: invoice.items, subtotal: invoice.subtotal, ppn: invoice.tax, total: invoice.total, amountPaid: invoice.amountPaid, outstandingAmount: invoice.outstandingAmount, status: invoice.status }} />
+                    <DownloadInvoiceLetterButton payload={{ id: invoice.code, client: invoice.clientName, project: invoice.projectName ?? "-", date: invoice.date ? new Date(invoice.date) : new Date(), dueDate: invoice.dueDate ? new Date(invoice.dueDate) : null, companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, paymentMethod: invoice.paymentMethod, attachment: invoice.attachment, subject: invoice.subject, recipientName: invoice.recipientName, recipientCompany: invoice.recipientCompany, recipientAddress: invoice.recipientAddress, introduction: invoice.introduction, terms: invoice.terms, closingNote: invoice.closingNote, signatoryName: invoice.signatoryName || settings.defaultSignatoryName, signatoryTitle: invoice.signatoryTitle || settings.defaultSignatoryTitle, signatureImageUrl: settings.signatureImageUrl, stampImageUrl: settings.stampImageUrl, items: invoice.items, subtotal: invoice.subtotal, ppn: invoice.tax, total: invoice.total, amountPaid: invoice.amountPaid, outstandingAmount: invoice.outstandingAmount, status: invoice.status }} />
+                    <GenerateDeliveryFromInvoiceButton invoiceId={invoice.id} />
                     <InvoiceRowActions row={invoice} clients={clients} />
                   </div>
                 </TableCell>
@@ -250,7 +252,7 @@ export function FilterablePaymentsTable({ payments, clients, invoices, settings,
                 <TableCell>{payment.paymentAccountCode ?? "-"}</TableCell>
                 <TableCell className="text-right">{formatCurrency(payment.amount)}</TableCell>
                 <TableCell className="text-right">{payment.date ? format(new Date(payment.date), "dd MMM yyyy") : "-"}</TableCell>
-                <TableCell className="text-center"><DownloadKwitansiButton payload={{ id: payment.code, client: payment.clientName, amount: payment.amount, description: `Pembayaran Invoice ${payment.invoiceCode}`, companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, signatoryName: settings.defaultSignatoryName, signatoryTitle: settings.defaultSignatoryTitle }} /></TableCell>
+                <TableCell className="text-center"><DownloadKwitansiButton payload={{ id: payment.code, client: payment.clientName, amount: payment.amount, description: `Pembayaran Invoice ${payment.invoiceCode}`, companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, signatoryName: settings.defaultSignatoryName, signatoryTitle: settings.defaultSignatoryTitle, signatureImageUrl: settings.signatureImageUrl, stampImageUrl: settings.stampImageUrl }} /></TableCell>
                 <TableCell className="text-right"><PaymentRowActions row={payment} clients={clients} invoices={invoices} /></TableCell>
               </TableRow>
             ))}

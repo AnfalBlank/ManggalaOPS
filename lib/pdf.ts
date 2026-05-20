@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
+import { drawSignatureAndStamp, preloadSignatureStamp } from "@/lib/pdf-signature";
 
 type InvoicePdfData = {
   id: string;
@@ -26,6 +27,8 @@ type ReceiptPdfData = {
   companyAddress?: string | null;
   signatoryName?: string | null;
   signatoryTitle?: string | null;
+  signatureImageUrl?: string | null;
+  stampImageUrl?: string | null;
 };
 
 type JsPdfWithLastAutoTable = jsPDF & {
@@ -137,11 +140,16 @@ export const generateInvoicePDF = (invoiceData: InvoicePdfData) => {
   doc.save(`${invoiceData.id}.pdf`);
 };
 
-export const generateKwitansiPDF = (paymentData: ReceiptPdfData) => {
+export const generateKwitansiPDF = async (paymentData: ReceiptPdfData) => {
   const doc = new jsPDF({
     orientation: "landscape",
     unit: "mm",
     format: [148, 210],
+  });
+
+  const sigStamp = await preloadSignatureStamp({
+    signatureImageUrl: paymentData.signatureImageUrl,
+    stampImageUrl: paymentData.stampImageUrl,
   });
 
   const amountInWords = toWordsId(paymentData.amount);
@@ -255,6 +263,10 @@ export const generateKwitansiPDF = (paymentData: ReceiptPdfData) => {
   doc.setFont("helvetica", "normal");
   doc.text(today, signatureX, 104);
   doc.text("Penerima,", signatureX, 111);
+
+  // Draw digital signature and stamp in the kwitansi signature area.
+  drawSignatureAndStamp(doc, signatureX - 2, 113, sigStamp.signatureB64, sigStamp.stampB64);
+
   doc.setFont("helvetica", "bold");
   doc.text(signatoryName, signatureX, 131);
   dottedLine(signatureX, 191, 132);

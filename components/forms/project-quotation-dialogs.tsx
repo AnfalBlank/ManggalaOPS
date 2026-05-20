@@ -18,7 +18,7 @@ import { parseMoneyInput } from "@/lib/money";
 type ClientOption = { id: number; name: string };
 type ProjectOption = { id: number; name: string; clientId?: number; clientName?: string };
 type ProjectRow = { id: number; clientId: number; name: string; value: number; status: string; progress: number; deadline: string | null };
-type QuotationItem = { description: string; qty: number; unit: string | null; unitPrice: number; amount: number; imageUrl?: string | null };
+type QuotationItem = { description: string; qty: number; unit: string | null; unitPrice: number; unitCost?: number | null; amount: number; imageUrl?: string | null };
 type QuotationRow = {
   id: number;
   clientId: number;
@@ -130,7 +130,7 @@ export function QuotationDialog({ clients, projects, quotation }: { clients: Cli
   const selectedClientName = clients.find((client) => String(client.id) === clientId)?.name;
   const selectedProjectName = projectId === "none" ? "Tanpa project" : filteredProjects.find((project) => String(project.id) === projectId)?.name;
   const [items, setItems] = useState<Array<{ description: string; qty: string; unit: string; unitPrice: string; unitCost: string; imageUrl?: string; includeImage?: boolean; uploading?: boolean }>>(
-    quotation?.items?.length ? quotation.items.map((item) => ({ description: item.description, qty: String(item.qty), unit: item.unit || "Unit", unitPrice: String(item.unitPrice), unitCost: String((item as any).unitCost ?? 0), imageUrl: item.imageUrl ?? undefined, includeImage: !!item.imageUrl })) : [{ description: "", qty: "1", unit: "Unit", unitPrice: "", unitCost: "", includeImage: false }],
+    quotation?.items?.length ? quotation.items.map((item) => ({ description: item.description, qty: String(item.qty), unit: item.unit || "Unit", unitPrice: String(item.unitPrice), unitCost: String(item.unitCost ?? 0), imageUrl: item.imageUrl ?? undefined, includeImage: !!item.imageUrl })) : [{ description: "", qty: "1", unit: "Unit", unitPrice: "", unitCost: "", includeImage: false }],
   );
   const [pricesIncludeTax, setPricesIncludeTax] = useState(false);
 

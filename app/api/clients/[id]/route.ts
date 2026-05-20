@@ -3,40 +3,47 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/db";
 import { clients } from "@/db/schema";
+import { ensure, ensurePositiveInt, nullableTrim, toErrorResponse, trimString } from "@/lib/api-helpers";
+import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
 import { getClients } from "@/lib/data";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireRole(["admin", "sales"]);
+    const { user } = await requireRole(["admin", "sales"]);
     const { id } = await params;
-    const clientId = Number(id);
+    const clientId = ensurePositiveInt(id, "client id");
     const body = await request.json();
+    const name = trimString(body.name, 200);
+    ensure(name.length > 0, "Nama client wajib diisi");
 
     await db.update(clients).set({
-      name: String(body.name ?? "").trim(),
-      contactPerson: String(body.contactPerson ?? "").trim() || null,
-      additionalPic: String(body.additionalPic ?? "").trim() || null,
-      phone: String(body.phone ?? "").trim() || null,
-      email: String(body.email ?? "").trim() || null,
-      npwp: String(body.npwp ?? "").trim() || null,
-      address: String(body.address ?? "").trim() || null,
-      notes: String(body.notes ?? "").trim() || null,
+      name,
+      contactPerson: nullableTrim(body.contactPerson, 200),
+      additionalPic: nullableTrim(body.additionalPic, 200),
+      phone: nullableTrim(body.phone, 50),
+      email: nullableTrim(body.email, 200),
+      npwp: nullableTrim(body.npwp, 50),
+      address: nullableTrim(body.address, 1000),
+      notes: nullableTrim(body.notes, 2000),
     }).where(eq(clients.id, clientId));
 
+    await audit({ userId: user.id, action: "client.update", entity: "client", entityId: clientId, payload: { name } });
     return NextResponse.json({ ok: true, data: await getClients() });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to update client" }, { status: 500 });
+    return toErrorResponse(error, "Failed to update client");
   }
 }
 
 export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireRole(["admin"]);
+    const { user } = await requireRole(["admin"]);
     const { id } = await params;
-    await db.delete(clients).where(eq(clients.id, Number(id)));
+    const clientId = ensurePositiveInt(id, "client id");
+    await db.delete(clients).where(eq(clients.id, clientId));
+    await audit({ userId: user.id, action: "client.delete", entity: "client", entityId: clientId });
     return NextResponse.json({ ok: true, data: await getClients() });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to delete client" }, { status: 500 });
+    return toErrorResponse(error, "Failed to delete client");
   }
 }

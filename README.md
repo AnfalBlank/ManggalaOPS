@@ -1,34 +1,37 @@
 # ManggalaOPS
 
-ERP/CRM dashboard untuk PT. Manggala Utama Indonesia, dibangun dengan Next.js, Drizzle ORM, dan Turso/libSQL.
+ERP/CRM internal untuk PT. Manggala Utama Indonesia. Stack: Next.js 16 (App Router + Turbopack), Drizzle ORM, libSQL/Turso.
 
-## Fitur Utama
+## Modul Utama
 
-- Manajemen client, lead, project
-- Quotation & invoice dengan perhitungan PPN
-- Finance & expense tracking
-- Accounting, journal, dan tax report
-- Internal chat dan notifikasi
+- Client, Lead, Project tracking
+- Quotation, Invoice, Surat Jalan (Delivery Order), Kwitansi — semua punya format PDF konsisten
+- Finance & Expense (auto-journal double entry)
+- Accounting (COA, Journal, Trial Balance, Tax Report)
+- Internal Chat & Notifikasi
+- Audit log untuk operasi destructive
+- Login dengan rate limit, password kebijakan minimal 8 karakter
 
 ## Kebutuhan
 
 - Node.js 20+
 - npm
-- Database Turso/libSQL
+- Database libSQL/Turso
 
 ## Setup Environment
-
-1. Copy file contoh env:
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-2. Isi `.env.local`:
+Isi `.env.local`:
 
 ```env
 TURSO_DATABASE_URL=libsql://your-database-name.turso.io
 TURSO_AUTH_TOKEN=your_turso_auth_token
+# Optional, only for ops emergency tools
+# MANGGALA_ALLOW_RESET=true
+# MANGGALA_ALLOW_SEED=true
 ```
 
 ## Instalasi
@@ -43,87 +46,66 @@ npm install
 npm run dev
 ```
 
-App akan tersedia di:
-- <http://localhost:3000>
+App akan tersedia di <http://localhost:3000>.
 
-## Setup Database
-
-### Untuk database yang sudah pernah dipakai
-Gunakan patch migration aman:
+## Database
 
 ```bash
+# patch / bootstrap aman dengan migration journal
 npm run db:apply
-```
 
-Script ini sekarang:
-- membedakan bootstrap DB kosong vs patch DB existing
-- memakai migration journal
-- tidak mengulang file migration yang sudah pernah diproses
-
-### Untuk database baru / kosong
-Tetap bisa pakai:
-
-```bash
-npm run db:apply
-```
-
-### Opsional
-Generate drizzle artifacts:
-
-```bash
+# helper drizzle
 npm run db:generate
-```
-
-Push schema via drizzle:
-
-```bash
+npm run db:check
 npm run db:push
-```
-
-Buka Drizzle Studio:
-
-```bash
 npm run db:studio
 ```
 
 ## Seed Data
 
-Kalau database masih kosong:
+Hanya berjalan di non-production:
 
 ```bash
 npm run dev
-# terminal lain
-curl -X POST http://localhost:3000/api/seed
+# di terminal lain
+curl -X POST http://localhost:3000/api/seed -b "manggala_session=..."
 ```
 
-## Script yang Tersedia
+Anda harus login dulu sebagai admin agar request seed diterima.
 
-- `npm run dev` — jalankan local dev server
-- `npm run build` — production build
-- `npm run start` — jalankan production server
-- `npm run lint` — ESLint
-- `npm run db:generate` — generate drizzle artifacts
-- `npm run db:check` — cek drift schema
-- `npm run db:push` — push schema via drizzle
-- `npm run db:apply` — apply migration SQL lokal dengan journal
-- `npm run db:up` — drizzle up
-- `npm run db:studio` — buka Drizzle Studio
+## Script
 
-## Catatan Repo
+| Script | Fungsi |
+|--------|--------|
+| `npm run dev` | Dev server |
+| `npm run build` | Production build |
+| `npm run start` | Production server |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run db:apply` | Apply migration aman pakai journal |
+| `npm run db:generate` | Generate drizzle artifacts |
+| `npm run db:check` | Cek drift schema |
+| `npm run db:push` | Push schema |
+| `npm run db:studio` | Drizzle Studio |
 
-- File `.env*` tidak ikut git
-- File database lokal (`*.db`) di-ignore
-- Repo ini memakai GitHub private untuk source utama
+## Format Surat (PDF)
 
-## Catatan Teknis
+Semua dokumen menyajikan layout konsisten: header banner biru, blok pengirim & penerima, tabel item kuning emas, footer banner dengan info kontak & nomor halaman.
+
+- **Quotation** — `QUO-####` dengan nomor surat `MUI/SP/Roman/Year`
+- **Invoice** — `INV-####` dengan nomor surat `MUI/INV/Roman/Year`
+- **Surat Jalan** — `SJ-####` dengan nomor surat `MUI/SJ/Roman/Year` (auto-generate dari invoice tersedia)
+- **Kwitansi** — `KWT-PAY-####`
+
+## Catatan Pajak
 
 - PPN Keluaran diambil dari invoice
 - PPN Masukan diambil dari expense/pembelian taxable
 - Quotation tidak dihitung sebagai objek final di laporan pajak
 
-
 ## Repo Standards
 
 - License: Proprietary / internal use only
-- CI: GitHub Actions build check on push and pull request
-- Issue & PR templates sudah disiapkan untuk workflow tim
+- CI: GitHub Actions build check on push & pull request
+- Issue / PR templates tersedia
+- Tabel `audit_log` mencatat setiap operasi sensitif

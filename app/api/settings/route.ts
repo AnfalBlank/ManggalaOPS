@@ -45,6 +45,8 @@ export async function PUT(request: NextRequest) {
       defaultProjectExpenseAccountCode: String(body.defaultProjectExpenseAccountCode ?? "5002").trim() || "5002",
       financeApprovalRequired: Boolean(body.financeApprovalRequired),
       allowUserSelfReset: Boolean(body.allowUserSelfReset),
+      signatureImageUrl: String(body.signatureImageUrl ?? "").trim() || null,
+      stampImageUrl: String(body.stampImageUrl ?? "").trim() || null,
       updatedAt: new Date(),
     };
 

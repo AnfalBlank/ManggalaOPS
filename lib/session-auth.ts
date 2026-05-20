@@ -8,23 +8,29 @@ import { sessions, users } from "@/db/schema";
 export type AppRole = "admin" | "finance" | "sales" | "project_manager";
 
 const SESSION_COOKIE = "manggala_session";
+const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+const MIN_PASSWORD_LENGTH = 8;
 
-export async function loginWithPassword(email: string, password: string) {
+export async function loginWithPassword(rawEmail: string, password: string) {
+  const email = rawEmail.trim().toLowerCase();
+  if (!email || !password) {
+    throw new Error("Email dan password wajib diisi");
+  }
+
   const user = await db.query.users.findFirst({
     where: eq(users.email, email),
   });
 
-  if (!user) {
-    throw new Error("Email atau password salah");
-  }
+  // Always run bcrypt to avoid leaking user existence via timing.
+  const dummyHash = "$2a$10$abcdefghijklmnopqrstuv0123456789012345678901234567890";
+  const valid = await bcrypt.compare(password, user?.passwordHash || dummyHash);
 
-  const valid = await bcrypt.compare(password, user.passwordHash);
-  if (!valid) {
+  if (!user || !valid) {
     throw new Error("Email atau password salah");
   }
 
   const sessionId = crypto.randomUUID();
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
 
   await db.insert(sessions).values({
     id: sessionId,
@@ -50,7 +56,11 @@ export async function logoutSession() {
   const sessionId = cookieStore.get(SESSION_COOKIE)?.value;
 
   if (sessionId) {
-    await db.delete(sessions).where(eq(sessions.id, sessionId));
+    try {
+      await db.delete(sessions).where(eq(sessions.id, sessionId));
+    } catch {
+      // session may already be removed; ignore
+    }
   }
 
   cookieStore.delete(SESSION_COOKIE);
@@ -74,3 +84,11 @@ export async function getCurrentUser() {
     where: eq(users.id, session.userId),
   });
 }
+
+export function validatePasswordStrength(password: string) {
+  if (typeof password !== "string" || password.length < MIN_PASSWORD_LENGTH) {
+    throw new Error(`Password minimal ${MIN_PASSWORD_LENGTH} karakter`);
+  }
+}
+
+export const PASSWORD_MIN_LENGTH = MIN_PASSWORD_LENGTH;

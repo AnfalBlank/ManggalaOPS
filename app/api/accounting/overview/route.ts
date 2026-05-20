@@ -3,9 +3,12 @@ import { asc, desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { accounts, journalEntries, journals } from "@/db/schema";
+import { toErrorResponse } from "@/lib/api-helpers";
+import { requireRole } from "@/lib/auth";
 
 export async function GET() {
   try {
+    await requireRole(["admin", "finance"]);
     const [accountRows, journalRows] = await Promise.all([
       db
         .select({
@@ -36,9 +39,6 @@ export async function GET() {
 
     return NextResponse.json({ accounts: accountRows, entries: journalRows });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch accounting overview" },
-      { status: 500 },
-    );
+    return toErrorResponse(error, "Failed to fetch accounting overview");
   }
 }
