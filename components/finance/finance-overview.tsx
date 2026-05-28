@@ -22,12 +22,14 @@ const expenseTypeOptions = [
 
 type ExpenseRow = { id: number; date: Date; category: string; description: string; amount: number; taxMode?: string | null; taxPercent?: number | null; taxAmount?: number | null; baseAmount?: number | null; status: string | null; projectId: number | null; paymentAccountCode?: string | null; paymentAccountName?: string | null };
 type ProjectOption = { id: number; name: string; clientId?: number; clientName?: string };
+type PaymentAccount = { code: string; name: string; balance: number };
 
 export function FinanceOverview({
   totalIncome,
   totalExpense,
   netCashFlow,
   recentExpenses,
+  paymentAccounts = [],
   projects = [],
   filters,
 }: {
@@ -35,6 +37,7 @@ export function FinanceOverview({
   totalExpense: number;
   netCashFlow: number;
   recentExpenses: ExpenseRow[];
+  paymentAccounts?: PaymentAccount[];
   projects?: ProjectOption[];
   filters?: { initialQuery?: string; initialPeriod?: FilterPeriod; initialType?: string };
 }) {
@@ -107,7 +110,7 @@ export function FinanceOverview({
                   <TableCell className="text-right font-medium py-4 text-foreground">{formatCurrency(expense.amount)}</TableCell>
                   <TableCell className="py-4 text-sm">{expense.paymentAccountName ?? expense.paymentAccountCode ?? "-"}</TableCell>
                   <TableCell className="text-center py-4"><Badge>{expense.status}</Badge></TableCell>
-                  <TableCell className="text-right py-4"><ExpenseRowActions expense={expense} projects={projects} /></TableCell>
+                  <TableCell className="text-right py-4"><ExpenseRowActions expense={expense} paymentAccounts={paymentAccounts} projects={projects} /></TableCell>
                 </TableRow>
               ))}
             </TableBody>

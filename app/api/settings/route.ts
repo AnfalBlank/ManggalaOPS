@@ -3,6 +3,8 @@ import { desc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { appSettings } from "@/db/schema";
+import { toErrorResponse } from "@/lib/api-helpers";
+import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
 import { getAppSettings } from "@/lib/settings";
 
@@ -11,13 +13,13 @@ export async function GET() {
     await requireRole(["admin"]);
     return NextResponse.json(await getAppSettings());
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to fetch settings" }, { status: 500 });
+    return toErrorResponse(error, "Failed to fetch settings");
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
-    await requireRole(["admin"]);
+    const { user } = await requireRole(["admin"]);
     const body = await request.json();
     const current = await db.query.appSettings.findFirst({ orderBy: desc(appSettings.id) });
 
@@ -56,8 +58,20 @@ export async function PUT(request: NextRequest) {
       await db.insert(appSettings).values(payload);
     }
 
+    await audit({
+      userId: user.id,
+      action: "settings.update",
+      entity: "settings",
+      payload: {
+        defaultTaxPercent: payload.defaultTaxPercent,
+        defaultPaymentMethod: payload.defaultPaymentMethod,
+        defaultSignatoryName: payload.defaultSignatoryName,
+        defaultSignatoryTitle: payload.defaultSignatoryTitle,
+      },
+    });
+
     return NextResponse.json({ ok: true, data: await getAppSettings() });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to save settings" }, { status: 500 });
+    return toErrorResponse(error, "Failed to save settings");
   }
 }

@@ -40,22 +40,23 @@ type SettingsData = {
 };
 
 const accountOptions = [
-  { code: "1001", name: "Kas" },
-  { code: "1002", name: "Bank Mandiri" },
-  { code: "1003", name: "Bank BCA" },
-  { code: "1101", name: "Piutang Usaha" },
-  { code: "1201", name: "Aset Tetap" },
-  { code: "2001", name: "Hutang Usaha" },
-  { code: "3001", name: "Modal" },
-  { code: "4001", name: "Pendapatan Project" },
-  { code: "4002", name: "Pendapatan Non Project" },
-  { code: "5001", name: "Beban Operasional" },
-  { code: "5002", name: "Beban Project" },
+  { code: "1001", name: "Kas", type: "Asset" },
+  { code: "1002", name: "Bank Mandiri", type: "Asset" },
+  { code: "1003", name: "Bank BCA", type: "Asset" },
+  { code: "1101", name: "Piutang Usaha", type: "Asset" },
+  { code: "1201", name: "Aset Tetap", type: "Asset" },
+  { code: "2001", name: "Hutang Usaha", type: "Liability" },
+  { code: "3001", name: "Modal", type: "Equity" },
+  { code: "4001", name: "Pendapatan Project", type: "Revenue" },
+  { code: "4002", name: "Pendapatan Non Project", type: "Revenue" },
+  { code: "5001", name: "Beban Operasional", type: "Expense" },
+  { code: "5002", name: "Beban Project", type: "Expense" },
 ];
 
-export function SettingsPanel({ initialSettings }: { initialSettings: SettingsData }) {
+export function SettingsPanel({ initialSettings, accountOptions: dbAccountOptions }: { initialSettings: SettingsData; accountOptions?: { code: string; name: string; type: string }[] }) {
   const [settings, setSettings] = useState<SettingsData>(initialSettings);
   const [saving, setSaving] = useState(false);
+  const accounts = dbAccountOptions && dbAccountOptions.length > 0 ? dbAccountOptions : accountOptions;
 
   const update = <K extends keyof SettingsData>(key: K, value: SettingsData[K]) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
@@ -114,7 +115,7 @@ export function SettingsPanel({ initialSettings }: { initialSettings: SettingsDa
             ["Akun Beban Operasional", "defaultOperationalExpenseAccountCode"],
             ["Akun Beban Project", "defaultProjectExpenseAccountCode"],
           ].map(([label, key]) => (
-            <div className="grid gap-2" key={key}><Label>{label}</Label><Select value={settings[key as keyof SettingsData] as string} onValueChange={(value) => update(key as keyof SettingsData, value as never)}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent>{accountOptions.map((account) => <SelectItem key={account.code} value={account.code}>{account.code} - {account.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="grid gap-2" key={key}><Label>{label}</Label><Select value={settings[key as keyof SettingsData] as string} onValueChange={(value) => update(key as keyof SettingsData, value as never)}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent>{accounts.map((account) => <SelectItem key={account.code} value={account.code}>{account.code} - {account.name}</SelectItem>)}</SelectContent></Select></div>
           ))}
         </CardContent>
       </Card>

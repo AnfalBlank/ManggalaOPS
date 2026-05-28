@@ -1,10 +1,13 @@
 import { RoleGuard } from "@/components/auth/guard";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { SettingsPanel } from "@/components/settings/settings-panel";
+import { getCoaList } from "@/lib/accounting";
 import { getAppSettings } from "@/lib/settings";
 
 export default async function SettingsPage() {
-  const settingsRow = await getAppSettings();
+  const [settingsRow, coa] = await Promise.all([getAppSettings(), getCoaList()]);
+  const accountOptions = coa.map((account) => ({ code: account.code, name: account.name, type: account.type }));
+
   const settings = {
     companyName: settingsRow.companyName,
     companyEmail: settingsRow.companyEmail ?? "",
@@ -41,7 +44,7 @@ export default async function SettingsPage() {
           <p className="text-muted-foreground mt-1">Pengaturan sistem dasar untuk ManggalaOPS.</p>
         </div>
 
-        <SettingsPanel initialSettings={settings} />
+        <SettingsPanel initialSettings={settings} accountOptions={accountOptions} />
       </RoleGuard>
     </PageWrapper>
   );

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2 } from "lucide-react";
+import { FileSignature, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { DetailDialog, formatCurrency, formatDateSafe } from "@/components/forms/entity-detail-dialogs";
@@ -27,7 +27,7 @@ type LeadRow = {
   createdAt: string | null;
 };
 
-async function requestJson(url: string, method: "PATCH" | "DELETE", body?: Record<string, unknown>) {
+async function requestJson(url: string, method: "POST" | "PATCH" | "DELETE", body?: Record<string, unknown>) {
   const response = await fetch(url, {
     method,
     headers: body ? { "Content-Type": "application/json" } : undefined,
@@ -69,6 +69,22 @@ export function LeadRowActions({ row, clients }: { row: LeadRow; clients: Client
     }
   };
 
+  const [converting, setConverting] = useState(false);
+  const handleConvert = async () => {
+    if (!confirm(`Buat quotation draft dari lead "${row.serviceName}"?`)) return;
+    try {
+      setConverting(true);
+      const result = await requestJson(`/api/leads/${row.id}/convert-to-quotation`, "POST");
+      toast.success(`Quotation draft #${result.quotationId} dibuat. Buka halaman Quotations untuk edit detailnya.`);
+      router.push("/quotations");
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal convert ke quotation");
+    } finally {
+      setConverting(false);
+    }
+  };
+
   return (
     <div className="flex justify-end gap-2">
       <DetailDialog
@@ -104,6 +120,16 @@ export function LeadRowActions({ row, clients }: { row: LeadRow; clients: Client
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Button
+        variant="outline"
+        size="sm"
+        className="text-blue-600 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-50"
+        disabled={converting || row.status === "Lost"}
+        onClick={handleConvert}
+        title="Buat quotation draft dari lead ini"
+      >
+        <FileSignature className="size-4" /> {converting ? "Converting..." : "→ Quote"}
+      </Button>
       <Button variant="outline" size="sm" className="text-destructive" onClick={handleDelete}><Trash2 className="size-4" /> Delete</Button>
     </div>
   );

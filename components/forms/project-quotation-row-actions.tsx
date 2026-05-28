@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { DetailDialog, formatCurrency, formatDateSafe } from "@/components/forms/entity-detail-dialogs";
 import { ProjectDialog, QuotationDialog } from "@/components/forms/project-quotation-dialogs";
+import { ProjectDetailDialog } from "@/components/projects/project-detail-dialog";
 import { Button } from "@/components/ui/button";
 
 type ClientOption = { id: number; name: string };
@@ -51,18 +52,7 @@ export function ProjectRowActions({ project, clients }: { project: ProjectRow; c
 
   return (
     <div className="flex justify-end gap-2">
-      <DetailDialog
-        title={`Detail Project #${project.id}`}
-        description="Ringkasan lengkap data project"
-        rows={[
-          { label: "Project", value: project.name },
-          { label: "Client", value: project.clientName ?? "-" },
-          { label: "Contract Value", value: formatCurrency(project.value) },
-          { label: "Status", value: project.status },
-          { label: "Progress", value: `${project.progress}%` },
-          { label: "Deadline", value: formatDateSafe(project.deadline) },
-        ]}
-      />
+      <ProjectDetailDialog projectId={project.id} />
       <ProjectDialog clients={clients} project={project} />
       <Button variant="outline" size="sm" className="text-destructive" onClick={async () => {
         if (!confirm(`Hapus project ${project.name}?`)) return;
