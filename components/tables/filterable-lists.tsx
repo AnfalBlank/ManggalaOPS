@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 
 import { TableFilterBar } from "@/components/filters/table-filter-bar";
+import { WhatsappReminderButton } from "@/components/invoices/whatsapp-reminder-button";
 import { DownloadInvoiceLetterButton } from "@/components/pdf/download-invoice-letter-button";
 import { DownloadKwitansiButton } from "@/components/pdf/download-kwitansi-button";
 import { GenerateDeliveryFromInvoiceButton } from "@/components/pdf/generate-delivery-from-invoice-button";
@@ -204,6 +205,26 @@ export function FilterableInvoicesTable({ invoices, clients, settings, filters }
                   <div className="flex justify-end gap-2">
                     <DownloadInvoiceLetterButton payload={{ id: invoice.code, client: invoice.clientName, project: invoice.projectName ?? "-", date: invoice.date ? new Date(invoice.date) : new Date(), dueDate: invoice.dueDate ? new Date(invoice.dueDate) : null, companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, paymentMethod: invoice.paymentMethod, attachment: invoice.attachment, subject: invoice.subject, recipientName: invoice.recipientName, recipientCompany: invoice.recipientCompany, recipientAddress: invoice.recipientAddress, introduction: invoice.introduction, terms: invoice.terms, closingNote: invoice.closingNote, signatoryName: invoice.signatoryName || settings.defaultSignatoryName, signatoryTitle: invoice.signatoryTitle || settings.defaultSignatoryTitle, signatureImageUrl: settings.signatureImageUrl, stampImageUrl: settings.stampImageUrl, items: invoice.items, subtotal: invoice.subtotal, ppn: invoice.tax, total: invoice.total, amountPaid: invoice.amountPaid, outstandingAmount: invoice.outstandingAmount, status: invoice.status }} />
                     <GenerateDeliveryFromInvoiceButton invoiceId={invoice.id} />
+                    <WhatsappReminderButton
+                      invoice={{
+                        id: invoice.id,
+                        code: invoice.code,
+                        clientName: invoice.clientName,
+                        clientPhone: invoice.clientPhone,
+                        total: invoice.total,
+                        amountPaid: invoice.amountPaid,
+                        outstandingAmount: invoice.outstandingAmount,
+                        dueDate: invoice.dueDate,
+                        status: invoice.status,
+                        paymentMethod: invoice.paymentMethod,
+                        recipientName: invoice.recipientName,
+                      }}
+                      company={{
+                        name: settings.companyName ?? "PT. Manggala Utama Indonesia",
+                        phone: settings.companyPhone,
+                        email: settings.companyEmail,
+                      }}
+                    />
                     {invoice.amountPaid > 0 ? (
                       <DownloadKwitansiButton
                         payload={{

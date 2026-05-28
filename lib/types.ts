@@ -88,6 +88,8 @@ export type InvoiceListItem = {
   code: string;
   clientId: number;
   clientName: string;
+  clientPhone: string | null;
+  clientEmail: string | null;
   projectId: number | null;
   projectName: string | null;
   quotationId: number | null;
