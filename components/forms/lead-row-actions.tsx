@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { DetailDialog, formatCurrency, formatDateSafe } from "@/components/forms/entity-detail-dialogs";
 import { MoneyInput } from "@/components/forms/money-input";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,7 +60,6 @@ export function LeadRowActions({ row, clients }: { row: LeadRow; clients: Client
   };
 
   const handleDelete = async () => {
-    if (!confirm(`Hapus lead ${row.serviceName}?`)) return;
     try {
       await requestJson(`/api/leads/${row.id}`, "DELETE");
       toast.success("Lead dihapus");
@@ -71,7 +71,6 @@ export function LeadRowActions({ row, clients }: { row: LeadRow; clients: Client
 
   const [converting, setConverting] = useState(false);
   const handleConvert = async () => {
-    if (!confirm(`Buat quotation draft dari lead "${row.serviceName}"?`)) return;
     try {
       setConverting(true);
       const result = await requestJson(`/api/leads/${row.id}/convert-to-quotation`, "POST");
@@ -130,7 +129,14 @@ export function LeadRowActions({ row, clients }: { row: LeadRow; clients: Client
       >
         <FileSignature className="size-4" /> {converting ? "Converting..." : "→ Quote"}
       </Button>
-      <Button variant="outline" size="sm" className="text-destructive" onClick={handleDelete}><Trash2 className="size-4" /> Delete</Button>
+      <ConfirmDialog
+        trigger={<Button variant="outline" size="sm" className="text-destructive"><Trash2 className="size-4" /> Delete</Button>}
+        title={`Hapus lead "${row.serviceName}"?`}
+        description="Lead akan dihapus permanen. Lead yang sudah pernah dipakai oleh project tidak bisa dihapus."
+        confirmText="Hapus"
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

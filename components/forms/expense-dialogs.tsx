@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { DetailDialog, formatCurrency, formatDateSafe } from "@/components/forms/entity-detail-dialogs";
 import { RupiahInput } from "@/components/forms/rupiah-input";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -147,12 +148,18 @@ export function ExpenseRowActions({ expense, paymentAccounts = [], projects = []
         ]}
       />
       <Button variant="outline" size="sm" onClick={() => setOpen(true)}>Edit</Button>
-      <Button variant="outline" size="sm" className="text-destructive" onClick={async () => {
-        if (!confirm(`Hapus expense ${expense.description}?`)) return;
-        await send(`/api/expenses/${expense.id}`, "DELETE");
-        toast.success("Expense dihapus");
-        router.refresh();
-      }}>Delete</Button>
+      <ConfirmDialog
+        trigger={<Button variant="outline" size="sm" className="text-destructive">Delete</Button>}
+        title={`Hapus expense "${expense.description}"?`}
+        description="Expense dan jurnal akuntansi terkait akan dihapus permanen."
+        confirmText="Hapus"
+        variant="destructive"
+        onConfirm={async () => {
+          await send(`/api/expenses/${expense.id}`, "DELETE");
+          toast.success("Expense dihapus");
+          router.refresh();
+        }}
+      />
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>

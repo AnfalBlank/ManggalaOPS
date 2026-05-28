@@ -34,9 +34,9 @@ export default async function InvoicesPage({ searchParams }: { searchParams?: Pr
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <ClickableStatCard href="/invoices" title="Total Invoices" value={totalInvoices} hint="Lihat semua invoice" icon={<FileCheck className="size-5" />} accentClassName="bg-blue-50 text-blue-600" />
-          <ClickableStatCard href="/invoices?period=year" title="Value Issued" value={formatCurrency(totalValue).replace(',00', '')} hint="Invoice tahun ini" icon={<Landmark className="size-5" />} accentClassName="bg-purple-50 text-purple-600" />
-          <ClickableStatCard href="/invoices?type=Paid" title="Total Paid" value={formatCurrency(totalPaid).replace(',00', '')} hint="Filter invoice lunas" icon={<Banknote className="size-5" />} accentClassName="bg-emerald-50 text-emerald-600" />
-          <ClickableStatCard href="/invoices?type=Overdue" title="Outstanding" value={formatCurrency(unpaidValue).replace(',00', '')} hint="Butuh follow up" icon={<AlertCircle className="size-5" />} accentClassName="bg-rose-50 text-rose-600" />
+          <ClickableStatCard href="/invoices?period=year" title="Value Issued" value={formatCurrency(totalValue)} hint="Invoice tahun ini" icon={<Landmark className="size-5" />} accentClassName="bg-purple-50 text-purple-600" />
+          <ClickableStatCard href="/invoices?type=Paid" title="Total Paid" value={formatCurrency(totalPaid)} hint="Filter invoice lunas" icon={<Banknote className="size-5" />} accentClassName="bg-emerald-50 text-emerald-600" />
+          <ClickableStatCard href="/invoices?type=Overdue" title="Outstanding" value={formatCurrency(unpaidValue)} hint="Butuh follow up" icon={<AlertCircle className="size-5" />} accentClassName="bg-rose-50 text-rose-600" />
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-border p-4 md:p-6">

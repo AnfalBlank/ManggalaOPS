@@ -33,7 +33,7 @@ export default async function CRMPage({ searchParams }: { searchParams?: Promise
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <ClickableStatCard href="/leads" title="Total Leads" value={totalLeads} hint="Lihat semua pipeline" icon={<Users className="size-5" />} accentClassName="bg-blue-50 text-blue-600" />
           <ClickableStatCard href="/leads?type=Won" title="Deals Won" value={wonLeads} hint="Filter lead menang" icon={<Target className="size-5" />} accentClassName="bg-emerald-50 text-emerald-600" />
-          <ClickableStatCard href="/leads?type=Negotiation" title="Pipeline Value" value={formatCurrency(openValue).replace(',00', '')} hint="Fokus pipeline aktif" icon={<Banknote className="size-5" />} accentClassName="bg-purple-50 text-purple-600" />
+          <ClickableStatCard href="/leads?type=Negotiation" title="Pipeline Value" value={formatCurrency(openValue)} hint="Fokus pipeline aktif" icon={<Banknote className="size-5" />} accentClassName="bg-purple-50 text-purple-600" />
           <ClickableStatCard href="/leads?type=Won&period=year" title="Win Rate" value={`${winRate}%`} hint="Lead won tahun ini" icon={<TrendingUp className="size-5" />} accentClassName="bg-amber-50 text-amber-600" />
         </div>
 

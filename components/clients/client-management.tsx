@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { TableFilterBar } from "@/components/filters/table-filter-bar";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -130,16 +131,22 @@ export function ClientManagement({ clients }: { clients: ClientRow[] }) {
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <ClientDialog client={client} />
-                    <Button variant="outline" size="sm" className="text-destructive" onClick={async () => {
-                      if (!confirm(`Hapus client ${client.name}?`)) return;
-                      try {
-                        await requestJson(`/api/clients/${client.id}`, "DELETE");
-                        toast.success("Client dihapus");
-                        router.refresh();
-                      } catch (error) {
-                        toast.error(error instanceof Error ? error.message : "Gagal hapus client");
-                      }
-                    }}><Trash2 className="size-4" /> Delete</Button>
+                    <ConfirmDialog
+                      trigger={<Button variant="outline" size="sm" className="text-destructive"><Trash2 className="size-4" /> Delete</Button>}
+                      title={`Hapus client "${client.name}"?`}
+                      description="Client akan dihapus. Client yang masih dipakai oleh lead/quotation/invoice/payment akan gagal dihapus."
+                      confirmText="Hapus"
+                      variant="destructive"
+                      onConfirm={async () => {
+                        try {
+                          await requestJson(`/api/clients/${client.id}`, "DELETE");
+                          toast.success("Client dihapus");
+                          router.refresh();
+                        } catch (error) {
+                          toast.error(error instanceof Error ? error.message : "Gagal hapus client");
+                        }
+                      }}
+                    />
                   </div>
                 </TableCell>
               </TableRow>

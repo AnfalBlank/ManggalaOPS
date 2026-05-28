@@ -26,6 +26,7 @@ import {
   UserCog,
   Building2,
   Calculator,
+  ShieldCheck,
   Truck,
 } from "lucide-react";
 import Link from "next/link";
@@ -116,6 +117,21 @@ export function AppSidebar({ role = "admin", user }: { role?: string; user?: { n
             <SidebarGroupLabel className="text-[10px] uppercase font-bold text-blue-300/50 mb-2 px-4 tracking-wider">System</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="gap-1 px-2">
+                {canAccessPath(normalizedRole, "/audit-log") ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      render={<Link href="/audit-log" />}
+                      className={`h-10 rounded-lg flex items-center gap-3 px-3 transition-all duration-200 group ${
+                        pathname === "/audit-log"
+                          ? "bg-blue-600/10 text-white font-medium relative"
+                          : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+                      }`}
+                    >
+                      <ShieldCheck className="size-[18px] text-slate-500 group-hover:text-amber-300 transition-colors" />
+                      <span className="text-sm">Audit Log</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
                 {canAccessPath(normalizedRole, "/settings") ? (
                   <SidebarMenuItem>
                     <SidebarMenuButton

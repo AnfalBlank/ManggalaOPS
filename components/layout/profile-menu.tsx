@@ -20,11 +20,12 @@ export function ProfileMenu({ user }: { user?: { name: string; email: string; ro
   const router = useRouter();
   const [openSettings, setOpenSettings] = useState(false);
   const initials = user?.name?.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() ?? "AD";
+  const avatarSrc = user?.avatarUrl ? user.avatarUrl.replace(/^\/uploads\//, "/api/uploads/") : "";
 
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger render={<button type="button" className="inline-flex items-center justify-center rounded-full"><Avatar className="size-8 cursor-pointer border border-border"><AvatarImage src={user?.avatarUrl || ""} /><AvatarFallback>{initials}</AvatarFallback></Avatar></button>} />
+        <DropdownMenuTrigger render={<button type="button" className="inline-flex items-center justify-center rounded-full"><Avatar className="size-8 cursor-pointer border border-border"><AvatarImage src={avatarSrc} /><AvatarFallback>{initials}</AvatarFallback></Avatar></button>} />
         <DropdownMenuContent align="end" className="w-64">
           <DropdownMenuGroup>
             <DropdownMenuLabel>

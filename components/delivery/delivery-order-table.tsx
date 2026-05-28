@@ -11,6 +11,7 @@ import { DeliveryOrderDialog } from "@/components/forms/delivery-order-dialogs";
 import { TableFilterBar } from "@/components/filters/table-filter-bar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { DeliveryOrderListItem } from "@/lib/data-delivery";
 import { isWithinPeriod, type FilterPeriod } from "@/lib/view-filters";
@@ -190,13 +191,22 @@ export function DeliveryOrdersTable({
                         })),
                       }}
                     />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 px-2 text-rose-600 hover:text-rose-700"
-                      disabled={deletingId === delivery.id}
-                      onClick={async () => {
-                        if (!confirm(`Hapus surat jalan ${delivery.code}?`)) return;
+                    <ConfirmDialog
+                      trigger={
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-2 text-rose-600 hover:text-rose-700"
+                          disabled={deletingId === delivery.id}
+                        >
+                          {deletingId === delivery.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                        </Button>
+                      }
+                      title={`Hapus surat jalan ${delivery.code}?`}
+                      description="Surat jalan akan dihapus permanen beserta seluruh item-nya."
+                      confirmText="Hapus"
+                      variant="destructive"
+                      onConfirm={async () => {
                         try {
                           setDeletingId(delivery.id);
                           const response = await fetch(`/api/delivery-orders/${delivery.id}`, { method: "DELETE" });
@@ -211,9 +221,7 @@ export function DeliveryOrdersTable({
                           setDeletingId(null);
                         }
                       }}
-                    >
-                      {deletingId === delivery.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-                    </Button>
+                    />
                   </div>
                 </TableCell>
               </TableRow>

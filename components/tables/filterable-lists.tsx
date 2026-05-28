@@ -8,6 +8,7 @@ import { DownloadInvoiceLetterButton } from "@/components/pdf/download-invoice-l
 import { DownloadKwitansiButton } from "@/components/pdf/download-kwitansi-button";
 import { GenerateDeliveryFromInvoiceButton } from "@/components/pdf/generate-delivery-from-invoice-button";
 import { Badge } from "@/components/ui/badge";
+import { Pagination, paginate } from "@/components/ui/pagination";
 import {
   Table,
   TableBody,
@@ -36,14 +37,22 @@ function useFilterState(filters?: TableFilterState) {
   const [query, setQuery] = useState(filters?.initialQuery ?? "");
   const [period, setPeriod] = useState<FilterPeriod>(filters?.initialPeriod ?? "all");
   const [type, setType] = useState(filters?.initialType ?? "all");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   useEffect(() => {
     setQuery(filters?.initialQuery ?? "");
     setPeriod(filters?.initialPeriod ?? "all");
     setType(filters?.initialType ?? "all");
+    setPage(1);
   }, [filters?.initialPeriod, filters?.initialQuery, filters?.initialType]);
 
-  return { query, setQuery, period, setPeriod, type, setType };
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [query, period, type, pageSize]);
+
+  return { query, setQuery, period, setPeriod, type, setType, page, setPage, pageSize, setPageSize };
 }
 
 const leadStatusOptions = [
@@ -81,7 +90,7 @@ const quotationStatusOptions = [
 ];
 
 export function FilterableLeadsTable({ leads, clients, filters }: { leads: LeadListItem[]; clients: ClientOption[]; filters?: TableFilterState }) {
-  const { query, setQuery, period, setPeriod, type, setType } = useFilterState(filters);
+  const { query, setQuery, period, setPeriod, type, setType, page, setPage, pageSize, setPageSize } = useFilterState(filters);
 
   const filtered = useMemo(
     () => leads.filter((lead) => {
@@ -92,6 +101,8 @@ export function FilterableLeadsTable({ leads, clients, filters }: { leads: LeadL
     }),
     [leads, period, query, type],
   );
+
+  const paged = paginate(filtered, page, pageSize);
 
   return (
     <div className="space-y-4">
@@ -120,7 +131,7 @@ export function FilterableLeadsTable({ leads, clients, filters }: { leads: LeadL
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((lead) => (
+            {paged.map((lead) => (
               <TableRow key={lead.id}>
                 <TableCell>{lead.code}</TableCell>
                 <TableCell>{lead.clientName}</TableCell>
@@ -135,12 +146,13 @@ export function FilterableLeadsTable({ leads, clients, filters }: { leads: LeadL
           </TableBody>
         </Table>
       </div>
+      <Pagination page={page} pageSize={pageSize} total={filtered.length} onPageChange={setPage} onPageSizeChange={setPageSize} />
     </div>
   );
 }
 
 export function FilterableInvoicesTable({ invoices, clients, settings, filters }: { invoices: InvoiceListItem[]; clients: ClientOption[]; settings: DocumentSettings; filters?: TableFilterState }) {
-  const { query, setQuery, period, setPeriod, type, setType } = useFilterState(filters);
+  const { query, setQuery, period, setPeriod, type, setType, page, setPage, pageSize, setPageSize } = useFilterState(filters);
 
   const filtered = useMemo(
     () => invoices.filter((invoice) => {
@@ -151,6 +163,8 @@ export function FilterableInvoicesTable({ invoices, clients, settings, filters }
     }),
     [invoices, period, query, type],
   );
+
+  const paged = paginate(filtered, page, pageSize);
 
   return (
     <div className="space-y-4">
@@ -178,7 +192,7 @@ export function FilterableInvoicesTable({ invoices, clients, settings, filters }
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((invoice) => (
+            {paged.map((invoice) => (
               <TableRow key={invoice.id}>
                 <TableCell>{invoice.code}</TableCell>
                 <TableCell>{invoice.clientName}<div className="text-xs text-muted-foreground">{invoice.projectName ?? "-"}</div></TableCell>
@@ -190,6 +204,24 @@ export function FilterableInvoicesTable({ invoices, clients, settings, filters }
                   <div className="flex justify-end gap-2">
                     <DownloadInvoiceLetterButton payload={{ id: invoice.code, client: invoice.clientName, project: invoice.projectName ?? "-", date: invoice.date ? new Date(invoice.date) : new Date(), dueDate: invoice.dueDate ? new Date(invoice.dueDate) : null, companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, paymentMethod: invoice.paymentMethod, attachment: invoice.attachment, subject: invoice.subject, recipientName: invoice.recipientName, recipientCompany: invoice.recipientCompany, recipientAddress: invoice.recipientAddress, introduction: invoice.introduction, terms: invoice.terms, closingNote: invoice.closingNote, signatoryName: invoice.signatoryName || settings.defaultSignatoryName, signatoryTitle: invoice.signatoryTitle || settings.defaultSignatoryTitle, signatureImageUrl: settings.signatureImageUrl, stampImageUrl: settings.stampImageUrl, items: invoice.items, subtotal: invoice.subtotal, ppn: invoice.tax, total: invoice.total, amountPaid: invoice.amountPaid, outstandingAmount: invoice.outstandingAmount, status: invoice.status }} />
                     <GenerateDeliveryFromInvoiceButton invoiceId={invoice.id} />
+                    {invoice.amountPaid > 0 ? (
+                      <DownloadKwitansiButton
+                        payload={{
+                          id: invoice.code,
+                          client: invoice.clientName,
+                          amount: invoice.amountPaid,
+                          description: `Pembayaran Invoice ${invoice.code}`,
+                          companyName: settings.companyName,
+                          companyEmail: settings.companyEmail,
+                          companyPhone: settings.companyPhone,
+                          companyAddress: settings.companyAddress,
+                          signatoryName: invoice.signatoryName || settings.defaultSignatoryName,
+                          signatoryTitle: invoice.signatoryTitle || settings.defaultSignatoryTitle,
+                          signatureImageUrl: settings.signatureImageUrl,
+                          stampImageUrl: settings.stampImageUrl,
+                        }}
+                      />
+                    ) : null}
                     <InvoiceRowActions row={invoice} clients={clients} />
                   </div>
                 </TableCell>
@@ -198,12 +230,13 @@ export function FilterableInvoicesTable({ invoices, clients, settings, filters }
           </TableBody>
         </Table>
       </div>
+      <Pagination page={page} pageSize={pageSize} total={filtered.length} onPageChange={setPage} onPageSizeChange={setPageSize} />
     </div>
   );
 }
 
 export function FilterablePaymentsTable({ payments, clients, invoices, settings, filters }: { payments: PaymentListItem[]; clients: ClientOption[]; invoices: InvoiceOption[]; settings: DocumentSettings; filters?: TableFilterState }) {
-  const { query, setQuery, period, setPeriod, type, setType } = useFilterState(filters);
+  const { query, setQuery, period, setPeriod, type, setType, page, setPage, pageSize, setPageSize } = useFilterState(filters);
 
   const filtered = useMemo(
     () => payments.filter((payment) => {
@@ -214,6 +247,8 @@ export function FilterablePaymentsTable({ payments, clients, invoices, settings,
     }),
     [payments, period, query, type],
   );
+
+  const paged = paginate(filtered, page, pageSize);
 
   return (
     <div className="space-y-4">
@@ -243,7 +278,7 @@ export function FilterablePaymentsTable({ payments, clients, invoices, settings,
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((payment) => (
+            {paged.map((payment) => (
               <TableRow key={payment.id}>
                 <TableCell>{payment.code}</TableCell>
                 <TableCell>{payment.clientName}</TableCell>
@@ -259,12 +294,13 @@ export function FilterablePaymentsTable({ payments, clients, invoices, settings,
           </TableBody>
         </Table>
       </div>
+      <Pagination page={page} pageSize={pageSize} total={filtered.length} onPageChange={setPage} onPageSizeChange={setPageSize} />
     </div>
   );
 }
 
 export function FilterableQuotationsTable({ quotations, onAccept, filters }: { quotations: QuotationListItem[]; onAccept: (id: number) => Promise<void>; filters?: TableFilterState }) {
-  const { query, setQuery, period, setPeriod, type, setType } = useFilterState(filters);
+  const { query, setQuery, period, setPeriod, type, setType, page, setPage, pageSize, setPageSize } = useFilterState(filters);
   const [loadingId, setLoadingId] = useState<number | null>(null);
 
   const filtered = useMemo(
@@ -276,6 +312,8 @@ export function FilterableQuotationsTable({ quotations, onAccept, filters }: { q
     }),
     [period, query, quotations, type],
   );
+
+  const paged = paginate(filtered, page, pageSize);
 
   return (
     <div className="space-y-4">
@@ -302,7 +340,7 @@ export function FilterableQuotationsTable({ quotations, onAccept, filters }: { q
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((quote) => (
+            {paged.map((quote) => (
               <TableRow key={quote.id}>
                 <TableCell>{quote.code}</TableCell>
                 <TableCell>{quote.clientName}<div className="text-xs text-muted-foreground">{quote.projectName ?? "-"}</div></TableCell>
@@ -330,6 +368,7 @@ export function FilterableQuotationsTable({ quotations, onAccept, filters }: { q
           </TableBody>
         </Table>
       </div>
+      <Pagination page={page} pageSize={pageSize} total={filtered.length} onPageChange={setPage} onPageSizeChange={setPageSize} />
     </div>
   );
 }

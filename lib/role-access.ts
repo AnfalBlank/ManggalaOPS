@@ -21,6 +21,8 @@ export const roleAccessMap: Record<AppRole, string[]> = {
     "/users",
     "/settings",
     "/calculator",
+    "/notifications",
+    "/audit-log",
   ],
   finance: [
     "/",
@@ -33,6 +35,7 @@ export const roleAccessMap: Record<AppRole, string[]> = {
     "/accounting",
     "/reports",
     "/calculator",
+    "/notifications",
   ],
   sales: [
     "/",
@@ -45,6 +48,7 @@ export const roleAccessMap: Record<AppRole, string[]> = {
     "/delivery-orders",
     "/reports",
     "/calculator",
+    "/notifications",
   ],
   project_manager: [
     "/",
@@ -54,6 +58,7 @@ export const roleAccessMap: Record<AppRole, string[]> = {
     "/delivery-orders",
     "/reports",
     "/calculator",
+    "/notifications",
   ],
 };
 

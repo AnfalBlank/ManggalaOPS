@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { ArrowDownCircle, ArrowUpCircle, Calculator, FolderOpen, Loader2, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -149,7 +150,6 @@ export function CalculatorPnL() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Hapus estimasi ini?")) return;
     try {
       const res = await fetch(`/api/estimations/${id}`, { method: "DELETE" });
       if (res.ok) {
@@ -464,9 +464,14 @@ export function CalculatorPnL() {
                       <Button variant={editingId === est.id ? "default" : "outline"} size="sm" className="flex-1 text-xs" onClick={() => handleLoad(est)}>
                         <FolderOpen className="size-3 mr-2" /> {editingId === est.id ? "Editing" : "Edit"}
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-rose-500 hover:bg-rose-50 hover:text-rose-600 px-2" onClick={() => handleDelete(est.id)}>
-                        <Trash2 className="size-4" />
-                      </Button>
+                      <ConfirmDialog
+                        trigger={<Button variant="ghost" size="sm" className="text-rose-500 hover:bg-rose-50 hover:text-rose-600 px-2"><Trash2 className="size-4" /></Button>}
+                        title={`Hapus estimasi "${est.name}"?`}
+                        description="Estimasi akan dihapus permanen."
+                        confirmText="Hapus"
+                        variant="destructive"
+                        onConfirm={() => handleDelete(est.id)}
+                      />
                     </div>
                   </div>
                 );

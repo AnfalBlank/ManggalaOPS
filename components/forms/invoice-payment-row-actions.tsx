@@ -9,6 +9,7 @@ import { DetailDialog, formatCurrency, formatDateSafe } from "@/components/forms
 import { InvoiceDialog } from "@/components/forms/invoice-dialogs";
 import { MoneyInput } from "@/components/forms/money-input";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,16 +55,22 @@ export function InvoiceRowActions({ row, clients }: { row: InvoiceListItem; clie
         ]}
       />
       <InvoiceDialog clients={clients} invoice={row} />
-      <Button variant="outline" size="sm" className="text-destructive" onClick={async () => {
-        if (!confirm(`Hapus invoice ${row.code}?`)) return;
-        try {
-          await requestJson(`/api/invoices/${row.id}`, "DELETE");
-          toast.success("Invoice dihapus");
-          router.refresh();
-        } catch (error) {
-          toast.error(error instanceof Error ? error.message : "Gagal hapus invoice");
-        }
-      }}><Trash2 className="size-4" /> Delete</Button>
+      <ConfirmDialog
+        trigger={<Button variant="outline" size="sm" className="text-destructive"><Trash2 className="size-4" /> Delete</Button>}
+        title={`Hapus invoice ${row.code}?`}
+        description="Invoice akan dihapus permanen. Invoice yang sudah punya payment tidak bisa dihapus."
+        confirmText="Hapus"
+        variant="destructive"
+        onConfirm={async () => {
+          try {
+            await requestJson(`/api/invoices/${row.id}`, "DELETE");
+            toast.success("Invoice dihapus");
+            router.refresh();
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Gagal hapus invoice");
+          }
+        }}
+      />
     </div>
   );
 }
@@ -125,16 +132,22 @@ export function PaymentRowActions({ row, clients, invoices, paymentAccounts = []
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Button variant="outline" size="sm" className="text-destructive" onClick={async () => {
-        if (!confirm(`Hapus payment ${row.code}?`)) return;
-        try {
-          await requestJson(`/api/payments/${row.id}`, "DELETE");
-          toast.success("Payment dihapus");
-          router.refresh();
-        } catch (error) {
-          toast.error(error instanceof Error ? error.message : "Gagal hapus payment");
-        }
-      }}><Trash2 className="size-4" /> Delete</Button>
+      <ConfirmDialog
+        trigger={<Button variant="outline" size="sm" className="text-destructive"><Trash2 className="size-4" /> Delete</Button>}
+        title={`Hapus payment ${row.code}?`}
+        description="Payment akan dihapus permanen dan jurnal akuntansi terkait juga akan dirollback."
+        confirmText="Hapus"
+        variant="destructive"
+        onConfirm={async () => {
+          try {
+            await requestJson(`/api/payments/${row.id}`, "DELETE");
+            toast.success("Payment dihapus");
+            router.refresh();
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Gagal hapus payment");
+          }
+        }}
+      />
     </div>
   );
 }

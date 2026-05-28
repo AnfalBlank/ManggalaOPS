@@ -34,7 +34,7 @@ export default async function QuotationsPage({ searchParams }: { searchParams?: 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <ClickableStatCard href="/quotations" title="Total Quotes" value={totalQuotations} hint="Lihat semua quotation" icon={<FileSignature className="size-5" />} accentClassName="bg-blue-50 text-blue-600" />
           <ClickableStatCard href="/quotations?type=Accepted" title="Accepted" value={acceptedQuotations} hint="Quotation diterima" icon={<CheckCircle className="size-5" />} accentClassName="bg-emerald-50 text-emerald-600" />
-          <ClickableStatCard href="/quotations?type=Sent" title="Pending Value" value={formatCurrency(pendingValue).replace(',00', '')} hint="Quotation menunggu closing" icon={<Clock className="size-5" />} accentClassName="bg-amber-50 text-amber-600" />
+          <ClickableStatCard href="/quotations?type=Sent" title="Pending Value" value={formatCurrency(pendingValue)} hint="Quotation menunggu closing" icon={<Clock className="size-5" />} accentClassName="bg-amber-50 text-amber-600" />
           <ClickableStatCard href="/quotations?type=Rejected" title="Rejected" value={rejectedQuotations} hint="Quotation ditolak" icon={<FileX className="size-5" />} accentClassName="bg-rose-50 text-rose-600" />
         </div>
 

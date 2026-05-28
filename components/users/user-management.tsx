@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { DetailDialog, formatDateSafe } from "@/components/forms/entity-detail-dialogs";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,6 +52,8 @@ function UserDialog({ user }: { user?: UserRow }) {
   const [password, setPassword] = useState("");
 
   const isCreate = !user;
+  const passwordTooShort = password.length > 0 && password.length < 8;
+  const canSubmit = name.trim().length > 0 && email.trim().length > 0 && (!isCreate || password.length >= 8) && !passwordTooShort;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -62,17 +65,31 @@ function UserDialog({ user }: { user?: UserRow }) {
         </DialogHeader>
         <div className="grid gap-4">
           <div className="grid gap-2"><Label>Nama</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-          <div className="grid gap-2"><Label>Email</Label><Input value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+          <div className="grid gap-2"><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
           <div className="grid gap-2"><Label>Role</Label><Select value={role} onValueChange={(value) => setRole(value ?? "sales")}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent>{roleOptions.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent></Select></div>
-          <div className="grid gap-2"><Label>{isCreate ? "Password" : "Reset Password (opsional)"}</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={isCreate ? "Minimal isi password" : "Kosongkan jika tidak diubah"} /></div>
+          <div className="grid gap-2">
+            <Label>{isCreate ? "Password" : "Reset Password (opsional)"}</Label>
+            <Input
+              type="password"
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={isCreate ? "Minimal 8 karakter" : "Kosongkan jika tidak diubah"}
+              className={passwordTooShort ? "border-rose-300 focus-visible:ring-rose-200" : ""}
+            />
+            {passwordTooShort ? (
+              <p className="text-xs text-rose-600">Password minimal 8 karakter.</p>
+            ) : null}
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Batal</Button>
-          <Button disabled={loading || !name || !email || (isCreate && !password)} onClick={async () => {
+          <Button disabled={loading || !canSubmit} onClick={async () => {
             try {
               setLoading(true);
               await send(isCreate ? "/api/users" : `/api/users/${user.id}`, isCreate ? "POST" : "PATCH", { name, email, role, password: password || undefined });
               toast.success(isCreate ? "User ditambahkan" : "User diupdate");
+              setPassword("");
               setOpen(false);
               router.refresh();
             } catch (error) {
@@ -129,12 +146,22 @@ export function UserManagement({ users }: { users: UserRow[] }) {
                       ]}
                     />
                     <UserDialog user={user} />
-                    <Button variant="outline" size="sm" className="text-destructive" onClick={async () => {
-                      if (!confirm(`Hapus user ${user.email}?`)) return;
-                      await send(`/api/users/${user.id}`, "DELETE");
-                      toast.success("User dihapus");
-                      router.refresh();
-                    }}>Delete</Button>
+                    <ConfirmDialog
+                      trigger={<Button variant="outline" size="sm" className="text-destructive">Delete</Button>}
+                      title={`Hapus user ${user.email}?`}
+                      description="User akan dihapus. Semua sesi login user ini juga akan diakhiri."
+                      confirmText="Hapus"
+                      variant="destructive"
+                      onConfirm={async () => {
+                        try {
+                          await send(`/api/users/${user.id}`, "DELETE");
+                          toast.success("User dihapus");
+                          router.refresh();
+                        } catch (error) {
+                          toast.error(error instanceof Error ? error.message : "Gagal hapus user");
+                        }
+                      }}
+                    />
                   </div>
                 </TableCell>
               </TableRow>

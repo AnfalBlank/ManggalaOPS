@@ -111,8 +111,22 @@ export function ReportsCenter({ financeRows, salesRows, projectRows, taxRows }: 
               </CardHeader>
               <CardContent>
                 <div className="space-y-4 pt-4 border-t border-slate-100">
-                  <div className="text-sm text-muted-foreground">
-                    Records in range: <span className="font-semibold text-foreground">{report.rows.length}</span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-lg border bg-muted/20 p-3">
+                      <div className="text-xs uppercase text-muted-foreground tracking-wide">Records</div>
+                      <div className="text-lg font-bold mt-1">{report.rows.length}</div>
+                    </div>
+                    <div className="rounded-lg border bg-muted/20 p-3">
+                      <div className="text-xs uppercase text-muted-foreground tracking-wide">Total Nilai</div>
+                      <div className="text-lg font-bold mt-1">
+                        {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(
+                          report.rows.reduce((sum, row) => {
+                            const amount = Number(row.amount ?? row.value ?? row.total ?? row.tax ?? 0);
+                            return sum + (Number.isFinite(amount) ? amount : 0);
+                          }, 0),
+                        )}
+                      </div>
+                    </div>
                   </div>
                   <ExportReportButtons title={report.title} filenamePrefix={`report-${report.id}-${endDate}`} rows={report.rows} />
                 </div>

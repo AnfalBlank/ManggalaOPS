@@ -60,7 +60,7 @@ export function ProjectsOverview({
         <ClickableStatCard href="/projects" title="Total Projects" value={totalProjects} hint="Lihat semua project" icon={<Briefcase className="size-5" />} accentClassName="bg-blue-50 text-blue-600" />
         <ClickableStatCard href="/projects?type=In%20Progress" title="In Progress" value={inProgressProjects} hint="Project berjalan" icon={<Activity className="size-5" />} accentClassName="bg-amber-50 text-amber-600" />
         <ClickableStatCard href="/projects?type=Completed" title="Completed" value={completedProjects} hint="Project selesai" icon={<CheckCircle className="size-5" />} accentClassName="bg-emerald-50 text-emerald-600" />
-        <ClickableStatCard href="/projects?period=year" title="Total Value" value={formatCurrency(totalValue).replace(',00', '')} hint="Nilai project tahun ini" icon={<Wallet className="size-5" />} accentClassName="bg-purple-50 text-purple-600" />
+        <ClickableStatCard href="/projects?period=year" title="Total Value" value={formatCurrency(totalValue)} hint="Nilai project tahun ini" icon={<Wallet className="size-5" />} accentClassName="bg-purple-50 text-purple-600" />
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-border p-4 md:p-6">
