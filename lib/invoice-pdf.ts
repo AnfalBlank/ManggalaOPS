@@ -221,7 +221,7 @@ export async function generateInvoiceLetterPDF(data: InvoicePdfData) {
   if (data.closingNote) {
     ny += 3;
     if (needsNewPage(ny, 12)) ny = pageBreak(doc);
-    ny = wrapText(doc, data.closingNote, 14, ny, 100, 4.5);
+    ny = wrapText(doc, data.closingNote, 14, ny, 182, 4.5);
   }
 
   // ========== SIGNATURE ==========
