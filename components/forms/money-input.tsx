@@ -9,9 +9,10 @@ type MoneyInputProps = {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  disabled?: boolean;
 };
 
-export function MoneyInput({ id, value, onChange, placeholder }: MoneyInputProps) {
+export function MoneyInput({ id, value, onChange, placeholder, disabled }: MoneyInputProps) {
   const [internalValue, setInternalValue] = useState(formatMoneyInput(value));
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export function MoneyInput({ id, value, onChange, placeholder }: MoneyInputProps
       onChange={handleChange}
       onBlur={handleBlur}
       placeholder={placeholder}
+      disabled={disabled}
     />
   );
 }

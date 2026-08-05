@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { toErrorResponse } from "@/lib/api-helpers";
 import { requireRole } from "@/lib/auth";
-import { getInvoiceOptions } from "@/lib/options";
+import { getClientOptions, getInvoiceOptions } from "@/lib/options";
 
 export async function GET() {
   try {

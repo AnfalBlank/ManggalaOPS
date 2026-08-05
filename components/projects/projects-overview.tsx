@@ -7,7 +7,8 @@ import { Activity, Briefcase, CheckCircle, Wallet } from "lucide-react";
 import { ClickableStatCard } from "@/components/cards/clickable-stat-card";
 import { ProjectRowActions } from "@/components/forms/project-quotation-row-actions";
 import { TableFilterBar } from "@/components/filters/table-filter-bar";
-import { Badge } from "@/components/ui/badge";
+import { InlineStatusSelect } from "@/components/ui/inline-status-select";
+import { Pagination, paginate } from "@/components/ui/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/format";
 import type { ProjectListItem } from "@/lib/types";
@@ -32,22 +33,33 @@ export function ProjectsOverview({
   const [query, setQuery] = useState(filters?.initialQuery ?? "");
   const [period, setPeriod] = useState<FilterPeriod>(filters?.initialPeriod ?? "all");
   const [type, setType] = useState(filters?.initialType ?? "all");
+  const [sort, setSort] = useState<"newest" | "oldest">("newest");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   useEffect(() => {
     setQuery(filters?.initialQuery ?? "");
     setPeriod(filters?.initialPeriod ?? "all");
     setType(filters?.initialType ?? "all");
+    setPage(1);
   }, [filters?.initialPeriod, filters?.initialQuery, filters?.initialType]);
 
+  useEffect(() => { setPage(1); }, [query, period, type, sort, pageSize]);
+
   const filtered = useMemo(
-    () => projects.filter((project) => {
-      const matchesQuery = `${project.code} ${project.name} ${project.clientName} ${project.status}`.toLowerCase().includes(query.toLowerCase());
-      const matchesPeriod = isWithinPeriod(project.startDate ?? project.deadline, period);
-      const matchesType = type === "all" || project.status === type;
-      return matchesQuery && matchesPeriod && matchesType;
-    }),
-    [period, projects, query, type],
+    () => {
+      const searched = projects.filter((project) => {
+        const matchesQuery = `${project.code} ${project.name} ${project.clientName} ${project.status}`.toLowerCase().includes(query.toLowerCase());
+        const matchesPeriod = isWithinPeriod(project.startDate ?? project.deadline, period);
+        const matchesType = type === "all" || project.status === type;
+        return matchesQuery && matchesPeriod && matchesType;
+      });
+      return [...searched].sort((a, b) => sort === "newest" ? b.id - a.id : a.id - b.id);
+    },
+    [period, projects, query, type, sort],
   );
+
+  const paged = paginate(filtered, page, pageSize);
 
   const totalProjects = projects.length;
   const completedProjects = projects.filter((project) => project.status === "Completed").length;
@@ -64,18 +76,30 @@ export function ProjectsOverview({
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-border p-4 md:p-6">
-        <TableFilterBar
-          value={query}
-          onChange={setQuery}
-          placeholder="Search projects..."
-          periodValue={period}
-          onPeriodChange={(value) => setPeriod(value as FilterPeriod)}
-          typeValue={type}
-          onTypeChange={setType}
-          typeOptions={projectStatusOptions}
-        />
+        <div className="flex flex-col sm:flex-row gap-2 mb-4">
+          <div className="flex-1">
+            <TableFilterBar
+              value={query}
+              onChange={setQuery}
+              placeholder="Search projects..."
+              periodValue={period}
+              onPeriodChange={(value) => setPeriod(value as FilterPeriod)}
+              typeValue={type}
+              onTypeChange={setType}
+              typeOptions={projectStatusOptions}
+            />
+          </div>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as "newest" | "oldest")}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm w-full sm:w-36"
+          >
+            <option value="newest">Terbaru</option>
+            <option value="oldest">Terlama</option>
+          </select>
+        </div>
 
-        <div className="w-full overflow-x-auto pb-4 rounded-xl border mt-4">
+        <div className="w-full overflow-x-auto pb-4 rounded-xl border">
           <Table className="min-w-[900px]">
             <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
               <TableRow className="hover:bg-transparent">
@@ -90,7 +114,7 @@ export function ProjectsOverview({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((project) => (
+              {paged.map((project) => (
                 <TableRow key={project.id} className="group hover:bg-muted/30 transition-colors border-b last:border-0">
                   <TableCell className="font-medium text-muted-foreground py-4">{project.code}</TableCell>
                   <TableCell className="font-semibold text-foreground py-4 max-w-[200px] truncate" title={project.name}>{project.name}</TableCell>
@@ -113,7 +137,11 @@ export function ProjectsOverview({
                   </TableCell>
                   <TableCell className="text-right font-medium py-4">{formatCurrency(project.value)}</TableCell>
                   <TableCell className="text-center py-4">
-                    <Badge className={project.status === "Completed" ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 border-none shadow-none" : "bg-blue-100 text-blue-700 hover:bg-blue-100 hover:text-blue-800 border-none shadow-none"}>{project.status}</Badge>
+                    <InlineStatusSelect
+                      currentStatus={project.status}
+                      options={["In Progress", "Completed", "On Hold"]}
+                      endpoint={`/api/projects/${project.id}/status`}
+                    />
                   </TableCell>
                   <TableCell className="text-right py-4">
                     <ProjectRowActions project={project} clients={clients} />
@@ -123,6 +151,7 @@ export function ProjectsOverview({
             </TableBody>
           </Table>
         </div>
+        <Pagination page={page} pageSize={pageSize} total={filtered.length} onPageChange={setPage} onPageSizeChange={setPageSize} />
       </div>
     </>
   );

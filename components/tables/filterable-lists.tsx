@@ -9,6 +9,7 @@ import { DownloadInvoiceLetterButton } from "@/components/pdf/download-invoice-l
 import { DownloadKwitansiButton } from "@/components/pdf/download-kwitansi-button";
 import { GenerateDeliveryFromInvoiceButton } from "@/components/pdf/generate-delivery-from-invoice-button";
 import { Badge } from "@/components/ui/badge";
+import { InlineStatusSelect } from "@/components/ui/inline-status-select";
 import { Pagination, paginate } from "@/components/ui/pagination";
 import {
   Table,
@@ -40,6 +41,7 @@ function useFilterState(filters?: TableFilterState) {
   const [type, setType] = useState(filters?.initialType ?? "all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [sort, setSort] = useState<"newest" | "oldest">("newest");
 
   useEffect(() => {
     setQuery(filters?.initialQuery ?? "");
@@ -51,9 +53,9 @@ function useFilterState(filters?: TableFilterState) {
   // Reset to page 1 when filters change
   useEffect(() => {
     setPage(1);
-  }, [query, period, type, pageSize]);
+  }, [query, period, type, pageSize, sort]);
 
-  return { query, setQuery, period, setPeriod, type, setType, page, setPage, pageSize, setPageSize };
+  return { query, setQuery, period, setPeriod, type, setType, page, setPage, pageSize, setPageSize, sort, setSort };
 }
 
 const leadStatusOptions = [
@@ -91,32 +93,47 @@ const quotationStatusOptions = [
 ];
 
 export function FilterableLeadsTable({ leads, clients, filters }: { leads: LeadListItem[]; clients: ClientOption[]; filters?: TableFilterState }) {
-  const { query, setQuery, period, setPeriod, type, setType, page, setPage, pageSize, setPageSize } = useFilterState(filters);
+  const { query, setQuery, period, setPeriod, type, setType, page, setPage, pageSize, setPageSize, sort, setSort } = useFilterState(filters);
 
   const filtered = useMemo(
-    () => leads.filter((lead) => {
-      const matchesQuery = `${lead.code} ${lead.clientName} ${lead.serviceName} ${lead.status}`.toLowerCase().includes(query.toLowerCase());
-      const matchesPeriod = isWithinPeriod(lead.createdAt, period);
-      const matchesType = type === "all" || lead.status === type;
-      return matchesQuery && matchesPeriod && matchesType;
-    }),
-    [leads, period, query, type],
+    () => {
+      const searched = leads.filter((lead) => {
+        const matchesQuery = `${lead.code} ${lead.clientName} ${lead.serviceName} ${lead.status}`.toLowerCase().includes(query.toLowerCase());
+        const matchesPeriod = isWithinPeriod(lead.createdAt, period);
+        const matchesType = type === "all" || lead.status === type;
+        return matchesQuery && matchesPeriod && matchesType;
+      });
+      return [...searched].sort((a, b) => sort === "newest" ? b.id - a.id : a.id - b.id);
+    },
+    [leads, period, query, type, sort],
   );
 
   const paged = paginate(filtered, page, pageSize);
 
   return (
     <div className="space-y-4">
-      <TableFilterBar
-        value={query}
-        onChange={setQuery}
-        placeholder="Search leads..."
-        periodValue={period}
-        onPeriodChange={(value) => setPeriod(value as FilterPeriod)}
-        typeValue={type}
-        onTypeChange={setType}
-        typeOptions={leadStatusOptions}
-      />
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex-1">
+          <TableFilterBar
+            value={query}
+            onChange={setQuery}
+            placeholder="Search leads..."
+            periodValue={period}
+            onPeriodChange={(value) => setPeriod(value as FilterPeriod)}
+            typeValue={type}
+            onTypeChange={setType}
+            typeOptions={leadStatusOptions}
+          />
+        </div>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as "newest" | "oldest")}
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm w-full sm:w-36"
+        >
+          <option value="newest">Terbaru</option>
+          <option value="oldest">Terlama</option>
+        </select>
+      </div>
       <div className="w-full overflow-x-auto pb-4 rounded-xl border">
         <Table className="min-w-[880px]">
           <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
@@ -139,7 +156,13 @@ export function FilterableLeadsTable({ leads, clients, filters }: { leads: LeadL
                 <TableCell>{lead.contactPerson ?? "-"}</TableCell>
                 <TableCell>{lead.serviceName}</TableCell>
                 <TableCell className="text-right">{formatCurrency(lead.estimatedValue)}</TableCell>
-                <TableCell className="text-center"><Badge>{lead.status}</Badge></TableCell>
+                <TableCell className="text-center">
+                  <InlineStatusSelect
+                    currentStatus={lead.status}
+                    options={["New", "Follow Up", "Negotiation", "Won", "Lost"]}
+                    endpoint={`/api/leads/${lead.id}/status`}
+                  />
+                </TableCell>
                 <TableCell className="text-right">{lead.createdAt ? format(new Date(lead.createdAt), "dd MMM yyyy") : "-"}</TableCell>
                 <TableCell className="text-right"><LeadRowActions row={lead} clients={clients} /></TableCell>
               </TableRow>
@@ -153,32 +176,47 @@ export function FilterableLeadsTable({ leads, clients, filters }: { leads: LeadL
 }
 
 export function FilterableInvoicesTable({ invoices, clients, settings, filters }: { invoices: InvoiceListItem[]; clients: ClientOption[]; settings: DocumentSettings; filters?: TableFilterState }) {
-  const { query, setQuery, period, setPeriod, type, setType, page, setPage, pageSize, setPageSize } = useFilterState(filters);
+  const { query, setQuery, period, setPeriod, type, setType, page, setPage, pageSize, setPageSize, sort, setSort } = useFilterState(filters);
 
   const filtered = useMemo(
-    () => invoices.filter((invoice) => {
-      const matchesQuery = `${invoice.code} ${invoice.clientName} ${invoice.projectName ?? ""} ${invoice.status}`.toLowerCase().includes(query.toLowerCase());
-      const matchesPeriod = isWithinPeriod(invoice.date, period);
-      const matchesType = type === "all" || invoice.status === type;
-      return matchesQuery && matchesPeriod && matchesType;
-    }),
-    [invoices, period, query, type],
+    () => {
+      const searched = invoices.filter((invoice) => {
+        const matchesQuery = `${invoice.code} ${invoice.clientName} ${invoice.projectName ?? ""} ${invoice.status}`.toLowerCase().includes(query.toLowerCase());
+        const matchesPeriod = isWithinPeriod(invoice.date, period);
+        const matchesType = type === "all" || invoice.status === type;
+        return matchesQuery && matchesPeriod && matchesType;
+      });
+      return [...searched].sort((a, b) => sort === "newest" ? b.id - a.id : a.id - b.id);
+    },
+    [invoices, period, query, type, sort],
   );
 
   const paged = paginate(filtered, page, pageSize);
 
   return (
     <div className="space-y-4">
-      <TableFilterBar
-        value={query}
-        onChange={setQuery}
-        placeholder="Search invoices..."
-        periodValue={period}
-        onPeriodChange={(value) => setPeriod(value as FilterPeriod)}
-        typeValue={type}
-        onTypeChange={setType}
-        typeOptions={invoiceStatusOptions}
-      />
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex-1">
+          <TableFilterBar
+            value={query}
+            onChange={setQuery}
+            placeholder="Search invoices..."
+            periodValue={period}
+            onPeriodChange={(value) => setPeriod(value as FilterPeriod)}
+            typeValue={type}
+            onTypeChange={setType}
+            typeOptions={invoiceStatusOptions}
+          />
+        </div>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as "newest" | "oldest")}
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm w-full sm:w-36"
+        >
+          <option value="newest">Terbaru</option>
+          <option value="oldest">Terlama</option>
+        </select>
+      </div>
       <div className="w-full overflow-x-auto pb-4 rounded-xl border">
         <Table className="min-w-[980px]">
           <TableHeader className="bg-slate-50 sticky top-0 z-10">
@@ -200,7 +238,14 @@ export function FilterableInvoicesTable({ invoices, clients, settings, filters }
                 <TableCell>{invoice.date ? format(new Date(invoice.date), "dd MMM yyyy") : "-"}<div className="text-xs text-muted-foreground">Due {invoice.dueDate ? format(new Date(invoice.dueDate), "dd MMM yyyy") : "-"}</div></TableCell>
                 <TableCell className="text-right">{invoice.amountPaid ? formatCurrency(invoice.amountPaid) : "-"}</TableCell>
                 <TableCell className="text-right">{formatCurrency(invoice.total)}</TableCell>
-                <TableCell className="text-center"><Badge>{invoice.status}</Badge></TableCell>
+                <TableCell className="text-center">
+                  <Badge className={
+                    invoice.status === "Paid" ? "bg-emerald-100 text-emerald-700 border-none" :
+                    invoice.status === "Overdue" ? "bg-rose-100 text-rose-700 border-none" :
+                    invoice.status === "Partially Paid" ? "bg-amber-100 text-amber-700 border-none" :
+                    "bg-slate-100 text-slate-700 border-none"
+                  }>{invoice.status}</Badge>
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <DownloadInvoiceLetterButton payload={{ id: invoice.code, client: invoice.clientName, project: invoice.projectName ?? "-", date: invoice.date ? new Date(invoice.date) : new Date(), dueDate: invoice.dueDate ? new Date(invoice.dueDate) : null, companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, paymentMethod: invoice.paymentMethod, attachment: invoice.attachment, subject: invoice.subject, recipientName: invoice.recipientName, recipientCompany: invoice.recipientCompany, recipientAddress: invoice.recipientAddress, introduction: invoice.introduction, terms: invoice.terms, closingNote: invoice.closingNote, signatoryName: invoice.signatoryName || settings.defaultSignatoryName, signatoryTitle: invoice.signatoryTitle || settings.defaultSignatoryTitle, signatureImageUrl: settings.signatureImageUrl, stampImageUrl: settings.stampImageUrl, items: invoice.items, subtotal: invoice.subtotal, ppn: invoice.tax, total: invoice.total, amountPaid: invoice.amountPaid, outstandingAmount: invoice.outstandingAmount, status: invoice.status }} />
@@ -257,32 +302,47 @@ export function FilterableInvoicesTable({ invoices, clients, settings, filters }
 }
 
 export function FilterablePaymentsTable({ payments, clients, invoices, settings, filters }: { payments: PaymentListItem[]; clients: ClientOption[]; invoices: InvoiceOption[]; settings: DocumentSettings; filters?: TableFilterState }) {
-  const { query, setQuery, period, setPeriod, type, setType, page, setPage, pageSize, setPageSize } = useFilterState(filters);
+  const { query, setQuery, period, setPeriod, type, setType, page, setPage, pageSize, setPageSize, sort, setSort } = useFilterState(filters);
 
   const filtered = useMemo(
-    () => payments.filter((payment) => {
-      const matchesQuery = `${payment.code} ${payment.clientName} ${payment.invoiceCode} ${payment.paymentMethod ?? ""}`.toLowerCase().includes(query.toLowerCase());
-      const matchesPeriod = isWithinPeriod(payment.date, period);
-      const matchesType = type === "all" || (payment.paymentMethod ?? "").toLowerCase() === type.toLowerCase();
-      return matchesQuery && matchesPeriod && matchesType;
-    }),
-    [payments, period, query, type],
+    () => {
+      const searched = payments.filter((payment) => {
+        const matchesQuery = `${payment.code} ${payment.clientName} ${payment.invoiceCode} ${payment.paymentMethod ?? ""}`.toLowerCase().includes(query.toLowerCase());
+        const matchesPeriod = isWithinPeriod(payment.date, period);
+        const matchesType = type === "all" || (payment.paymentMethod ?? "").toLowerCase() === type.toLowerCase();
+        return matchesQuery && matchesPeriod && matchesType;
+      });
+      return [...searched].sort((a, b) => sort === "newest" ? b.id - a.id : a.id - b.id);
+    },
+    [payments, period, query, type, sort],
   );
 
   const paged = paginate(filtered, page, pageSize);
 
   return (
     <div className="space-y-4">
-      <TableFilterBar
-        value={query}
-        onChange={setQuery}
-        placeholder="Search payments..."
-        periodValue={period}
-        onPeriodChange={(value) => setPeriod(value as FilterPeriod)}
-        typeValue={type}
-        onTypeChange={setType}
-        typeOptions={paymentMethodOptions}
-      />
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex-1">
+          <TableFilterBar
+            value={query}
+            onChange={setQuery}
+            placeholder="Search payments..."
+            periodValue={period}
+            onPeriodChange={(value) => setPeriod(value as FilterPeriod)}
+            typeValue={type}
+            onTypeChange={setType}
+            typeOptions={paymentMethodOptions}
+          />
+        </div>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as "newest" | "oldest")}
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm w-full sm:w-36"
+        >
+          <option value="newest">Terbaru</option>
+          <option value="oldest">Terlama</option>
+        </select>
+      </div>
       <div className="w-full overflow-x-auto pb-4 rounded-xl border">
         <Table className="min-w-[920px]">
           <TableHeader className="bg-slate-50 sticky top-0 z-10">

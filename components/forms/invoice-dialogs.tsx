@@ -113,6 +113,25 @@ export function InvoiceDialog({ clients, invoice }: { clients: ClientOption[]; i
     return () => { active = false; };
   }, [invoice, open]);
 
+  // Auto-fill recipient fields from client data when client is selected.
+  const handleClientChange = (id: string | null) => {
+    setClientId(id ?? "");
+    if (!id) return;
+    fetch(`/api/clients`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((allClients: Array<{ id: number; name: string; contactPerson?: string | null; address?: string | null }> | null) => {
+        if (!allClients) return;
+        const found = allClients.find((c) => String(c.id) === id);
+        if (!found) return;
+        if (!recipientName) setRecipientName(found.contactPerson || found.name || "");
+        if (!recipientCompany) setRecipientCompany(found.name || "");
+        if (!recipientAddress || recipientAddress === "Di tempat") {
+          setRecipientAddress(found.address || "Di tempat");
+        }
+      })
+      .catch(() => null);
+  };
+
   const computedItems = useMemo(() => items.map((item) => ({ ...item, amount: parseMoneyInput(item.unitPrice) * Number(item.qty || 0) })), [items]);
   const subtotal = useMemo(() => computedItems.reduce((sum, item) => sum + item.amount, 0), [computedItems]);
 
@@ -139,7 +158,7 @@ export function InvoiceDialog({ clients, invoice }: { clients: ClientOption[]; i
         </DialogHeader>
         <div className="grid gap-6">
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="grid gap-2"><Label>Client</Label><Select value={clientId} onValueChange={(value) => setClientId(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih client">{selectedClientName}</SelectValue></SelectTrigger><SelectContent>{clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="grid gap-2"><Label>Client</Label><Select value={clientId} onValueChange={handleClientChange}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih client">{selectedClientName}</SelectValue></SelectTrigger><SelectContent>{clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}</SelectContent></Select></div>
             <div className="grid gap-2"><Label>Due Date</Label><Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
             <div className="grid gap-2"><Label>Payment Method</Label><Select value={paymentMethod} onValueChange={(value) => setPaymentMethod(value ?? "CBD")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih opsi" /></SelectTrigger><SelectContent><SelectItem value="CBD">CBD</SelectItem><SelectItem value="Term">Term</SelectItem></SelectContent></Select></div>
             <div className="grid gap-2"><Label>PPN (%)</Label><Input type="number" min="0" step="0.01" value={taxPercent} onChange={(e) => setTaxPercent(e.target.value)} placeholder="11" /></div>

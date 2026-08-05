@@ -93,12 +93,40 @@ function ClientDialog({ client }: { client?: ClientRow }) {
 export function ClientManagement({ clients }: { clients: ClientRow[] }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const filtered = useMemo(() => clients.filter((client) => `${client.name} ${client.contactPerson ?? ""} ${client.additionalPic ?? ""} ${client.phone ?? ""} ${client.email ?? ""} ${client.npwp ?? ""}`.toLowerCase().includes(query.toLowerCase())), [clients, query]);
+  const [sortOrder, setSortOrder] = useState<"az" | "za" | "newest" | "oldest">("az");
+
+  const filtered = useMemo(() => {
+    const searched = clients.filter((client) =>
+      `${client.name} ${client.contactPerson ?? ""} ${client.additionalPic ?? ""} ${client.phone ?? ""} ${client.email ?? ""} ${client.npwp ?? ""}`.toLowerCase().includes(query.toLowerCase())
+    );
+    return [...searched].sort((a, b) => {
+      if (sortOrder === "az") return a.name.localeCompare(b.name, "id");
+      if (sortOrder === "za") return b.name.localeCompare(a.name, "id");
+      if (sortOrder === "newest") return b.id - a.id;
+      return a.id - b.id;
+    });
+  }, [clients, query, sortOrder]);
+
+  const sortOptions = [
+    { label: "A–Z", value: "az" },
+    { label: "Z–A", value: "za" },
+    { label: "Terbaru", value: "newest" },
+    { label: "Terlama", value: "oldest" },
+  ];
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <TableFilterBar value={query} onChange={setQuery} placeholder="Search clients..." />
+        <div className="flex flex-col sm:flex-row gap-2 flex-1">
+          <TableFilterBar value={query} onChange={setQuery} placeholder="Search clients..." />
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as typeof sortOrder)}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm w-full sm:w-40"
+          >
+            {sortOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </div>
         <ClientDialog />
       </div>
 

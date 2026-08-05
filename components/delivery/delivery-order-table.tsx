@@ -9,9 +9,9 @@ import { toast } from "sonner";
 import { DownloadDeliveryOrderButton } from "@/components/pdf/download-delivery-order-button";
 import { DeliveryOrderDialog } from "@/components/forms/delivery-order-dialogs";
 import { TableFilterBar } from "@/components/filters/table-filter-bar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { InlineStatusSelect } from "@/components/ui/inline-status-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { DeliveryOrderListItem } from "@/lib/data-delivery";
 import { isWithinPeriod, type FilterPeriod } from "@/lib/view-filters";
@@ -120,7 +120,13 @@ export function DeliveryOrdersTable({
                   {delivery.vehicleNumber ? <div className="text-xs text-muted-foreground">{delivery.vehicleNumber}</div> : null}
                 </TableCell>
                 <TableCell>{delivery.invoiceCode ?? "-"}</TableCell>
-                <TableCell className="text-center"><Badge>{delivery.status}</Badge></TableCell>
+                <TableCell className="text-center">
+                  <InlineStatusSelect
+                    currentStatus={delivery.status}
+                    options={["Draft", "In Transit", "Delivered", "Cancelled"]}
+                    endpoint={`/api/delivery-orders/${delivery.id}/status`}
+                  />
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2 flex-wrap">
                     <DownloadDeliveryOrderButton

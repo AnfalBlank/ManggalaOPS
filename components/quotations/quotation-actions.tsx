@@ -10,6 +10,8 @@ import { DownloadQuotationButton } from "@/components/pdf/download-quotation-but
 import { QuotationRowActions } from "@/components/forms/project-quotation-row-actions";
 import { TableFilterBar } from "@/components/filters/table-filter-bar";
 import { Badge } from "@/components/ui/badge";
+import { InlineStatusSelect } from "@/components/ui/inline-status-select";
+import { Pagination, paginate } from "@/components/ui/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/format";
 import type { QuotationListItem } from "@/lib/types";
@@ -41,12 +43,17 @@ export function QuotationActionsTable({
   const [period, setPeriod] = useState<FilterPeriod>(filters?.initialPeriod ?? "all");
   const [type, setType] = useState(filters?.initialType ?? "all");
   const [loadingId, setLoadingId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   useEffect(() => {
     setQuery(filters?.initialQuery ?? "");
     setPeriod(filters?.initialPeriod ?? "all");
     setType(filters?.initialType ?? "all");
+    setPage(1);
   }, [filters?.initialPeriod, filters?.initialQuery, filters?.initialType]);
+
+  useEffect(() => { setPage(1); }, [query, period, type, pageSize]);
 
   const filtered = useMemo(
     () => quotations.filter((quote) => {
@@ -57,6 +64,8 @@ export function QuotationActionsTable({
     }),
     [period, query, quotations, type],
   );
+
+  const paged = paginate(filtered, page, pageSize);
 
   return (
     <div className="space-y-4">
@@ -85,7 +94,7 @@ export function QuotationActionsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((quote) => (
+            {paged.map((quote) => (
               <TableRow key={quote.id}>
                 <TableCell>{quote.code}</TableCell>
                 <TableCell>{quote.clientName}<div className="text-xs text-muted-foreground">{quote.projectName ?? "-"}</div></TableCell>
@@ -93,7 +102,14 @@ export function QuotationActionsTable({
                 <TableCell className="text-right">{formatCurrency(quote.total)}</TableCell>
                 <TableCell className={cn("text-right font-medium", quote.totalMargin >= 0 ? "text-green-600" : "text-red-600")}>{formatCurrency(quote.totalMargin)}</TableCell>
                 <TableCell className={cn("text-right font-medium", quote.totalMargin >= 0 ? "text-green-600" : "text-red-600")}>{quote.marginPercentage.toFixed(1)}%</TableCell>
-                <TableCell className="text-center"><Badge>{quote.status}</Badge></TableCell>
+                <TableCell className="text-center">
+                  <InlineStatusSelect
+                    currentStatus={quote.status}
+                    options={["Draft", "Sent", "Accepted", "Rejected"]}
+                    endpoint={`/api/quotations/${quote.id}/status`}
+                    disabled={quote.status === "Accepted"}
+                  />
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2 flex-wrap">
                     <DownloadQuotationButton
@@ -160,6 +176,7 @@ export function QuotationActionsTable({
           </TableBody>
         </Table>
       </div>
+      <Pagination page={page} pageSize={pageSize} total={filtered.length} onPageChange={setPage} onPageSizeChange={setPageSize} />
     </div>
   );
 }

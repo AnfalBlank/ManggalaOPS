@@ -134,6 +134,27 @@ export function QuotationDialog({ clients, projects, quotation }: { clients: Cli
   );
   const [pricesIncludeTax, setPricesIncludeTax] = useState(false);
 
+  // Auto-fill recipient from client data when client is selected.
+  const handleClientChange = (id: string | null) => {
+    const safeId = id ?? "";
+    setClientId(safeId);
+    setProjectId("none");
+    if (!safeId) return;
+    fetch("/api/clients")
+      .then((r) => r.ok ? r.json() : null)
+      .then((allClients: Array<{ id: number; name: string; contactPerson?: string | null; address?: string | null }> | null) => {
+        if (!allClients) return;
+        const found = allClients.find((c) => String(c.id) === safeId);
+        if (!found) return;
+        if (!recipientName) setRecipientName(found.contactPerson || found.name || "");
+        if (!recipientCompany) setRecipientCompany(found.name || "");
+        if (!recipientAddress || recipientAddress === "Di tempat") {
+          setRecipientAddress(found.address || "Di tempat");
+        }
+      })
+      .catch(() => null);
+  };
+
   useEffect(() => {
     if (!open || quotation) return;
     let active = true;
@@ -188,7 +209,7 @@ export function QuotationDialog({ clients, projects, quotation }: { clients: Cli
         </DialogHeader>
         <div className="grid gap-6">
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="grid gap-2"><Label>Client</Label><Select value={clientId} onValueChange={(value) => { setClientId(value ?? ""); setProjectId("none"); }}><SelectTrigger className="w-full"><TriggerLabel text={selectedClientName} placeholder="Pilih client" /></SelectTrigger><SelectContent>{clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="grid gap-2"><Label>Client</Label><Select value={clientId} onValueChange={handleClientChange}><SelectTrigger className="w-full"><TriggerLabel text={selectedClientName} placeholder="Pilih client" /></SelectTrigger><SelectContent>{clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}</SelectContent></Select></div>
             <div className="grid gap-2"><Label>Project (opsional)</Label><Select value={projectId} onValueChange={(value) => setProjectId(value ?? "none")}><SelectTrigger className="w-full"><TriggerLabel text={selectedProjectName} placeholder="Pilih project" /></SelectTrigger><SelectContent><SelectItem value="none">Tanpa project</SelectItem>{filteredProjects.map((project) => <SelectItem key={project.id} value={String(project.id)}>{project.name}{project.clientName ? ` — ${project.clientName}` : ""}</SelectItem>)}</SelectContent></Select></div>
             <div className="grid gap-2"><Label>Payment Method</Label><Select value={paymentMethod} onValueChange={(value) => setPaymentMethod(value ?? "CBD")}><SelectTrigger className="w-full"><TriggerLabel text={paymentMethod} placeholder="Pilih opsi" /></SelectTrigger><SelectContent><SelectItem value="CBD">CBD</SelectItem><SelectItem value="Term">Term</SelectItem></SelectContent></Select></div>
             <div className="grid gap-2"><Label>Status</Label><Select value={status} onValueChange={(value) => setStatus(value ?? "Draft")}><SelectTrigger className="w-full"><TriggerLabel text={status} placeholder="Pilih opsi" /></SelectTrigger><SelectContent><SelectItem value="Draft">Draft</SelectItem><SelectItem value="Sent">Sent</SelectItem><SelectItem value="Accepted">Accepted</SelectItem><SelectItem value="Rejected">Rejected</SelectItem></SelectContent></Select></div>
