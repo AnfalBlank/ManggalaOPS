@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { labelStatus } from "@/lib/label-status";
 
 const STATUS_COLORS: Record<string, string> = {
   // Invoice
@@ -73,13 +74,13 @@ export function InlineStatusSelect({
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        toast.error(payload.error ?? "Gagal update status");
+        toast.error(payload.error ?? "Gagal ubah status");
         return;
       }
-      toast.success(`Status diubah ke "${next}"`);
+      toast.success(`Status diubah jadi "${labelStatus(next)}"`);
       router.refresh();
     } catch {
-      toast.error("Gagal update status");
+      toast.error("Gagal ubah status");
     } finally {
       setSaving(false);
     }
@@ -88,7 +89,7 @@ export function InlineStatusSelect({
   if (disabled) {
     return (
       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${colorClass}`}>
-        {currentStatus}
+        {labelStatus(currentStatus)}
       </span>
     );
   }
@@ -102,13 +103,13 @@ export function InlineStatusSelect({
           <SelectTrigger
             className={`h-7 rounded-full border-0 px-2.5 text-xs font-medium shadow-none focus:ring-0 ${colorClass}`}
           >
-            <SelectValue />
+            <SelectValue>{(value: string) => labelStatus(value)}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {options.map((opt) => (
               <SelectItem key={opt} value={opt}>
                 <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[opt] ?? "bg-slate-100"}`}>
-                  {opt}
+                  {labelStatus(opt)}
                 </span>
               </SelectItem>
             ))}

@@ -14,7 +14,7 @@ export async function GET() {
     const data = await getLeads();
     return NextResponse.json(data);
   } catch (error) {
-    return toErrorResponse(error, "Failed to fetch leads");
+    return toErrorResponse(error, "Gagal ngambil calon klien");
   }
 }
 
@@ -38,6 +38,6 @@ export async function POST(request: NextRequest) {
     await audit({ userId: user.id, action: "lead.create", entity: "lead", entityId: inserted[0]?.id, payload: { serviceName, status } });
     return NextResponse.json({ ok: true, data: await getLeads() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to create lead");
+    return toErrorResponse(error, "Gagal nambah calon klien");
   }
 }

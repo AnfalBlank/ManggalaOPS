@@ -12,8 +12,8 @@ export default async function ClientsPage() {
       <PageWrapper>
         <RoleGuard allow={["admin", "sales", "finance", "project_manager"]}>
           <div className="mb-6">
-            <h1 className="text-3xl font-bold tracking-tight text-primary">Client Management</h1>
-            <p className="text-muted-foreground mt-1">Kelola data client untuk kebutuhan lead, quotation, invoice, project, dan payment.</p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Klien</h1>
+            <p className="text-muted-foreground mt-1">Data klien yang dipakai buat calon klien, penawaran, proyek, tagihan, dan pembayaran.</p>
           </div>
           <ClientManagement clients={clients} />
         </RoleGuard>
@@ -22,7 +22,7 @@ export default async function ClientsPage() {
   } catch (error) {
     return (
       <PageWrapper>
-        <ErrorState title="Gagal memuat clients" description={error instanceof Error ? error.message : "Terjadi error saat memuat data client."} />
+        <ErrorState title="Gagal memuat data klien" description={error instanceof Error ? error.message : "Ada masalah pas ngambil data klien."} />
       </PageWrapper>
     );
   }

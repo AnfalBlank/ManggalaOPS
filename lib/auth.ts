@@ -5,22 +5,22 @@ export type AppRole = SessionRole;
 
 export const roleLabels: Record<AppRole, string> = {
   admin: "Admin",
-  finance: "Finance",
+  finance: "Keuangan",
   sales: "Sales",
-  project_manager: "Project Manager",
+  project_manager: "Manajer proyek",
 };
 
 export const allRoles: AppRole[] = ["admin", "finance", "sales", "project_manager"];
 
 export class UnauthorizedError extends Error {
-  constructor(message = "Unauthorized") {
+  constructor(message = "Belum login") {
     super(message);
     this.name = "UnauthorizedError";
   }
 }
 
 export class ForbiddenError extends Error {
-  constructor(message = "Forbidden") {
+  constructor(message = "Gak punya akses") {
     super(message);
     this.name = "ForbiddenError";
   }
@@ -42,7 +42,7 @@ export async function requireRole(allowed: AppRole[]) {
   }
   const role = user.role as AppRole;
   if (!allowed.includes(role)) {
-    throw new ForbiddenError(`Role ${roleLabels[role] ?? role} tidak punya akses`);
+    throw new ForbiddenError(`Jabatan ${roleLabels[role] ?? role} gak punya akses ke sini`);
   }
   return { user, role };
 }

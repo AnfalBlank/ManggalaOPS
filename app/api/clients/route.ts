@@ -13,7 +13,7 @@ export async function GET() {
     const data = await getClients();
     return NextResponse.json(data);
   } catch (error) {
-    return toErrorResponse(error, "Failed to fetch clients");
+    return toErrorResponse(error, "Gagal ngambil data klien");
   }
 }
 
@@ -38,6 +38,6 @@ export async function POST(request: NextRequest) {
     await audit({ userId: user.id, action: "client.create", entity: "client", entityId: inserted[0]?.id, payload: { name } });
     return NextResponse.json({ ok: true, data: await getClients() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to create client");
+    return toErrorResponse(error, "Gagal nambah klien");
   }
 }

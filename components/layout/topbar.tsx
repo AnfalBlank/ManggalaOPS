@@ -4,19 +4,30 @@ import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { LABEL_JABATAN } from "@/lib/label-status";
 import { NotificationsMenu } from "@/components/layout/notifications-menu";
 import { ProfileMenu } from "@/components/layout/profile-menu";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
-const roleLabels: Record<string, string> = {
-  admin: "Admin",
-  finance: "Finance",
-  sales: "Sales",
-  project_manager: "Project Manager",
-};
+const roleLabels = LABEL_JABATAN;
 
 const SEARCH_TARGETS = [
+  { keyword: "po klien", path: "/po" },
+  { keyword: "surat jalan", path: "/delivery-orders" },
+  { keyword: "calon klien", path: "/leads" },
+  { keyword: "klien", path: "/clients" },
+  { keyword: "proyek", path: "/projects" },
+  { keyword: "penawaran", path: "/quotations" },
+  { keyword: "tagihan", path: "/invoices" },
+  { keyword: "pembayaran", path: "/payments" },
+  { keyword: "pengeluaran", path: "/finance" },
+  { keyword: "keuangan", path: "/finance" },
+  { keyword: "akuntansi", path: "/accounting" },
+  { keyword: "laporan", path: "/reports" },
+  { keyword: "kalkulator", path: "/calculator" },
+  { keyword: "pengguna", path: "/users" },
+  { keyword: "setelan", path: "/settings" },
   { keyword: "lead", path: "/leads" },
   { keyword: "client", path: "/clients" },
   { keyword: "project", path: "/projects" },
@@ -73,7 +84,7 @@ export function Topbar({ user }: { user?: { name: string; email: string; role: s
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Cari client, invoice, project..."
+            placeholder="Cari klien, tagihan, proyek..."
             className="border-none shadow-none focus-visible:ring-0 h-8 px-0 text-sm placeholder:text-muted-foreground/70"
           />
         </form>

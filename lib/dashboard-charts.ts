@@ -6,7 +6,7 @@ import { expenses, payments } from "@/db/schema";
 export type MonthBucket = { name: string; total: number };
 export type CashflowMonthBucket = { name: string; in: number; out: number };
 
-const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 
 function emptyMonths(): MonthBucket[] {
   return MONTH_LABELS.map((name) => ({ name, total: 0 }));

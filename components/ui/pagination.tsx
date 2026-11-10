@@ -31,16 +31,16 @@ export function Pagination({
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-2 py-3 text-sm">
       <div className="text-muted-foreground">
-        {total === 0 ? "Tidak ada data" : `Menampilkan ${startItem}-${endItem} dari ${total} entri`}
+        {total === 0 ? "Tidak ada data" : `Menampilkan ${startItem}–${endItem} dari ${total} data`}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {onPageSizeChange ? (
           <div className="flex items-center gap-2 mr-2">
-            <span className="text-xs text-muted-foreground">Per page</span>
+            <span className="text-xs text-muted-foreground">Per halaman</span>
             <select
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
-              className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+              className="h-10 sm:h-8 rounded-md border border-input bg-background px-2 text-sm"
             >
               {pageSizeOptions.map((option) => (
                 <option key={option} value={option}>{option}</option>
@@ -49,19 +49,19 @@ export function Pagination({
           </div>
         ) : null}
 
-        <Button variant="outline" size="sm" className="size-8 p-0" disabled={safePage <= 1} onClick={() => onPageChange(1)} title="Halaman pertama">
+        <Button variant="outline" size="sm" className="size-10 p-0 sm:size-8" disabled={safePage <= 1} onClick={() => onPageChange(1)} title="Halaman pertama">
           <ChevronsLeft className="size-4" />
         </Button>
-        <Button variant="outline" size="sm" className="size-8 p-0" disabled={safePage <= 1} onClick={() => onPageChange(safePage - 1)} title="Halaman sebelumnya">
+        <Button variant="outline" size="sm" className="size-10 p-0 sm:size-8" disabled={safePage <= 1} onClick={() => onPageChange(safePage - 1)} title="Halaman sebelumnya">
           <ChevronLeft className="size-4" />
         </Button>
         <span className="px-2 text-xs font-medium tabular-nums">
           {safePage} / {totalPages}
         </span>
-        <Button variant="outline" size="sm" className="size-8 p-0" disabled={safePage >= totalPages} onClick={() => onPageChange(safePage + 1)} title="Halaman selanjutnya">
+        <Button variant="outline" size="sm" className="size-10 p-0 sm:size-8" disabled={safePage >= totalPages} onClick={() => onPageChange(safePage + 1)} title="Halaman selanjutnya">
           <ChevronRight className="size-4" />
         </Button>
-        <Button variant="outline" size="sm" className="size-8 p-0" disabled={safePage >= totalPages} onClick={() => onPageChange(totalPages)} title="Halaman terakhir">
+        <Button variant="outline" size="sm" className="size-10 p-0 sm:size-8" disabled={safePage >= totalPages} onClick={() => onPageChange(totalPages)} title="Halaman terakhir">
           <ChevronsRight className="size-4" />
         </Button>
       </div>

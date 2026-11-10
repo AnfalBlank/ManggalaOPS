@@ -128,3 +128,130 @@
     @apply font-sans;
   }
 }
+
+/* HP: tombol & isian minimal 40 px biar gampang dipencet. Laptop gak berubah. */
+@media (max-width: 767px) {
+  main :is(button, a[data-slot="button"]):not([role="checkbox"]):not([role="switch"]),
+  [data-slot="select-trigger"] {
+    min-height: 2.5rem;
+    min-width: 2.5rem;
+  }
+  input[data-slot="input"]:not([type="checkbox"]):not([type="radio"]) {
+    min-height: 2.5rem;
+  }
+}
+
+/* Tabel jadi kartu di HP: tiap baris = kartu, judul kolom (data-label) di kiri nilainya. */
+@media (max-width: 767px) {
+  table[data-kartu="hp"] {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+  table[data-kartu="hp"] > thead {
+    display: none;
+  }
+  table[data-kartu="hp"],
+  table[data-kartu="hp"] > tbody,
+  table[data-kartu="hp"] > tfoot,
+  table[data-kartu="hp"] > tbody > tr,
+  table[data-kartu="hp"] > tfoot > tr {
+    display: block;
+    width: 100%;
+  }
+  table[data-kartu="hp"] > tbody > tr,
+  table[data-kartu="hp"] > tfoot > tr {
+    margin-bottom: 0.75rem;
+    padding: 0.25rem 0.875rem;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-lg);
+    background: var(--card);
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+  }
+  table[data-kartu="hp"] > tbody > tr > td,
+  table[data-kartu="hp"] > tfoot > tr > td {
+    display: block;
+    position: relative;
+    min-width: 0;
+    min-height: 2.25rem;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0.5rem 0 0.5rem 40% !important;
+    border-bottom: 1px dashed var(--border);
+    white-space: normal !important;
+    text-align: right !important;
+    overflow-wrap: anywhere;
+  }
+  table[data-kartu="hp"] > tbody > tr > td:last-child,
+  table[data-kartu="hp"] > tfoot > tr > td:last-child {
+    border-bottom: 0;
+  }
+  table[data-kartu="hp"] > tbody > tr > td::before,
+  table[data-kartu="hp"] > tfoot > tr > td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    width: 38%;
+    text-align: left;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    font-weight: 500;
+    color: var(--muted-foreground);
+  }
+  table[data-kartu="hp"] > * > tr > td[data-label=""]::before,
+  table[data-kartu="hp"] > * > tr > td:not([data-label])::before {
+    display: none;
+  }
+  table[data-kartu="hp"] > * > tr > td[data-label=""],
+  table[data-kartu="hp"] > * > tr > td:not([data-label]) {
+    padding-left: 0 !important;
+  }
+  /* Pesan "belum ada data" yang satu sel penuh. */
+  table[data-kartu="hp"] > tbody > tr > td:only-child {
+    padding-left: 0 !important;
+    text-align: center !important;
+  }
+  /* Kolom pertama = judul kartu. */
+  table[data-kartu="hp"] > tbody > tr > td:first-child:not(:only-child) {
+    font-weight: 600;
+  }
+  table[data-kartu="hp"] > * > tr > td > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  table[data-kartu="hp"] > * > tr > td :is(.whitespace-nowrap, .truncate) {
+    white-space: normal;
+  }
+  /* Tombol di kartu gampang dipencet. */
+  table[data-kartu="hp"] > tbody > tr > td button,
+  table[data-kartu="hp"] > tbody > tr > td a[data-slot="button"] {
+    min-height: 2.5rem;
+    min-width: 2.5rem;
+  }
+  table[data-kartu="hp"] > tbody > tr > td > div:has(button, a[data-slot="button"]) {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.375rem;
+  }
+  /* Sel tombol aksi: label disembunyiin, tombol pakai lebar penuh kartu. */
+  table[data-kartu="hp"] > tbody > tr > td:last-child:not(:only-child):has(button, a[data-slot="button"]) {
+    padding-left: 0 !important;
+    padding-top: 0.625rem !important;
+  }
+  table[data-kartu="hp"] > tbody > tr > td:last-child:not(:only-child):has(button, a[data-slot="button"])::before {
+    display: none;
+  }
+}
+/* Laptop lebar: tabel muat tanpa geser, tombol aksi turun baris kalau gak muat. */
+@media (min-width: 1280px) {
+  table[data-kartu="hp"] > tbody > tr > td:last-child:has(button, a[data-slot="button"]) > div {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 12rem;
+  }
+  table[data-kartu="hp"] > tbody > tr > td {
+    white-space: normal;
+  }
+}

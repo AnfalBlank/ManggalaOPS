@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 
 import { TableFilterBar } from "@/components/filters/table-filter-bar";
 import { WhatsappReminderButton } from "@/components/invoices/whatsapp-reminder-button";
@@ -22,7 +23,10 @@ import {
 import { LeadRowActions } from "@/components/forms/lead-row-actions";
 import { InvoiceRowActions, PaymentRowActions } from "@/components/forms/invoice-payment-row-actions";
 import { formatCurrency } from "@/lib/format";
-import type { InvoiceListItem, LeadListItem, PaymentListItem, QuotationListItem } from "@/lib/types";
+
+const tgl = (d: string | Date | null | undefined) => (d ? format(new Date(d), "dd MMM yyyy", { locale: localeId }) : "-");
+import type { InvoiceListItem, LeadListItem, PaymentListItem } from "@/lib/types";
+import { labelStatus, namaProyek } from "@/lib/label-status";
 import { isWithinPeriod, type FilterPeriod } from "@/lib/view-filters";
 
 type ClientOption = { id: number; name: string };
@@ -60,37 +64,33 @@ function useFilterState(filters?: TableFilterState) {
 
 const leadStatusOptions = [
   { label: "Semua status", value: "all" },
-  { label: "New", value: "New" },
-  { label: "Follow Up", value: "Follow Up" },
-  { label: "Negotiation", value: "Negotiation" },
-  { label: "Won", value: "Won" },
-  { label: "Lost", value: "Lost" },
+  { label: labelStatus("New"), value: "New" },
+  { label: labelStatus("Follow Up"), value: "Follow Up" },
+  { label: labelStatus("Negotiation"), value: "Negotiation" },
+  { label: labelStatus("Won"), value: "Won" },
+  { label: labelStatus("Lost"), value: "Lost" },
 ];
 
 const invoiceStatusOptions = [
   { label: "Semua status", value: "all" },
-  { label: "Unpaid", value: "Unpaid" },
-  { label: "Partially Paid", value: "Partially Paid" },
-  { label: "Paid", value: "Paid" },
-  { label: "Overdue", value: "Overdue" },
+  { label: labelStatus("Unpaid"), value: "Unpaid" },
+  { label: labelStatus("Partially Paid"), value: "Partially Paid" },
+  { label: labelStatus("Paid"), value: "Paid" },
+  { label: labelStatus("Overdue"), value: "Overdue" },
 ];
+
+const LABEL_CARA_BAYAR: Record<string, string> = { Cash: "Tunai", Term: "Tempo" };
+const labelCaraBayar = (m?: string | null) => (m ? LABEL_CARA_BAYAR[m] ?? m : "-");
 
 const paymentMethodOptions = [
   { label: "Semua metode", value: "all" },
   { label: "Transfer", value: "Transfer" },
-  { label: "Cash", value: "Cash" },
+  { label: "Tunai", value: "Cash" },
   { label: "Giro", value: "Giro" },
   { label: "CBD", value: "CBD" },
-  { label: "Term", value: "Term" },
+  { label: "Tempo", value: "Term" },
 ];
 
-const quotationStatusOptions = [
-  { label: "Semua status", value: "all" },
-  { label: "Draft", value: "Draft" },
-  { label: "Sent", value: "Sent" },
-  { label: "Accepted", value: "Accepted" },
-  { label: "Rejected", value: "Rejected" },
-];
 
 export function FilterableLeadsTable({ leads, clients, filters }: { leads: LeadListItem[]; clients: ClientOption[]; filters?: TableFilterState }) {
   const { query, setQuery, period, setPeriod, type, setType, page, setPage, pageSize, setPageSize, sort, setSort } = useFilterState(filters);
@@ -98,7 +98,7 @@ export function FilterableLeadsTable({ leads, clients, filters }: { leads: LeadL
   const filtered = useMemo(
     () => {
       const searched = leads.filter((lead) => {
-        const matchesQuery = `${lead.code} ${lead.clientName} ${lead.serviceName} ${lead.status}`.toLowerCase().includes(query.toLowerCase());
+        const matchesQuery = `${lead.code} ${lead.clientName} ${lead.serviceName} ${lead.status} ${labelStatus(lead.status)}`.toLowerCase().includes(query.toLowerCase());
         const matchesPeriod = isWithinPeriod(lead.createdAt, period);
         const matchesType = type === "all" || lead.status === type;
         return matchesQuery && matchesPeriod && matchesType;
@@ -117,7 +117,7 @@ export function FilterableLeadsTable({ leads, clients, filters }: { leads: LeadL
           <TableFilterBar
             value={query}
             onChange={setQuery}
-            placeholder="Search leads..."
+            placeholder="Cari calon klien..."
             periodValue={period}
             onPeriodChange={(value) => setPeriod(value as FilterPeriod)}
             typeValue={type}
@@ -134,18 +134,18 @@ export function FilterableLeadsTable({ leads, clients, filters }: { leads: LeadL
           <option value="oldest">Terlama</option>
         </select>
       </div>
-      <div className="w-full overflow-x-auto pb-4 rounded-xl border">
-        <Table className="min-w-[880px]">
+      <div className="w-full overflow-x-auto pb-4 md:rounded-xl md:border">
+        <Table className="min-w-[880px] xl:min-w-0">
           <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
             <TableRow className="hover:bg-transparent">
-              <TableHead>Lead ID</TableHead>
-              <TableHead>Client</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Service Need</TableHead>
-              <TableHead className="text-right">Est. Value</TableHead>
+              <TableHead>No.</TableHead>
+              <TableHead>Klien</TableHead>
+              <TableHead>Kontak</TableHead>
+              <TableHead>Kebutuhan</TableHead>
+              <TableHead className="text-right">Perkiraan nilai</TableHead>
               <TableHead className="text-center">Status</TableHead>
-              <TableHead className="text-right">Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right">Tanggal</TableHead>
+              <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -163,7 +163,7 @@ export function FilterableLeadsTable({ leads, clients, filters }: { leads: LeadL
                     endpoint={`/api/leads/${lead.id}/status`}
                   />
                 </TableCell>
-                <TableCell className="text-right">{lead.createdAt ? format(new Date(lead.createdAt), "dd MMM yyyy") : "-"}</TableCell>
+                <TableCell className="text-right">{tgl(lead.createdAt)}</TableCell>
                 <TableCell className="text-right"><LeadRowActions row={lead} clients={clients} /></TableCell>
               </TableRow>
             ))}
@@ -181,7 +181,7 @@ export function FilterableInvoicesTable({ invoices, clients, settings, filters }
   const filtered = useMemo(
     () => {
       const searched = invoices.filter((invoice) => {
-        const matchesQuery = `${invoice.code} ${invoice.clientName} ${invoice.projectName ?? ""} ${invoice.status}`.toLowerCase().includes(query.toLowerCase());
+        const matchesQuery = `${invoice.code} ${invoice.clientName} ${invoice.projectName ?? ""} ${invoice.status} ${labelStatus(invoice.status)}`.toLowerCase().includes(query.toLowerCase());
         const matchesPeriod = isWithinPeriod(invoice.date, period);
         const matchesType = type === "all" || invoice.status === type;
         return matchesQuery && matchesPeriod && matchesType;
@@ -200,7 +200,7 @@ export function FilterableInvoicesTable({ invoices, clients, settings, filters }
           <TableFilterBar
             value={query}
             onChange={setQuery}
-            placeholder="Search invoices..."
+            placeholder="Cari tagihan..."
             periodValue={period}
             onPeriodChange={(value) => setPeriod(value as FilterPeriod)}
             typeValue={type}
@@ -217,25 +217,25 @@ export function FilterableInvoicesTable({ invoices, clients, settings, filters }
           <option value="oldest">Terlama</option>
         </select>
       </div>
-      <div className="w-full overflow-x-auto pb-4 rounded-xl border">
-        <Table className="min-w-[980px]">
+      <div className="w-full overflow-x-auto pb-4 md:rounded-xl md:border">
+        <Table className="min-w-[980px] xl:min-w-0">
           <TableHeader className="bg-slate-50 sticky top-0 z-10">
             <TableRow>
-              <TableHead>Invoice ID</TableHead>
-              <TableHead>Client & Project</TableHead>
-              <TableHead>Dates</TableHead>
-              <TableHead className="text-right">Amount Paid</TableHead>
+              <TableHead>No. tagihan</TableHead>
+              <TableHead>Klien & proyek</TableHead>
+              <TableHead>Tanggal</TableHead>
+              <TableHead className="text-right">Sudah dibayar</TableHead>
               <TableHead className="text-right">Total</TableHead>
               <TableHead className="text-center">Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paged.map((invoice) => (
               <TableRow key={invoice.id}>
                 <TableCell>{invoice.code}</TableCell>
-                <TableCell>{invoice.clientName}<div className="text-xs text-muted-foreground">{invoice.projectName ?? "-"}</div></TableCell>
-                <TableCell>{invoice.date ? format(new Date(invoice.date), "dd MMM yyyy") : "-"}<div className="text-xs text-muted-foreground">Due {invoice.dueDate ? format(new Date(invoice.dueDate), "dd MMM yyyy") : "-"}</div></TableCell>
+                <TableCell>{invoice.clientName}<div className="text-xs text-muted-foreground">{namaProyek(invoice.projectName)}</div></TableCell>
+                <TableCell>{tgl(invoice.date)}<div className="text-xs text-muted-foreground">Jatuh tempo {tgl(invoice.dueDate)}</div></TableCell>
                 <TableCell className="text-right">{invoice.amountPaid ? formatCurrency(invoice.amountPaid) : "-"}</TableCell>
                 <TableCell className="text-right">{formatCurrency(invoice.total)}</TableCell>
                 <TableCell className="text-center">
@@ -244,11 +244,11 @@ export function FilterableInvoicesTable({ invoices, clients, settings, filters }
                     invoice.status === "Overdue" ? "bg-rose-100 text-rose-700 border-none" :
                     invoice.status === "Partially Paid" ? "bg-amber-100 text-amber-700 border-none" :
                     "bg-slate-100 text-slate-700 border-none"
-                  }>{invoice.status}</Badge>
+                  }>{labelStatus(invoice.status)}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <DownloadInvoiceLetterButton payload={{ id: invoice.code, client: invoice.clientName, project: invoice.projectName ?? "-", date: invoice.date ? new Date(invoice.date) : new Date(), dueDate: invoice.dueDate ? new Date(invoice.dueDate) : null, companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, paymentMethod: invoice.paymentMethod, attachment: invoice.attachment, subject: invoice.subject, recipientName: invoice.recipientName, recipientCompany: invoice.recipientCompany, recipientAddress: invoice.recipientAddress, introduction: invoice.introduction, terms: invoice.terms, closingNote: invoice.closingNote, signatoryName: invoice.signatoryName || settings.defaultSignatoryName, signatoryTitle: invoice.signatoryTitle || settings.defaultSignatoryTitle, signatureImageUrl: settings.signatureImageUrl, stampImageUrl: settings.stampImageUrl, items: invoice.items, subtotal: invoice.subtotal, ppn: invoice.tax, total: invoice.total, amountPaid: invoice.amountPaid, outstandingAmount: invoice.outstandingAmount, status: invoice.status, clientPoNumber: invoice.clientPoNumber ?? null }} />
+                    <DownloadInvoiceLetterButton payload={{ id: invoice.code, client: invoice.clientName, project: namaProyek(invoice.projectName), date: invoice.date ? new Date(invoice.date) : new Date(), dueDate: invoice.dueDate ? new Date(invoice.dueDate) : null, companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, paymentMethod: invoice.paymentMethod, attachment: invoice.attachment, subject: invoice.subject, recipientName: invoice.recipientName, recipientCompany: invoice.recipientCompany, recipientAddress: invoice.recipientAddress, introduction: invoice.introduction, terms: invoice.terms, closingNote: invoice.closingNote, signatoryName: invoice.signatoryName || settings.defaultSignatoryName, signatoryTitle: invoice.signatoryTitle || settings.defaultSignatoryTitle, signatureImageUrl: settings.signatureImageUrl, stampImageUrl: settings.stampImageUrl, items: invoice.items, subtotal: invoice.subtotal, ppn: invoice.tax, total: invoice.total, amountPaid: invoice.amountPaid, outstandingAmount: invoice.outstandingAmount, status: invoice.status, clientPoNumber: invoice.clientPoNumber ?? null }} />
                     <GenerateDeliveryFromInvoiceButton invoiceId={invoice.id} />
                     <WhatsappReminderButton
                       invoice={{
@@ -276,13 +276,13 @@ export function FilterableInvoicesTable({ invoices, clients, settings, filters }
                           id: invoice.code,
                           client: invoice.clientName,
                           amount: invoice.amountPaid,
-                          description: `Pembayaran Invoice ${invoice.code}`,
+                          description: `Pembayaran tagihan ${invoice.code}`,
                           companyName: settings.companyName,
                           companyEmail: settings.companyEmail,
                           companyPhone: settings.companyPhone,
                           companyAddress: settings.companyAddress,
-                          signatoryName: invoice.signatoryName || settings.defaultSignatoryName,
-                          signatoryTitle: invoice.signatoryTitle || settings.defaultSignatoryTitle,
+                          signatoryName: settings.defaultSignatoryName,
+                          signatoryTitle: settings.defaultSignatoryTitle,
                           signatureImageUrl: settings.signatureImageUrl,
                           stampImageUrl: settings.stampImageUrl,
                         }}
@@ -326,7 +326,7 @@ export function FilterablePaymentsTable({ payments, clients, invoices, settings,
           <TableFilterBar
             value={query}
             onChange={setQuery}
-            placeholder="Search payments..."
+            placeholder="Cari pembayaran..."
             periodValue={period}
             onPeriodChange={(value) => setPeriod(value as FilterPeriod)}
             typeValue={type}
@@ -343,19 +343,19 @@ export function FilterablePaymentsTable({ payments, clients, invoices, settings,
           <option value="oldest">Terlama</option>
         </select>
       </div>
-      <div className="w-full overflow-x-auto pb-4 rounded-xl border">
-        <Table className="min-w-[920px]">
+      <div className="w-full overflow-x-auto pb-4 md:rounded-xl md:border">
+        <Table className="min-w-[920px] xl:min-w-0">
           <TableHeader className="bg-slate-50 sticky top-0 z-10">
             <TableRow>
-              <TableHead>Payment ID</TableHead>
-              <TableHead>Client</TableHead>
-              <TableHead>Invoice</TableHead>
-              <TableHead>Method</TableHead>
-              <TableHead>Akun Masuk</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
-              <TableHead className="text-right">Date</TableHead>
-              <TableHead className="text-center">Receipt</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>No. bayar</TableHead>
+              <TableHead>Klien</TableHead>
+              <TableHead>Tagihan</TableHead>
+              <TableHead>Cara bayar</TableHead>
+              <TableHead>Masuk ke akun</TableHead>
+              <TableHead className="text-right">Jumlah</TableHead>
+              <TableHead className="text-right">Tanggal</TableHead>
+              <TableHead className="text-center">Kwitansi</TableHead>
+              <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -364,86 +364,12 @@ export function FilterablePaymentsTable({ payments, clients, invoices, settings,
                 <TableCell>{payment.code}</TableCell>
                 <TableCell>{payment.clientName}</TableCell>
                 <TableCell>{payment.invoiceCode}</TableCell>
-                <TableCell>{payment.paymentMethod ?? "-"}</TableCell>
+                <TableCell>{labelCaraBayar(payment.paymentMethod)}</TableCell>
                 <TableCell>{payment.paymentAccountCode ?? "-"}</TableCell>
                 <TableCell className="text-right">{formatCurrency(payment.amount)}</TableCell>
-                <TableCell className="text-right">{payment.date ? format(new Date(payment.date), "dd MMM yyyy") : "-"}</TableCell>
-                <TableCell className="text-center"><DownloadKwitansiButton payload={{ id: payment.code, client: payment.clientName, amount: payment.amount, description: `Pembayaran Invoice ${payment.invoiceCode}`, companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, signatoryName: settings.defaultSignatoryName, signatoryTitle: settings.defaultSignatoryTitle, signatureImageUrl: settings.signatureImageUrl, stampImageUrl: settings.stampImageUrl }} /></TableCell>
+                <TableCell className="text-right">{tgl(payment.date)}</TableCell>
+                <TableCell className="text-center"><DownloadKwitansiButton payload={{ id: payment.code, client: payment.clientName, amount: payment.amount, description: `Pembayaran tagihan ${payment.invoiceCode}`, companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, signatoryName: settings.defaultSignatoryName, signatoryTitle: settings.defaultSignatoryTitle, signatureImageUrl: settings.signatureImageUrl, stampImageUrl: settings.stampImageUrl }} /></TableCell>
                 <TableCell className="text-right"><PaymentRowActions row={payment} clients={clients} invoices={invoices} /></TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      <Pagination page={page} pageSize={pageSize} total={filtered.length} onPageChange={setPage} onPageSizeChange={setPageSize} />
-    </div>
-  );
-}
-
-export function FilterableQuotationsTable({ quotations, onAccept, filters }: { quotations: QuotationListItem[]; onAccept: (id: number) => Promise<void>; filters?: TableFilterState }) {
-  const { query, setQuery, period, setPeriod, type, setType, page, setPage, pageSize, setPageSize } = useFilterState(filters);
-  const [loadingId, setLoadingId] = useState<number | null>(null);
-
-  const filtered = useMemo(
-    () => quotations.filter((quote) => {
-      const matchesQuery = `${quote.code} ${quote.clientName} ${quote.projectName ?? ""} ${quote.status}`.toLowerCase().includes(query.toLowerCase());
-      const matchesPeriod = isWithinPeriod(quote.date, period);
-      const matchesType = type === "all" || quote.status === type;
-      return matchesQuery && matchesPeriod && matchesType;
-    }),
-    [period, query, quotations, type],
-  );
-
-  const paged = paginate(filtered, page, pageSize);
-
-  return (
-    <div className="space-y-4">
-      <TableFilterBar
-        value={query}
-        onChange={setQuery}
-        placeholder="Search quotations..."
-        periodValue={period}
-        onPeriodChange={(value) => setPeriod(value as FilterPeriod)}
-        typeValue={type}
-        onTypeChange={setType}
-        typeOptions={quotationStatusOptions}
-      />
-      <div className="w-full overflow-x-auto pb-4 rounded-xl border">
-        <Table className="min-w-[980px]">
-          <TableHeader className="bg-slate-50 sticky top-0 z-10">
-            <TableRow>
-              <TableHead>Quote ID</TableHead>
-              <TableHead>Client & Project</TableHead>
-              <TableHead>Dates</TableHead>
-              <TableHead className="text-right">Total</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paged.map((quote) => (
-              <TableRow key={quote.id}>
-                <TableCell>{quote.code}</TableCell>
-                <TableCell>{quote.clientName}<div className="text-xs text-muted-foreground">{quote.projectName ?? "-"}</div></TableCell>
-                <TableCell>{quote.date ? format(new Date(quote.date), "dd MMM yyyy") : "-"}<div className="text-xs text-muted-foreground">Valid {quote.validUntil ? format(new Date(quote.validUntil), "dd MMM yyyy") : "-"}</div></TableCell>
-                <TableCell className="text-right">{formatCurrency(quote.total)}</TableCell>
-                <TableCell className="text-center"><Badge>{quote.status}</Badge></TableCell>
-                <TableCell className="text-right">
-                  {quote.status !== "Accepted" ? (
-                    <button
-                      className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
-                      disabled={loadingId === quote.id}
-                      onClick={async () => {
-                        setLoadingId(quote.id);
-                        try { await onAccept(quote.id); } finally { setLoadingId(null); }
-                      }}
-                    >
-                      {loadingId === quote.id ? "Processing..." : "Accept + Create"}
-                    </button>
-                  ) : (
-                    <span className="text-xs text-emerald-600 font-medium">Synced</span>
-                  )}
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>

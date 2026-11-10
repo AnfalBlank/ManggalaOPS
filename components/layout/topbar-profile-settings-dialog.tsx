@@ -18,14 +18,14 @@ export function TopbarProfileSettingsDialog({ open, onOpenChange, user }: { open
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Profile Settings</DialogTitle>
-          <DialogDescription>Ubah profil user, foto avatar, email, dan password login.</DialogDescription>
+          <DialogTitle>Profil saya</DialogTitle>
+          <DialogDescription>Ubah nama, foto, email, dan password kamu.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
           <div className="grid gap-2"><Label>Nama</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div className="grid gap-2"><Label>Email</Label><Input value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-          <div className="grid gap-2"><Label>Avatar URL / Data URL</Label><Input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://... atau data:image/..." /></div>
-          <div className="grid gap-2"><Label>Password Baru</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Kosongkan jika tidak ganti" /></div>
+          <div className="grid gap-2"><Label>Link foto profil</Label><Input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://... atau data:image/..." /></div>
+          <div className="grid gap-2"><Label>Password baru</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Kosongin kalau gak diganti" /></div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
@@ -35,12 +35,12 @@ export function TopbarProfileSettingsDialog({ open, onOpenChange, user }: { open
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ name, email, avatarUrl, password }),
             });
-            const payload = await response.json();
+            const payload = await response.json().catch(() => ({}));
             if (!response.ok) {
-              toast.error(payload.error ?? 'Gagal update profile');
+              toast.error(payload.error ?? 'Gagal nyimpen profil');
               return;
             }
-            toast.success('Profile berhasil diupdate');
+            toast.success('Profil disimpan');
             setPassword('');
             onOpenChange(false);
             window.location.reload();

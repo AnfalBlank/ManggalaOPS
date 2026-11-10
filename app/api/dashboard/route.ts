@@ -10,6 +10,6 @@ export async function GET() {
     const data = await getDashboardSummary();
     return NextResponse.json(data);
   } catch (error) {
-    return toErrorResponse(error, "Failed to fetch dashboard summary");
+    return toErrorResponse(error, "Gagal ngambil ringkasan Beranda");
   }
 }

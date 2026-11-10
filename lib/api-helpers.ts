@@ -7,7 +7,7 @@ import { ForbiddenError, UnauthorizedError } from "@/lib/auth";
  * Unauthorized → 401, Forbidden → 403, ValidationError pattern → 400, else 500.
  * Never leaks raw stack traces.
  */
-export function toErrorResponse(error: unknown, fallback = "Internal server error") {
+export function toErrorResponse(error: unknown, fallback = "Ada masalah di server") {
   if (error instanceof UnauthorizedError) {
     return NextResponse.json({ error: error.message }, { status: 401 });
   }
@@ -17,8 +17,19 @@ export function toErrorResponse(error: unknown, fallback = "Internal server erro
   if (error instanceof ValidationError) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
-  const message = error instanceof Error ? error.message : fallback;
-  return NextResponse.json({ error: message }, { status: 500 });
+  const raw = error instanceof Error ? error.message : "";
+  return NextResponse.json({ error: pesanError(raw, fallback) }, { status: 500 });
+}
+
+// Error database/teknis jangan bocor mentah (bahasa Inggris & detail SQL) ke layar.
+function pesanError(raw: string, fallback: string) {
+  if (/FOREIGN KEY/i.test(raw)) return "Data ini masih dipakai di data lain, jadi gak bisa dihapus/diubah.";
+  if (/UNIQUE constraint/i.test(raw)) return "Data yang sama udah ada.";
+  if (!raw || /SQLITE|libsql|Failed query|constraint|fetch failed|ECONN|TypeError|undefined|null/i.test(raw)) {
+    console.error("[api]", raw);
+    return /\b(gagal|tidak|belum|gak)\b/i.test(fallback) ? fallback : "Ada masalah di server. Coba lagi, kalau masih gagal kabari admin.";
+  }
+  return raw;
 }
 
 export class ValidationError extends Error {

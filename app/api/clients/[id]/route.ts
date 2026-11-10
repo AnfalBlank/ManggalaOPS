@@ -31,7 +31,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     await audit({ userId: user.id, action: "client.update", entity: "client", entityId: clientId, payload: { name } });
     return NextResponse.json({ ok: true, data: await getClients() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to update client");
+    return toErrorResponse(error, "Gagal nyimpen data klien");
   }
 }
 
@@ -44,6 +44,6 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
     await audit({ userId: user.id, action: "client.delete", entity: "client", entityId: clientId });
     return NextResponse.json({ ok: true, data: await getClients() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to delete client");
+    return toErrorResponse(error, "Gagal hapus klien");
   }
 }

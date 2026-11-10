@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Pagination, paginate } from "@/components/ui/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type ClientRow = {
@@ -31,8 +32,8 @@ async function requestJson(url: string, method: "POST" | "PATCH" | "DELETE", bod
     headers: body ? { "Content-Type": "application/json" } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
-  const payload = await response.json();
-  if (!response.ok) throw new Error(payload.error ?? "Request failed");
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error ?? "Gagal nyimpen ke server");
   return payload;
 }
 
@@ -50,21 +51,21 @@ function ClientDialog({ client }: { client?: ClientRow }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant={client ? "outline" : "default"} size="sm">{client ? <><Pencil className="size-4" /> Edit</> : <><Plus className="size-4" /> Add Client</>}</Button>} />
-      <DialogContent className="sm:max-w-2xl">
+      <DialogTrigger render={<Button variant={client ? "outline" : "default"} size="sm">{client ? <><Pencil className="size-4" /> Ubah</> : <><Plus className="size-4" /> Tambah klien</>}</Button>} />
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{client ? "Edit Client" : "Tambah Client Baru"}</DialogTitle>
-          <DialogDescription>Lengkapi data client untuk dipakai di lead, quotation, invoice, dan project.</DialogDescription>
+          <DialogTitle>{client ? "Ubah data klien" : "Tambah klien baru"}</DialogTitle>
+          <DialogDescription>Data ini dipakai di calon klien, penawaran, proyek, dan tagihan.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="grid gap-2"><Label>Nama Client / Perusahaan</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-          <div className="grid gap-2"><Label>Contact Person</Label><Input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} /></div>
-          <div className="grid gap-2"><Label>PIC Tambahan</Label><Input value={additionalPic} onChange={(e) => setAdditionalPic(e.target.value)} /></div>
-          <div className="grid gap-2"><Label>Phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
+          <div className="grid gap-2"><Label>Nama klien / perusahaan</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div className="grid gap-2"><Label>Nama kontak</Label><Input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} /></div>
+          <div className="grid gap-2"><Label>PIC tambahan</Label><Input value={additionalPic} onChange={(e) => setAdditionalPic(e.target.value)} /></div>
+          <div className="grid gap-2"><Label>No. HP / telepon</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
           <div className="grid gap-2"><Label>Email</Label><Input value={email} onChange={(e) => setEmail(e.target.value)} /></div>
           <div className="grid gap-2"><Label>NPWP</Label><Input value={npwp} onChange={(e) => setNpwp(e.target.value)} /></div>
-          <div className="grid gap-2 md:col-span-2"><Label>Address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} /></div>
-          <div className="grid gap-2 md:col-span-2"><Label>Notes</Label><Input value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+          <div className="grid gap-2 md:col-span-2"><Label>Alamat</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} /></div>
+          <div className="grid gap-2 md:col-span-2"><Label>Catatan</Label><Input value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Batal</Button>
@@ -73,15 +74,15 @@ function ClientDialog({ client }: { client?: ClientRow }) {
               const payload = { name, contactPerson, additionalPic, phone, email, npwp, address, notes };
               if (client) {
                 await requestJson(`/api/clients/${client.id}`, "PATCH", payload);
-                toast.success("Client diupdate");
+                toast.success("Data klien disimpan");
               } else {
                 await requestJson(`/api/clients`, "POST", payload);
-                toast.success("Client ditambahkan");
+                toast.success("Klien ditambahkan");
               }
               setOpen(false);
               router.refresh();
             } catch (error) {
-              toast.error(error instanceof Error ? error.message : "Gagal simpan client");
+              toast.error(error instanceof Error ? error.message : "Gagal nyimpen data klien");
             }
           }} disabled={!name.trim()}>Simpan</Button>
         </DialogFooter>
@@ -107,6 +108,11 @@ export function ClientManagement({ clients }: { clients: ClientRow[] }) {
     });
   }, [clients, query, sortOrder]);
 
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  useEffect(() => { setPage(1); }, [query, sortOrder, pageSize]);
+  const paged = paginate(filtered, page, pageSize);
+
   const sortOptions = [
     { label: "A–Z", value: "az" },
     { label: "Z–A", value: "za" },
@@ -118,7 +124,7 @@ export function ClientManagement({ clients }: { clients: ClientRow[] }) {
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-col sm:flex-row gap-2 flex-1">
-          <TableFilterBar value={query} onChange={setQuery} placeholder="Search clients..." />
+          <TableFilterBar value={query} onChange={setQuery} placeholder="Cari klien..." />
           <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value as typeof sortOrder)}
@@ -130,23 +136,23 @@ export function ClientManagement({ clients }: { clients: ClientRow[] }) {
         <ClientDialog />
       </div>
 
-      <div className="w-full overflow-x-auto rounded-xl border bg-white">
-        <Table className="min-w-[1240px]">
+      <div className="w-full overflow-x-auto md:rounded-xl md:border md:bg-white">
+        <Table className="min-w-[1240px] xl:min-w-0">
           <TableHeader>
             <TableRow>
-              <TableHead>Client</TableHead>
-              <TableHead>Contact Person</TableHead>
-              <TableHead>PIC Tambahan</TableHead>
-              <TableHead>Phone</TableHead>
+              <TableHead>Klien</TableHead>
+              <TableHead>Kontak</TableHead>
+              <TableHead>PIC tambahan</TableHead>
+              <TableHead>No. HP</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>NPWP</TableHead>
-              <TableHead>Address</TableHead>
-              <TableHead>Notes</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Alamat</TableHead>
+              <TableHead>Catatan</TableHead>
+              <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((client) => (
+            {paged.map((client) => (
               <TableRow key={client.id}>
                 <TableCell className="font-medium">{client.name}</TableCell>
                 <TableCell>{client.contactPerson ?? "-"}</TableCell>
@@ -160,18 +166,18 @@ export function ClientManagement({ clients }: { clients: ClientRow[] }) {
                   <div className="flex justify-end gap-2">
                     <ClientDialog client={client} />
                     <ConfirmDialog
-                      trigger={<Button variant="outline" size="sm" className="text-destructive"><Trash2 className="size-4" /> Delete</Button>}
-                      title={`Hapus client "${client.name}"?`}
-                      description="Client akan dihapus. Client yang masih dipakai oleh lead/quotation/invoice/payment akan gagal dihapus."
+                      trigger={<Button variant="outline" size="sm" className="text-destructive"><Trash2 className="size-4" /> Hapus</Button>}
+                      title={`Hapus klien "${client.name}"?`}
+                      description="Klien ini bakal dihapus. Kalau masih dipakai di calon klien, penawaran, tagihan, atau pembayaran, hapusnya gagal."
                       confirmText="Hapus"
                       variant="destructive"
                       onConfirm={async () => {
                         try {
                           await requestJson(`/api/clients/${client.id}`, "DELETE");
-                          toast.success("Client dihapus");
+                          toast.success("Klien dihapus");
                           router.refresh();
                         } catch (error) {
-                          toast.error(error instanceof Error ? error.message : "Gagal hapus client");
+                          toast.error(error instanceof Error ? error.message : "Gagal hapus klien");
                         }
                       }}
                     />
@@ -182,6 +188,7 @@ export function ClientManagement({ clients }: { clients: ClientRow[] }) {
           </TableBody>
         </Table>
       </div>
+      <Pagination page={page} pageSize={pageSize} total={filtered.length} onPageChange={setPage} onPageSizeChange={setPageSize} />
     </div>
   );
 }

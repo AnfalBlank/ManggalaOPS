@@ -9,7 +9,7 @@ export async function getInvoiceWithPayments(invoiceId: number) {
   });
 
   if (!invoice) {
-    throw new Error("Invoice tidak ditemukan");
+    throw new Error("Tagihan tidak ditemukan");
   }
 
   const paymentSummary = await db
@@ -41,11 +41,11 @@ export async function ensurePaymentMatchesInvoice({
   });
 
   if (!invoice) {
-    throw new Error("Invoice tidak ditemukan");
+    throw new Error("Tagihan tidak ditemukan");
   }
 
   if (invoice.clientId !== clientId) {
-    throw new Error("Client payment harus sama dengan client invoice");
+    throw new Error("Klien pembayaran harus sama dengan klien tagihan");
   }
 
   const conditions = [eq(payments.invoiceId, invoiceId)];
@@ -65,7 +65,7 @@ export async function ensurePaymentMatchesInvoice({
   const invoiceTotal = invoice.total ?? 0;
 
   if (projectedTotal > invoiceTotal) {
-    throw new Error("Nominal payment melebihi outstanding invoice");
+    throw new Error("Jumlah bayar lebih dari sisa tagihan");
   }
 
   return invoice;
@@ -75,7 +75,7 @@ export async function ensureInvoiceCanBeUpdated(invoiceId: number, nextTotal: nu
   const { totalPaid } = await getInvoiceWithPayments(invoiceId);
 
   if (nextTotal < totalPaid) {
-    throw new Error("Total invoice tidak boleh lebih kecil dari total payment yang sudah masuk");
+    throw new Error("Total tagihan gak boleh lebih kecil dari pembayaran yang udah masuk");
   }
 }
 
@@ -85,7 +85,7 @@ export async function ensureInvoiceCanBeDeleted(invoiceId: number) {
   });
 
   if (payment) {
-    throw new Error("Invoice tidak bisa dihapus karena masih punya payment");
+    throw new Error("Tagihan gak bisa dihapus karena udah ada pembayarannya");
   }
 }
 
@@ -95,6 +95,6 @@ export async function ensureLeadCanBeDeleted(leadId: number) {
   });
 
   if (project) {
-    throw new Error("Lead tidak bisa dihapus karena sudah dipakai project");
+    throw new Error("Calon klien gak bisa dihapus karena udah dipakai di proyek");
   }
 }

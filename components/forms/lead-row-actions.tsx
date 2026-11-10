@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { labelStatus } from "@/lib/label-status";
 
 type ClientOption = { id: number; name: string };
 type LeadRow = {
@@ -34,8 +35,8 @@ async function requestJson(url: string, method: "POST" | "PATCH" | "DELETE", bod
     headers: body ? { "Content-Type": "application/json" } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
-  const payload = await response.json();
-  if (!response.ok) throw new Error(payload.error ?? "Request failed");
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error ?? "Gagal nyimpen ke server");
   return payload;
 }
 
@@ -51,21 +52,21 @@ export function LeadRowActions({ row, clients }: { row: LeadRow; clients: Client
   const handleSave = async () => {
     try {
       await requestJson(`/api/leads/${row.id}`, "PATCH", { clientId, serviceName, estimatedValue, status });
-      toast.success("Lead diupdate");
+      toast.success("Calon klien disimpan");
       setOpen(false);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal update lead");
+      toast.error(error instanceof Error ? error.message : "Gagal nyimpen calon klien");
     }
   };
 
   const handleDelete = async () => {
     try {
       await requestJson(`/api/leads/${row.id}`, "DELETE");
-      toast.success("Lead dihapus");
+      toast.success("Calon klien dihapus");
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal hapus lead");
+      toast.error(error instanceof Error ? error.message : "Gagal hapus calon klien");
     }
   };
 
@@ -74,11 +75,11 @@ export function LeadRowActions({ row, clients }: { row: LeadRow; clients: Client
     try {
       setConverting(true);
       const result = await requestJson(`/api/leads/${row.id}/convert-to-quotation`, "POST");
-      toast.success(`Quotation draft #${result.quotationId} dibuat. Buka halaman Quotations untuk edit detailnya.`);
+      toast.success(`Draf penawaran #${result.quotationId} dibuat. Lengkapi detailnya di halaman Penawaran.`);
       router.push("/quotations");
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal convert ke quotation");
+      toast.error(error instanceof Error ? error.message : "Gagal bikin penawaran");
     } finally {
       setConverting(false);
     }
@@ -88,30 +89,30 @@ export function LeadRowActions({ row, clients }: { row: LeadRow; clients: Client
     <div className="flex justify-end gap-2">
       <DetailDialog
         title={`Detail ${row.code}`}
-        description="Ringkasan lengkap data lead"
+        description="Ringkasan data calon klien"
         rows={[
-          { label: "Lead ID", value: row.code },
-          { label: "Client", value: row.clientName },
-          { label: "Contact", value: row.contactPerson ?? "-" },
-          { label: "Phone", value: row.phone ?? "-" },
-          { label: "Service", value: row.serviceName },
-          { label: "Estimated Value", value: formatCurrency(row.estimatedValue) },
-          { label: "Status", value: row.status },
-          { label: "Created", value: formatDateSafe(row.createdAt) },
+          { label: "No.", value: row.code },
+          { label: "Klien", value: row.clientName },
+          { label: "Kontak", value: row.contactPerson ?? "-" },
+          { label: "No. HP", value: row.phone ?? "-" },
+          { label: "Kebutuhan", value: row.serviceName },
+          { label: "Perkiraan nilai", value: formatCurrency(row.estimatedValue) },
+          { label: "Status", value: labelStatus(row.status) },
+          { label: "Dibuat", value: formatDateSafe(row.createdAt) },
         ]}
       />
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger render={<Button variant="outline" size="sm"><Pencil className="size-4" /> Edit</Button>} />
+        <DialogTrigger render={<Button variant="outline" size="sm"><Pencil className="size-4" /> Ubah</Button>} />
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Edit Lead</DialogTitle>
-            <DialogDescription>Perbarui data lead yang sudah ada.</DialogDescription>
+            <DialogTitle>Ubah calon klien</DialogTitle>
+            <DialogDescription>Perbarui data calon klien ini.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
-            <div className="grid gap-2"><Label>Client</Label><Select value={clientId} onValueChange={(value) => setClientId(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih client">{selectedClientName}</SelectValue></SelectTrigger><SelectContent>{clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}</SelectContent></Select></div>
-            <div className="grid gap-2"><Label>Service Need</Label><Input value={serviceName} onChange={(event) => setServiceName(event.target.value)} /></div>
-            <div className="grid gap-2"><Label>Estimated Value</Label><MoneyInput value={estimatedValue} onChange={setEstimatedValue} placeholder="111.000.000" /></div>
-            <div className="grid gap-2"><Label>Status</Label><Select value={status} onValueChange={(value) => setStatus(value ?? "New")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih opsi" /></SelectTrigger><SelectContent>{["New", "Follow Up", "Negotiation", "Won", "Lost"].map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select></div>
+            <div className="grid gap-2"><Label>Klien</Label><Select value={clientId} onValueChange={(value) => setClientId(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih klien">{selectedClientName}</SelectValue></SelectTrigger><SelectContent>{clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="grid gap-2"><Label>Kebutuhan</Label><Input value={serviceName} onChange={(event) => setServiceName(event.target.value)} /></div>
+            <div className="grid gap-2"><Label>Perkiraan nilai</Label><MoneyInput value={estimatedValue} onChange={setEstimatedValue} placeholder="111.000.000" /></div>
+            <div className="grid gap-2"><Label>Status</Label><Select value={status} onValueChange={(value) => setStatus(value ?? "New")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih status">{(v: string) => labelStatus(v)}</SelectValue></SelectTrigger><SelectContent>{["New", "Follow Up", "Negotiation", "Won", "Lost"].map((item) => <SelectItem key={item} value={item}>{labelStatus(item)}</SelectItem>)}</SelectContent></Select></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Batal</Button>
@@ -125,14 +126,14 @@ export function LeadRowActions({ row, clients }: { row: LeadRow; clients: Client
         className="text-blue-600 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-50"
         disabled={converting || row.status === "Lost"}
         onClick={handleConvert}
-        title="Buat quotation draft dari lead ini"
+        title="Bikin draf penawaran dari calon klien ini"
       >
-        <FileSignature className="size-4" /> {converting ? "Converting..." : "→ Quote"}
+        <FileSignature className="size-4" /> {converting ? "Memproses..." : "Bikin penawaran"}
       </Button>
       <ConfirmDialog
-        trigger={<Button variant="outline" size="sm" className="text-destructive"><Trash2 className="size-4" /> Delete</Button>}
-        title={`Hapus lead "${row.serviceName}"?`}
-        description="Lead akan dihapus permanen. Lead yang sudah pernah dipakai oleh project tidak bisa dihapus."
+        trigger={<Button variant="outline" size="sm" className="text-destructive"><Trash2 className="size-4" /> Hapus</Button>}
+        title={`Hapus calon klien "${row.serviceName}"?`}
+        description="Calon klien ini dihapus permanen. Kalau udah dipakai di proyek, gak bisa dihapus."
         confirmText="Hapus"
         variant="destructive"
         onConfirm={handleDelete}

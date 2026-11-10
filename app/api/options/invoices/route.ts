@@ -10,6 +10,6 @@ export async function GET() {
     const data = await getInvoiceOptions();
     return NextResponse.json(data);
   } catch (error) {
-    return toErrorResponse(error, "Failed to fetch invoice options");
+    return toErrorResponse(error, "Gagal ngambil daftar tagihan");
   }
 }

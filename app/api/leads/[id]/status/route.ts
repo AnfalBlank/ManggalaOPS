@@ -27,6 +27,6 @@ export async function PATCH(
     await audit({ userId: user.id, action: "lead.status_change", entity: "lead", entityId: leadId, payload: { status } });
     return NextResponse.json({ ok: true, status });
   } catch (error) {
-    return toErrorResponse(error, "Failed to update lead status");
+    return toErrorResponse(error, "Gagal ubah status calon klien");
   }
 }

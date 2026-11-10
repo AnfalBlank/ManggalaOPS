@@ -30,7 +30,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     await audit({ userId: user.id, action: "lead.update", entity: "lead", entityId: leadId });
     return NextResponse.json({ ok: true, data: await getLeads() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to update lead");
+    return toErrorResponse(error, "Gagal nyimpen calon klien");
   }
 }
 
@@ -44,6 +44,6 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
     await audit({ userId: user.id, action: "lead.delete", entity: "lead", entityId: leadId });
     return NextResponse.json({ ok: true, data: await getLeads() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to delete lead");
+    return toErrorResponse(error, "Gagal hapus calon klien");
   }
 }

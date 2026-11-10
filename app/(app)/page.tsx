@@ -18,6 +18,7 @@ import { getDashboardSummary, getInvoices, getLeads, getQuotations } from "@/lib
 import { getClientPoList } from "@/lib/po";
 import { getCurrentUser } from "@/lib/session-auth";
 import { formatCurrency } from "@/lib/format";
+import { labelStatus } from "@/lib/label-status";
 
 export default async function Dashboard() {
   try {
@@ -45,7 +46,7 @@ export default async function Dashboard() {
       <PageWrapper>
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-primary">Beranda</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Beranda</h1>
             <p className="text-muted-foreground mt-1">Ringkasan kerjaan dan uang tahun {charts.year}.</p>
           </div>
         </div>
@@ -59,7 +60,7 @@ export default async function Dashboard() {
                 value={formatCurrency(totalRevenue)}
                 hint={
                   <span className="text-green-600 font-medium inline-flex items-center">
-                    <TrendingUp className="size-3 mr-1" /> semua invoice yang udah diterbitkan
+                    <TrendingUp className="size-3 mr-1" /> semua tagihan yang udah terbit
                   </span>
                 }
                 icon={<Banknote className="size-5" />}
@@ -125,7 +126,7 @@ export default async function Dashboard() {
 
             <Card className="border-border/60">
               <CardHeader className="pb-3 border-b border-border/50">
-                <CardTitle className="text-base font-semibold">Aktivitas Terbaru</CardTitle>
+                <CardTitle className="text-base font-semibold">Aktivitas terbaru</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="flex flex-col">
@@ -143,7 +144,7 @@ export default async function Dashboard() {
                           {invoice.code} • {invoice.clientName}
                         </span>
                         <span className="text-xs text-slate-500 truncate">
-                          {formatCurrency(invoice.total)} • {invoice.status}
+                          {formatCurrency(invoice.total)} • {labelStatus(invoice.status)}
                         </span>
                       </div>
                     </a>
@@ -164,14 +165,14 @@ export default async function Dashboard() {
                           {lead.code} • {lead.clientName}
                         </span>
                         <span className="text-xs text-slate-500 truncate">
-                          {lead.serviceName} • {lead.status}
+                          {lead.serviceName} • {labelStatus(lead.status)}
                         </span>
                       </div>
                     </a>
                   ))}
                   {recentInvoices.length === 0 && recentLeads.length === 0 ? (
                     <div className="p-6 text-center text-sm text-muted-foreground">
-                      Belum ada aktivitas. Mulai dari menambah lead atau invoice.
+                      Belum ada aktivitas. Mulai dari nambah calon klien atau tagihan.
                     </div>
                   ) : null}
                 </div>
@@ -185,8 +186,8 @@ export default async function Dashboard() {
     return (
       <PageWrapper>
         <ErrorState
-          title="Gagal memuat dashboard"
-          description={error instanceof Error ? error.message : "Terjadi error saat memuat dashboard dari database."}
+          title="Gagal memuat Beranda"
+          description={error instanceof Error ? error.message : "Ada masalah pas ngambil data Beranda."}
         />
       </PageWrapper>
     );

@@ -30,7 +30,7 @@ const defaultPeriodOptions: FilterOption[] = [
   { label: "30 hari terakhir", value: "30d" },
   { label: "Bulan ini", value: "month" },
   { label: "Tahun ini", value: "year" },
-  { label: "Range custom", value: "custom" },
+  { label: "Pilih tanggal sendiri", value: "custom" },
 ];
 
 export function TableFilterBar({
@@ -56,15 +56,15 @@ export function TableFilterBar({
             value={value}
             onChange={(event) => onChange(event.target.value)}
             placeholder={placeholder}
-            className="pl-9"
+            className="pl-9 h-10 md:h-8"
           />
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           {onPeriodChange ? (
             <Select value={periodValue ?? "all"} onValueChange={(next) => onPeriodChange(next ?? "all")}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Pilih periode" />
+              <SelectTrigger className="w-full sm:w-[180px] data-[size=default]:h-10 md:data-[size=default]:h-8">
+                <SelectValue placeholder="Pilih periode">{(v: string) => periodOptions.find((o) => o.value === v)?.label ?? v}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {periodOptions.map((option) => (
@@ -78,8 +78,8 @@ export function TableFilterBar({
 
           {onTypeChange && typeOptions.length > 0 ? (
             <Select value={typeValue ?? "all"} onValueChange={(next) => onTypeChange(next ?? "all")}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Pilih jenis" />
+              <SelectTrigger className="w-full sm:w-[180px] data-[size=default]:h-10 md:data-[size=default]:h-8">
+                <SelectValue placeholder="Pilih jenis">{(v: string) => typeOptions.find((o) => o.value === v)?.label ?? v}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {typeOptions.map((option) => (
@@ -95,7 +95,7 @@ export function TableFilterBar({
 
       {periodValue === "custom" && onCustomRangeChange ? (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 rounded-lg bg-muted/30 p-3 border">
-          <span className="text-xs font-medium text-muted-foreground uppercase">Range Custom</span>
+          <span className="text-xs font-medium text-muted-foreground uppercase">Dari tanggal – sampai</span>
           <div className="flex flex-1 flex-col sm:flex-row gap-2">
             <Input
               type="date"

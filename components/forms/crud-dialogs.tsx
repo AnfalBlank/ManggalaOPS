@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatMoneyInput, parseMoneyInput } from "@/lib/money";
+import { labelStatus } from "@/lib/label-status";
 
 type ClientOption = {
   id: number;
@@ -57,8 +58,8 @@ async function postJson(url: string, body: Record<string, unknown>) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  const payload = await response.json();
-  if (!response.ok) throw new Error(payload.error ?? "Request failed");
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error ?? "Gagal nyimpen ke server");
   return payload;
 }
 
@@ -87,12 +88,12 @@ export function CreateLeadDialog({ clients }: LeadDialogProps) {
     try {
       setLoading(true);
       await postJson("/api/leads", { clientId, serviceName, estimatedValue, status });
-      toast.success("Lead berhasil ditambahkan");
+      toast.success("Calon klien ditambahkan");
       setOpen(false);
       reset();
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal membuat lead");
+      toast.error(error instanceof Error ? error.message : "Gagal nambah calon klien");
     } finally {
       setLoading(false);
     }
@@ -100,18 +101,18 @@ export function CreateLeadDialog({ clients }: LeadDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button className="bg-primary hover:bg-primary/90 text-white rounded-lg px-4 gap-2 shadow-sm"><Plus className="size-4" /> Add New Lead</Button>} />
-      <DialogContent className="sm:max-w-lg">
+      <DialogTrigger render={<Button className="bg-primary hover:bg-primary/90 text-white rounded-lg px-4 gap-2 shadow-sm"><Plus className="size-4" /> Tambah calon klien</Button>} />
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Tambah Lead Baru</DialogTitle>
-          <DialogDescription>Masukkan prospek baru ke pipeline sales.</DialogDescription>
+          <DialogTitle>Tambah calon klien</DialogTitle>
+          <DialogDescription>Catat klien yang lagi dijajaki.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label>Client</Label>
+            <Label>Klien</Label>
             <Select value={clientId} onValueChange={(value) => setClientId(value ?? "")}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Pilih client">{clients.find((c) => String(c.id) === clientId)?.name}</SelectValue>
+                <SelectValue placeholder="Pilih klien">{clients.find((c) => String(c.id) === clientId)?.name}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {clients.map((client) => (
@@ -121,20 +122,20 @@ export function CreateLeadDialog({ clients }: LeadDialogProps) {
             </Select>
           </div>
           <div className="grid gap-2">
-            <Label>Service Need</Label>
-            <Input value={serviceName} onChange={(e) => setServiceName(e.target.value)} placeholder="Contoh: ERP System Development" />
+            <Label>Kebutuhan</Label>
+            <Input value={serviceName} onChange={(e) => setServiceName(e.target.value)} placeholder="Contoh: pengadaan laptop kantor" />
           </div>
           <div className="grid gap-2">
-            <Label>Estimated Value</Label>
+            <Label>Perkiraan nilai</Label>
             <MoneyInput value={estimatedValue} onChange={setEstimatedValue} placeholder="850.000.000" />
           </div>
           <div className="grid gap-2">
             <Label>Status</Label>
             <Select value={status} onValueChange={(value) => setStatus(value ?? "New")}>
-              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue>{(v: string) => labelStatus(v)}</SelectValue></SelectTrigger>
               <SelectContent>
                 {["New", "Follow Up", "Negotiation", "Won", "Lost"].map((item) => (
-                  <SelectItem key={item} value={item}>{item}</SelectItem>
+                  <SelectItem key={item} value={item}>{labelStatus(item)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -143,7 +144,7 @@ export function CreateLeadDialog({ clients }: LeadDialogProps) {
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Batal</Button>
           <Button onClick={handleSubmit} disabled={!canSubmit || loading}>
-            {loading ? <Loader2 className="size-4 animate-spin" /> : "Simpan Lead"}
+            {loading ? <Loader2 className="size-4 animate-spin" /> : "Simpan"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -215,7 +216,7 @@ export function RecordPaymentDialog({ clients, invoices, paymentAccounts = [] }:
 
   const handleSubmit = async () => {
     if (!isPartial && maxAmount > 0 && parsedAmount > maxAmount) {
-      toast.error(`Amount melebihi outstanding invoice (${formatRupiah(maxAmount)})`);
+      toast.error(`Jumlahnya lebih dari sisa tagihan (${formatRupiah(maxAmount)})`);
       return;
     }
     try {
@@ -228,12 +229,12 @@ export function RecordPaymentDialog({ clients, invoices, paymentAccounts = [] }:
         paymentAccountCode,
         referenceCode,
       });
-      toast.success("Payment berhasil direkam");
+      toast.success("Pembayaran dicatat");
       setOpen(false);
       reset();
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal merekam payment");
+      toast.error(error instanceof Error ? error.message : "Gagal nyatet pembayaran");
     } finally {
       setLoading(false);
     }
@@ -241,19 +242,19 @@ export function RecordPaymentDialog({ clients, invoices, paymentAccounts = [] }:
 
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
-      <DialogTrigger render={<Button className="bg-primary hover:bg-primary/90 text-white rounded-lg px-4 gap-2 shadow-sm"><Plus className="size-4" /> Record Payment</Button>} />
-      <DialogContent className="sm:max-w-lg">
+      <DialogTrigger render={<Button className="bg-primary hover:bg-primary/90 text-white rounded-lg px-4 gap-2 shadow-sm"><Plus className="size-4" /> Catat pembayaran</Button>} />
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Record Payment</DialogTitle>
-          <DialogDescription>Catat pembayaran masuk. Hanya invoice yang belum lunas ditampilkan.</DialogDescription>
+          <DialogTitle>Catat pembayaran masuk</DialogTitle>
+          <DialogDescription>Yang muncul cuma tagihan yang belum lunas.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
           {/* Client */}
           <div className="grid gap-2">
-            <Label>Client</Label>
+            <Label>Klien</Label>
             <Select value={clientId} onValueChange={(v) => { setClientId(v ?? ""); setInvoiceId(""); setAmount(""); setIsPartial(false); }}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Pilih client">{clients.find((c) => String(c.id) === clientId)?.name}</SelectValue>
+                <SelectValue placeholder="Pilih klien">{clients.find((c) => String(c.id) === clientId)?.name}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {clients.map((client) => (
@@ -265,16 +266,16 @@ export function RecordPaymentDialog({ clients, invoices, paymentAccounts = [] }:
 
           {/* Invoice — only unpaid ones */}
           <div className="grid gap-2">
-            <Label>Invoice</Label>
+            <Label>Tagihan</Label>
             <Select value={invoiceId} onValueChange={handleInvoiceChange}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Pilih invoice (belum lunas)">
+                <SelectValue placeholder="Pilih tagihan (belum lunas)">
                   {filteredInvoices.find((inv) => String(inv.id) === invoiceId)?.code}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {filteredInvoices.length === 0 ? (
-                  <div className="py-3 px-4 text-sm text-muted-foreground">Tidak ada invoice outstanding</div>
+                  <div className="py-3 px-4 text-sm text-muted-foreground">Gak ada tagihan yang belum lunas</div>
                 ) : filteredInvoices.map((inv) => (
                   <SelectItem key={inv.id} value={String(inv.id)}>
                     <span className="font-medium">{inv.code}</span>
@@ -298,7 +299,7 @@ export function RecordPaymentDialog({ clients, invoices, paymentAccounts = [] }:
                   <div className="font-semibold text-emerald-700">{formatRupiah(selectedInvoice.amountPaid ?? 0)}</div>
                 </div>
                 <div>
-                  <div className="text-muted-foreground uppercase">Outstanding</div>
+                  <div className="text-muted-foreground uppercase">Sisa</div>
                   <div className="font-semibold text-amber-700">{formatRupiah(selectedInvoice.outstanding ?? 0)}</div>
                 </div>
               </div>
@@ -315,9 +316,9 @@ export function RecordPaymentDialog({ clients, invoices, paymentAccounts = [] }:
                 onChange={(e) => handlePartialToggle(e.target.checked)}
               />
               <div>
-                <div className="text-sm font-medium">Bayar sebagian (partial payment)</div>
+                <div className="text-sm font-medium">Bayar sebagian</div>
                 <div className="text-xs text-muted-foreground">
-                  Centang jika jumlah yang dibayarkan tidak sama dengan sisa tagihan penuh.
+                  Centang kalau yang dibayar kurang dari sisa tagihan.
                 </div>
               </div>
             </label>
@@ -326,9 +327,9 @@ export function RecordPaymentDialog({ clients, invoices, paymentAccounts = [] }:
           {/* Amount */}
           <div className="grid gap-2">
             <Label>
-              Amount
+              Jumlah
               {!isPartial && maxAmount > 0 ? (
-                <span className="ml-2 text-xs font-normal text-muted-foreground">(auto-filled dari outstanding)</span>
+                <span className="ml-2 text-xs font-normal text-muted-foreground">(otomatis dari sisa tagihan)</span>
               ) : null}
             </Label>
             <MoneyInput
@@ -339,16 +340,16 @@ export function RecordPaymentDialog({ clients, invoices, paymentAccounts = [] }:
             />
             {isPartial && maxAmount > 0 && parsedAmount >= maxAmount ? (
               <p className="text-xs text-rose-600">
-                Amount partial tidak boleh ≥ outstanding ({formatRupiah(maxAmount)}). Hilangkan centang partial untuk bayar lunas.
+                Bayar sebagian harus kurang dari sisa ({formatRupiah(maxAmount)}). Hapus centangnya kalau bayar lunas.
               </p>
             ) : null}
           </div>
 
           {/* Payment account */}
           <div className="grid gap-2">
-            <Label>Akun Penerimaan</Label>
+            <Label>Masuk ke akun</Label>
             <Select value={paymentAccountCode} onValueChange={(v) => setPaymentAccountCode(v ?? "1002")}>
-              <SelectTrigger className="w-full"><SelectValue placeholder="Pilih akun" /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue placeholder="Pilih akun">{(v: string) => { const a = paymentAccounts.find((x) => x.code === v); return a ? `${a.code} - ${a.name}` : v; }}</SelectValue></SelectTrigger>
               <SelectContent>
                 {paymentAccounts.map((account) => (
                   <SelectItem key={account.code} value={account.code}>{account.code} - {account.name}</SelectItem>
@@ -359,20 +360,20 @@ export function RecordPaymentDialog({ clients, invoices, paymentAccounts = [] }:
 
           {/* Payment method */}
           <div className="grid gap-2">
-            <Label>Payment Method</Label>
-            <Input value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} placeholder="Bank Transfer (Mandiri)" />
+            <Label>Cara bayar</Label>
+            <Input value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} placeholder="Transfer bank (Mandiri)" />
           </div>
 
           {/* Reference */}
           <div className="grid gap-2">
-            <Label>Reference Code</Label>
+            <Label>No. referensi / bukti transfer</Label>
             <Input value={referenceCode} onChange={(e) => setReferenceCode(e.target.value)} placeholder="TRX-INV-0099" />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => { setOpen(false); reset(); }}>Batal</Button>
           <Button onClick={handleSubmit} disabled={!canSubmit || loading || (isPartial && parsedAmount >= maxAmount && maxAmount > 0)}>
-            {loading ? <Loader2 className="size-4 animate-spin" /> : "Simpan Payment"}
+            {loading ? <Loader2 className="size-4 animate-spin" /> : "Simpan"}
           </Button>
         </DialogFooter>
       </DialogContent>
