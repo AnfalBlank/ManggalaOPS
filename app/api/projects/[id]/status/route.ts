@@ -27,6 +27,6 @@ export async function PATCH(
     await audit({ userId: user.id, action: "project.status_change", entity: "project", entityId: projectId, payload: { status } });
     return NextResponse.json({ ok: true, status });
   } catch (error) {
-    return toErrorResponse(error, "Failed to update project status");
+    return toErrorResponse(error, "Gagal ubah status proyek");
   }
 }

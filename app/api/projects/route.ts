@@ -14,7 +14,7 @@ export async function GET() {
     const data = await getProjects();
     return NextResponse.json(data);
   } catch (error) {
-    return toErrorResponse(error, "Failed to fetch projects");
+    return toErrorResponse(error, "Gagal ambil data proyek");
   }
 }
 
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const clientId = ensurePositiveInt(body.clientId, "clientId");
     const name = trimString(body.name, 300);
-    ensure(name.length > 0, "Nama project wajib diisi");
+    ensure(name.length > 0, "Nama proyek wajib diisi");
 
     const inserted = await db.insert(projects).values({
       clientId,
@@ -39,6 +39,6 @@ export async function POST(request: NextRequest) {
     await audit({ userId: user.id, action: "project.create", entity: "project", entityId: inserted[0]?.id, payload: { name } });
     return NextResponse.json({ ok: true, data: await getProjects() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to create project");
+    return toErrorResponse(error, "Gagal bikin proyek");
   }
 }

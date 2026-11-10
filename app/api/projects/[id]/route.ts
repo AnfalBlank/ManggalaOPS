@@ -28,7 +28,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     await audit({ userId: user.id, action: "project.update", entity: "project", entityId: projectId });
     return NextResponse.json({ ok: true, data: await getProjects() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to update project");
+    return toErrorResponse(error, "Gagal simpan proyek");
   }
 }
 
@@ -41,6 +41,6 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
     await audit({ userId: user.id, action: "project.delete", entity: "project", entityId: projectId });
     return NextResponse.json({ ok: true, data: await getProjects() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to delete project");
+    return toErrorResponse(error, "Gagal hapus proyek");
   }
 }

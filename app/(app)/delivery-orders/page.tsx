@@ -44,9 +44,9 @@ export default async function DeliveryOrdersPage({ searchParams }: { searchParam
         <RoleGuard allow={["admin", "sales", "finance", "project_manager"]}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-primary">Surat Jalan</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Surat Jalan</h1>
               <p className="text-muted-foreground mt-1">
-                Kelola surat jalan pengiriman barang dengan format konsisten dengan invoice, quotation, dan kwitansi.
+                Bikin dan pantau surat jalan pengiriman barang ke klien.
               </p>
             </div>
             <DeliveryOrderDialog
@@ -61,17 +61,17 @@ export default async function DeliveryOrdersPage({ searchParams }: { searchParam
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <ClickableStatCard
               href="/delivery-orders?type=Draft"
-              title="Draft"
+              title="Draf"
               value={draftCount}
               hint="Belum dikirim"
               icon={<Clock className="size-5" />}
               accentClassName="bg-amber-50 text-amber-600"
             />
             <ClickableStatCard
-              href="/delivery-orders?type=In Transit"
+              href="/delivery-orders?type=In%20Transit"
               title="Dalam Pengiriman"
               value={inTransitCount}
-              hint="Tracking aktif"
+              hint="Barang lagi di jalan"
               icon={<Truck className="size-5" />}
               accentClassName="bg-blue-50 text-blue-600"
             />
@@ -79,7 +79,7 @@ export default async function DeliveryOrdersPage({ searchParams }: { searchParam
               href="/delivery-orders?type=Delivered"
               title="Terkirim"
               value={deliveredCount}
-              hint="Sudah diterima client"
+              hint="Udah diterima klien"
               icon={<CheckCircle2 className="size-5" />}
               accentClassName="bg-emerald-50 text-emerald-600"
             />
@@ -89,7 +89,7 @@ export default async function DeliveryOrdersPage({ searchParams }: { searchParam
             {deliveries.length === 0 ? (
               <EmptyState
                 title="Belum ada surat jalan"
-                description="Buat surat jalan pertama untuk pengiriman barang. Anda juga bisa generate otomatis dari halaman invoice."
+                description="Bikin surat jalan pertama di sini, atau langsung dari halaman PO klien / tagihan."
               />
             ) : (
               <DeliveryOrdersTable
@@ -119,7 +119,7 @@ export default async function DeliveryOrdersPage({ searchParams }: { searchParam
   } catch (error) {
     return (
       <PageWrapper>
-        <ErrorState title="Gagal memuat surat jalan" description={error instanceof Error ? error.message : "Terjadi error saat memuat data surat jalan."} />
+        <ErrorState title="Gagal memuat surat jalan" description={error instanceof Error ? error.message : "Data surat jalan gagal dibaca. Coba muat ulang halaman."} />
       </PageWrapper>
     );
   }

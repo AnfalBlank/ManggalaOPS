@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 import { Activity, Briefcase, CheckCircle, Wallet } from "lucide-react";
 
 import { ClickableStatCard } from "@/components/cards/clickable-stat-card";
@@ -11,14 +12,15 @@ import { InlineStatusSelect } from "@/components/ui/inline-status-select";
 import { Pagination, paginate } from "@/components/ui/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/format";
+import { labelStatus, namaProyek } from "@/lib/label-status";
 import type { ProjectListItem } from "@/lib/types";
 import { isWithinPeriod, type FilterPeriod } from "@/lib/view-filters";
 
 const projectStatusOptions = [
   { label: "Semua status", value: "all" },
-  { label: "In Progress", value: "In Progress" },
-  { label: "Completed", value: "Completed" },
-  { label: "On Hold", value: "On Hold" },
+  { label: labelStatus("In Progress"), value: "In Progress" },
+  { label: labelStatus("Completed"), value: "Completed" },
+  { label: labelStatus("On Hold"), value: "On Hold" },
 ];
 
 export function ProjectsOverview({
@@ -49,7 +51,7 @@ export function ProjectsOverview({
   const filtered = useMemo(
     () => {
       const searched = projects.filter((project) => {
-        const matchesQuery = `${project.code} ${project.name} ${project.clientName} ${project.status}`.toLowerCase().includes(query.toLowerCase());
+        const matchesQuery = `${project.code} ${project.name} ${project.clientName} ${project.status} ${labelStatus(project.status)}`.toLowerCase().includes(query.toLowerCase());
         const matchesPeriod = isWithinPeriod(project.startDate ?? project.deadline, period);
         const matchesType = type === "all" || project.status === type;
         return matchesQuery && matchesPeriod && matchesType;
@@ -69,10 +71,10 @@ export function ProjectsOverview({
   return (
     <>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <ClickableStatCard href="/projects" title="Total Projects" value={totalProjects} hint="Lihat semua project" icon={<Briefcase className="size-5" />} accentClassName="bg-blue-50 text-blue-600" />
-        <ClickableStatCard href="/projects?type=In%20Progress" title="In Progress" value={inProgressProjects} hint="Project berjalan" icon={<Activity className="size-5" />} accentClassName="bg-amber-50 text-amber-600" />
-        <ClickableStatCard href="/projects?type=Completed" title="Completed" value={completedProjects} hint="Project selesai" icon={<CheckCircle className="size-5" />} accentClassName="bg-emerald-50 text-emerald-600" />
-        <ClickableStatCard href="/projects?period=year" title="Total Value" value={formatCurrency(totalValue)} hint="Nilai project tahun ini" icon={<Wallet className="size-5" />} accentClassName="bg-purple-50 text-purple-600" />
+        <ClickableStatCard href="/projects" title="Semua proyek" value={totalProjects} hint="Lihat semua proyek" icon={<Briefcase className="size-5" />} accentClassName="bg-blue-50 text-blue-600" />
+        <ClickableStatCard href="/projects?type=In%20Progress" title="Berjalan" value={inProgressProjects} hint="Proyek yang lagi jalan" icon={<Activity className="size-5" />} accentClassName="bg-amber-50 text-amber-600" />
+        <ClickableStatCard href="/projects?type=Completed" title="Selesai" value={completedProjects} hint="Proyek yang udah selesai" icon={<CheckCircle className="size-5" />} accentClassName="bg-emerald-50 text-emerald-600" />
+        <ClickableStatCard href="/projects?period=year" title="Nilai kontrak" value={formatCurrency(totalValue)} hint="Total nilai semua proyek" icon={<Wallet className="size-5" />} accentClassName="bg-purple-50 text-purple-600" />
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-border p-4 md:p-6">
@@ -81,7 +83,7 @@ export function ProjectsOverview({
             <TableFilterBar
               value={query}
               onChange={setQuery}
-              placeholder="Search projects..."
+              placeholder="Cari proyek, klien, kode..."
               periodValue={period}
               onPeriodChange={(value) => setPeriod(value as FilterPeriod)}
               typeValue={type}
@@ -99,34 +101,34 @@ export function ProjectsOverview({
           </select>
         </div>
 
-        <div className="w-full overflow-x-auto pb-4 rounded-xl border">
-          <Table className="min-w-[900px]">
+        <div className="w-full overflow-x-auto pb-4 rounded-xl border max-md:border-0 max-md:pb-0">
+          <Table className="min-w-[900px] xl:min-w-0">
             <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[120px] rounded-tl-xl text-xs uppercase tracking-wider">Project ID</TableHead>
-                <TableHead className="text-xs uppercase tracking-wider">Project Name</TableHead>
-                <TableHead className="text-xs uppercase tracking-wider">Client</TableHead>
-                <TableHead className="text-xs uppercase tracking-wider">Timeline</TableHead>
-                <TableHead className="w-[150px] text-xs uppercase tracking-wider">Progress</TableHead>
-                <TableHead className="text-right text-xs uppercase tracking-wider">Contract Value</TableHead>
+                <TableHead className="w-[120px] rounded-tl-xl text-xs uppercase tracking-wider">Kode</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider">Nama proyek</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider">Klien</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider">Jadwal</TableHead>
+                <TableHead className="w-[150px] text-xs uppercase tracking-wider">Progres</TableHead>
+                <TableHead className="text-right text-xs uppercase tracking-wider">Nilai kontrak</TableHead>
                 <TableHead className="text-center text-xs uppercase tracking-wider">Status</TableHead>
-                <TableHead className="text-right rounded-tr-xl">Actions</TableHead>
+                <TableHead className="text-right rounded-tr-xl">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paged.map((project) => (
                 <TableRow key={project.id} className="group hover:bg-muted/30 transition-colors border-b last:border-0">
                   <TableCell className="font-medium text-muted-foreground py-4">{project.code}</TableCell>
-                  <TableCell className="font-semibold text-foreground py-4 max-w-[200px] truncate" title={project.name}>{project.name}</TableCell>
+                  <TableCell className="font-semibold text-foreground py-4 max-w-[200px] truncate max-md:max-w-none" title={project.name}>{namaProyek(project.name)}</TableCell>
                   <TableCell className="py-4 text-sm text-slate-700">{project.clientName}</TableCell>
                   <TableCell className="text-xs py-4 text-muted-foreground">
                     <div className="flex flex-col gap-1">
-                      <span>Start: {project.startDate ? format(new Date(project.startDate), "dd MMM yyyy") : "-"}</span>
-                      <span>Target: {project.deadline ? format(new Date(project.deadline), "dd MMM yyyy") : "-"}</span>
+                      <span>Mulai: {project.startDate ? format(new Date(project.startDate), "dd MMM yyyy", { locale: localeId }) : "-"}</span>
+                      <span>Target: {project.deadline ? format(new Date(project.deadline), "dd MMM yyyy", { locale: localeId }) : "-"}</span>
                     </div>
                   </TableCell>
                   <TableCell className="py-4">
-                    <div className="flex flex-col gap-1">
+                    <div className="flex w-32 flex-col gap-1 md:w-auto">
                       <div className="flex justify-between text-xs font-medium">
                         <span>{project.progress}%</span>
                       </div>

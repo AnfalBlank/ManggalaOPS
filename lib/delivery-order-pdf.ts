@@ -1,7 +1,18 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 import { tampilkanPdf } from "@/lib/dokumen-pdf";
+
+const LABEL_PENGIRIMAN_PDF: Record<string, string> = {
+  "Direct Delivery": "Antar langsung",
+  "Kurir Internal": "Kurir internal",
+  Pickup: "Diambil sendiri",
+};
+function labelPengirimanPdf(method?: string | null) {
+  if (!method) return "Antar langsung";
+  return LABEL_PENGIRIMAN_PDF[method] ?? method;
+}
 
 export type DeliveryOrderPdfItem = {
   description: string;
@@ -121,13 +132,13 @@ export function generateDeliveryOrderPDF(data: DeliveryOrderPdfData) {
   let infoY = 57;
   const infoRows: Array<[string, string]> = [
     ["Nomor", letterNumber],
-    ["Tanggal", format(data.date, "dd MMMM yyyy")],
-    ["Pengiriman", data.shippingMethod || "Direct Delivery"],
+    ["Tanggal", format(data.date, "dd MMMM yyyy", { locale: localeId })],
+    ["Pengiriman", labelPengirimanPdf(data.shippingMethod)],
     ["No. Kendaraan", data.vehicleNumber || "-"],
-    ["Driver", data.driverName || "-"],
+    ["Sopir", data.driverName || "-"],
   ];
   if (data.invoiceCode) {
-    infoRows.push(["Ref. Invoice", data.invoiceCode]);
+    infoRows.push(["No. Tagihan", data.invoiceCode]);
   }
   if (data.poNumber) {
     infoRows.push(["No. PO", data.poNumber]);
@@ -154,7 +165,7 @@ export function generateDeliveryOrderPDF(data: DeliveryOrderPdfData) {
   y += 4;
   autoTable(doc, {
     startY: y,
-    head: [["No", "Description", "Qty", "Unit", "Serial Number", "Notes"]],
+    head: [["No", "Uraian", "Qty", "Satuan", "No. Seri", "Catatan"]],
     body: data.items.map((item, index) => [
       String(index + 1),
       item.description,
@@ -237,13 +248,13 @@ export function generateDeliveryOrderPDF(data: DeliveryOrderPdfData) {
 
   const columns = [
     { label: "Pengirim", name: data.signatoryName || "Adiatma Pasau", title: data.signatoryTitle || "Manager Marketing" },
-    { label: "Driver", name: data.driverName || "(....................)", title: data.vehicleNumber ? `No. ${data.vehicleNumber}` : "" },
+    { label: "Sopir", name: data.driverName || "(....................)", title: data.vehicleNumber ? `No. ${data.vehicleNumber}` : "" },
     { label: "Penerima", name: data.recipientName || data.client || "(....................)", title: data.recipientCompany || "" },
   ];
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text(format(data.date, "dd MMMM yyyy"), 196, signY, { align: "right" });
+  doc.text(format(data.date, "dd MMMM yyyy", { locale: localeId }), 196, signY, { align: "right" });
   signY += 6;
   columns.forEach((col, index) => {
     const x = startX + index * (colWidth + colGap);
@@ -273,7 +284,7 @@ export function generateDeliveryOrderPDF(data: DeliveryOrderPdfData) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.text(`${companyName}  •  ${companyEmail}  •  ${companyPhone}`, 14, 293);
-    doc.text(`Page ${i} of ${pageCount}`, 196, 293, { align: "right" });
+    doc.text(`Halaman ${i} dari ${pageCount}`, 196, 293, { align: "right" });
   }
 
   tampilkanPdf(doc, `${letterNumber.replace(/\//g, "-")}.pdf`);

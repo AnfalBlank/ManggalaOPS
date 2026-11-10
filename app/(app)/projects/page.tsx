@@ -14,15 +14,15 @@ export default async function ProjectsPage({ searchParams }: { searchParams?: Pr
       <PageWrapper>
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-primary">Projects & Procurement</h1>
-            <p className="text-muted-foreground mt-1">Track ongoing implementations and hardware procurements.</p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Proyek</h1>
+            <p className="text-muted-foreground mt-1">Pantau proyek yang lagi jalan, target selesai, dan nilai kontraknya.</p>
           </div>
           <ProjectDialog clients={clients} />
         </div>
 
         {projects.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-sm border border-border p-4 md:p-6">
-            <EmptyState title="Belum ada data projects" description="Tabel projects masih kosong. Setelah lead menang atau seed dijalankan, data project akan tampil di sini." />
+            <EmptyState title="Belum ada proyek" description="Proyek muncul di sini setelah penawaran diterima atau kamu bikin proyek baru." />
           </div>
         ) : (
           <ProjectsOverview projects={projects} clients={clients} filters={{ initialQuery: params.q, initialPeriod: (params.period as "all" | "30d" | "month" | "year") ?? "all", initialType: params.type ?? "all" }} />
@@ -32,7 +32,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams?: Pr
   } catch (error) {
     return (
       <PageWrapper>
-        <ErrorState title="Gagal memuat projects" description={error instanceof Error ? error.message : "Terjadi error saat membaca data project dari database."} />
+        <ErrorState title="Gagal memuat proyek" description={error instanceof Error ? error.message : "Data proyek gagal dibaca. Coba muat ulang halaman."} />
       </PageWrapper>
     );
   }

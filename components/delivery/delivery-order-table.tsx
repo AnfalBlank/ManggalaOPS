@@ -3,25 +3,27 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { DownloadDeliveryOrderButton } from "@/components/pdf/download-delivery-order-button";
-import { DeliveryOrderDialog } from "@/components/forms/delivery-order-dialogs";
+import { DeliveryOrderDialog, labelPengiriman } from "@/components/forms/delivery-order-dialogs";
 import { TableFilterBar } from "@/components/filters/table-filter-bar";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { InlineStatusSelect } from "@/components/ui/inline-status-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { DeliveryOrderListItem } from "@/lib/data-delivery";
+import { labelStatus, namaProyek } from "@/lib/label-status";
 import { isWithinPeriod, type FilterPeriod } from "@/lib/view-filters";
 
 const statusOptions = [
   { label: "Semua status", value: "all" },
-  { label: "Draft", value: "Draft" },
-  { label: "In Transit", value: "In Transit" },
-  { label: "Delivered", value: "Delivered" },
-  { label: "Cancelled", value: "Cancelled" },
+  { label: labelStatus("Draft"), value: "Draft" },
+  { label: labelStatus("In Transit"), value: "In Transit" },
+  { label: labelStatus("Delivered"), value: "Delivered" },
+  { label: labelStatus("Cancelled"), value: "Cancelled" },
 ];
 
 type ClientOption = { id: number; name: string };
@@ -66,7 +68,7 @@ export function DeliveryOrdersTable({
 
   const filtered = useMemo(
     () => deliveries.filter((delivery) => {
-      const haystack = `${delivery.code} ${delivery.clientName} ${delivery.projectName ?? ""} ${delivery.recipientName ?? ""} ${delivery.invoiceCode ?? ""}`.toLowerCase();
+      const haystack = `${delivery.code} ${delivery.clientName} ${delivery.projectName ?? ""} ${delivery.recipientName ?? ""} ${delivery.invoiceCode ?? ""} ${delivery.poNumber ?? ""} ${labelStatus(delivery.status)}`.toLowerCase();
       const matchesQuery = haystack.includes(query.toLowerCase());
       const matchesPeriod = isWithinPeriod(delivery.date, period);
       const matchesType = type === "all" || delivery.status === type;
@@ -88,18 +90,18 @@ export function DeliveryOrdersTable({
         typeOptions={statusOptions}
       />
 
-      <div className="w-full overflow-x-auto pb-4 rounded-xl border">
-        <Table className="min-w-[1000px]">
+      <div className="w-full overflow-x-auto pb-4 rounded-xl border max-md:border-0 max-md:pb-0">
+        <Table className="min-w-[1000px] xl:min-w-0">
           <TableHeader className="bg-slate-50 sticky top-0 z-10">
             <TableRow>
               <TableHead>No. Surat Jalan</TableHead>
-              <TableHead>Client / Project</TableHead>
+              <TableHead>Klien / proyek</TableHead>
               <TableHead>Penerima</TableHead>
               <TableHead>Tanggal</TableHead>
               <TableHead>Pengiriman</TableHead>
-              <TableHead>Ref. Invoice</TableHead>
+              <TableHead>No. tagihan</TableHead>
               <TableHead className="text-center">Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -108,15 +110,15 @@ export function DeliveryOrdersTable({
                 <TableCell className="font-medium">{delivery.code}</TableCell>
                 <TableCell>
                   {delivery.clientName}
-                  <div className="text-xs text-muted-foreground">{delivery.projectName ?? "-"}</div>
+                  <div className="text-xs text-muted-foreground">{namaProyek(delivery.projectName)}</div>
                 </TableCell>
                 <TableCell>
                   {delivery.recipientName ?? delivery.clientName}
                   <div className="text-xs text-muted-foreground">{delivery.recipientCompany ?? "-"}</div>
                 </TableCell>
-                <TableCell>{delivery.date ? format(new Date(delivery.date), "dd MMM yyyy") : "-"}</TableCell>
+                <TableCell>{delivery.date ? format(new Date(delivery.date), "dd MMM yyyy", { locale: localeId }) : "-"}</TableCell>
                 <TableCell>
-                  {delivery.shippingMethod ?? "-"}
+                  {delivery.shippingMethod ? labelPengiriman(delivery.shippingMethod) : "-"}
                   {delivery.vehicleNumber ? <div className="text-xs text-muted-foreground">{delivery.vehicleNumber}</div> : null}
                 </TableCell>
                 <TableCell>{delivery.invoiceCode ?? "-"}</TableCell>
@@ -205,12 +207,13 @@ export function DeliveryOrdersTable({
                           size="sm"
                           className="h-8 px-2 text-rose-600 hover:text-rose-700"
                           disabled={deletingId === delivery.id}
+                          aria-label={`Hapus surat jalan ${delivery.code}`}
                         >
                           {deletingId === delivery.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
                         </Button>
                       }
                       title={`Hapus surat jalan ${delivery.code}?`}
-                      description="Surat jalan akan dihapus permanen beserta seluruh item-nya."
+                      description="Surat jalan ini dihapus permanen beserta semua barangnya."
                       confirmText="Hapus"
                       variant="destructive"
                       onConfirm={async () => {

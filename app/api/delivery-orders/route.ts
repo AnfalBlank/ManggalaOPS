@@ -15,7 +15,7 @@ export async function GET() {
     const data = await getDeliveryOrders();
     return NextResponse.json(data);
   } catch (error) {
-    return toErrorResponse(error, "Failed to fetch delivery orders");
+    return toErrorResponse(error, "Gagal ambil data surat jalan");
   }
 }
 
@@ -77,12 +77,12 @@ export async function POST(request: NextRequest) {
       return createdId;
     });
 
-    await createNotification({ title: "Surat jalan baru", message: `Surat jalan #${newId} berhasil dibuat untuk client.`, type: "info", targetRole: "project_manager" });
+    await createNotification({ title: "Surat jalan baru", message: `Surat jalan #${newId} udah dibuat.`, type: "info", targetRole: "project_manager" });
     await audit({ userId: user.id, action: "delivery_order.create", entity: "delivery_order", entityId: newId, payload: { clientId } });
 
     return NextResponse.json({ ok: true, data: await getDeliveryOrders() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to create delivery order");
+    return toErrorResponse(error, "Gagal bikin surat jalan");
   }
 }
 

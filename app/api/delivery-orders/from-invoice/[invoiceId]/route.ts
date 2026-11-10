@@ -22,12 +22,12 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ invoi
 
     const invoice = await db.query.invoices.findFirst({ where: eq(invoices.id, invoiceId) });
     if (!invoice) {
-      return NextResponse.json({ error: "Invoice tidak ditemukan" }, { status: 404 });
+      return NextResponse.json({ error: "Tagihan gak ketemu" }, { status: 404 });
     }
 
     const items = await db.select().from(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
     if (items.length === 0) {
-      return NextResponse.json({ error: "Invoice tidak memiliki item barang" }, { status: 400 });
+      return NextResponse.json({ error: "Tagihan ini gak punya barang" }, { status: 400 });
     }
 
     const client = await db.query.clients.findFirst({ where: eq(clients.id, invoice.clientId) });
@@ -75,6 +75,6 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ invoi
     await audit({ userId: user.id, action: "delivery_order.from_invoice", entity: "delivery_order", entityId: newId, payload: { invoiceId } });
     return NextResponse.json({ ok: true, deliveryOrderId: newId, data: await getDeliveryOrders() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to generate delivery order from invoice");
+    return toErrorResponse(error, "Gagal bikin surat jalan dari tagihan");
   }
 }

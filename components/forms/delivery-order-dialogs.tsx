@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { labelStatus } from "@/lib/label-status";
 
 type ClientOption = { id: number; name: string };
 type ProjectOption = { id: number; name: string; clientId: number; clientName: string };
@@ -47,7 +48,18 @@ type DeliveryOrderForm = {
   items?: Array<{ description: string; qty: number; unit: string | null; serialNumber: string | null; notes: string | null }>;
 };
 
+// Nilai yang disimpan tetap (data lama); yang tampil pakai label.
 const SHIPPING_METHODS = ["Direct Delivery", "Kurir Internal", "Ekspedisi", "Pickup"];
+const LABEL_PENGIRIMAN: Record<string, string> = {
+  "Direct Delivery": "Antar langsung",
+  "Kurir Internal": "Kurir internal",
+  Ekspedisi: "Ekspedisi",
+  Pickup: "Diambil sendiri",
+};
+export function labelPengiriman(method: string) {
+  return LABEL_PENGIRIMAN[method] ?? method;
+}
+const STATUS_SURAT_JALAN = ["Draft", "In Transit", "Delivered", "Cancelled"];
 const DEFAULT_INTRO =
   "Bersama ini kami sampaikan pengiriman barang dengan rincian sebagai berikut. Mohon diperiksa dan ditandatangani sebagai bukti penerimaan.";
 const DEFAULT_NOTES =
@@ -61,7 +73,7 @@ async function send(url: string, method: string, body?: Record<string, unknown>)
     body: body ? JSON.stringify(body) : undefined,
   });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.error ?? "Request failed");
+  if (!response.ok) throw new Error(payload.error ?? "Gagal menyimpan, coba lagi");
   return payload;
 }
 
@@ -170,21 +182,21 @@ export function DeliveryOrderDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={delivery ? <Button variant="outline" size="sm">Edit</Button> : <Button className="gap-2"><Plus className="size-4" /> {triggerLabel ?? "Buat Surat Jalan"}</Button>} />
-      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogTrigger render={delivery ? <Button variant="outline" size="sm">Ubah</Button> : <Button className="gap-2"><Plus className="size-4" /> {triggerLabel ?? "Bikin surat jalan"}</Button>} />
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
-          <DialogTitle>{delivery ? "Edit Surat Jalan" : "Buat Surat Jalan"}</DialogTitle>
+          <DialogTitle>{delivery ? "Ubah surat jalan" : "Bikin surat jalan"}</DialogTitle>
           <DialogDescription>
-            {delivery ? "Update data surat jalan." : "Buat surat jalan untuk pengiriman barang. Bisa dibuat dari invoice atau manual."}
+            {delivery ? "Ubah data surat jalan ini." : "Isi manual, atau pilih tagihan biar penerima & barang terisi otomatis."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
-              <Label>Client</Label>
-              <Select value={clientId} onValueChange={(value) => setClientId(value ?? "")}>
-                <SelectTrigger className="w-full"><SelectValue placeholder="Pilih client" /></SelectTrigger>
+              <Label>Klien</Label>
+              <Select value={clientId || null} onValueChange={(value) => setClientId(value ?? "")}>
+                <SelectTrigger className="w-full"><SelectValue>{(v: string | null) => (v ? clients.find((c) => String(c.id) === v)?.name ?? "Pilih klien" : "Pilih klien")}</SelectValue></SelectTrigger>
                 <SelectContent>
                   {clients.map((client) => (
                     <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>
@@ -194,14 +206,14 @@ export function DeliveryOrderDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label>Tanggal Pengiriman</Label>
+              <Label>Tanggal kirim</Label>
               <Input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
             </div>
 
             <div className="grid gap-2">
-              <Label>Project (opsional)</Label>
-              <Select value={projectId} onValueChange={(value) => setProjectId(value ?? "")}>
-                <SelectTrigger className="w-full"><SelectValue placeholder="Pilih project" /></SelectTrigger>
+              <Label>Proyek (opsional)</Label>
+              <Select value={projectId || null} onValueChange={(value) => setProjectId(value ?? "")}>
+                <SelectTrigger className="w-full"><SelectValue>{(v: string | null) => (v ? projects.find((p) => String(p.id) === v)?.name ?? "Pilih proyek" : "Pilih proyek")}</SelectValue></SelectTrigger>
                 <SelectContent>
                   {filteredProjects.map((project) => (
                     <SelectItem key={project.id} value={String(project.id)}>{project.name}</SelectItem>
@@ -211,9 +223,9 @@ export function DeliveryOrderDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label>Referensi Invoice (opsional)</Label>
-              <Select value={invoiceId} onValueChange={(value) => setInvoiceId(value ?? "")}>
-                <SelectTrigger className="w-full"><SelectValue placeholder="Pilih invoice" /></SelectTrigger>
+              <Label>Dari tagihan (opsional)</Label>
+              <Select value={invoiceId || null} onValueChange={(value) => setInvoiceId(value ?? "")}>
+                <SelectTrigger className="w-full"><SelectValue>{(v: string | null) => { const inv = v ? invoices.find((i) => String(i.id) === v) : undefined; return inv ? `${inv.code} • ${inv.clientName}` : "Pilih tagihan"; }}</SelectValue></SelectTrigger>
                 <SelectContent>
                   {filteredInvoices.map((invoice) => (
                     <SelectItem key={invoice.id} value={String(invoice.id)}>{invoice.code} • {invoice.clientName}</SelectItem>
@@ -223,12 +235,12 @@ export function DeliveryOrderDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label>Metode Pengiriman</Label>
+              <Label>Cara kirim</Label>
               <Select value={shippingMethod} onValueChange={(value) => setShippingMethod(value ?? "Direct Delivery")}>
-                <SelectTrigger className="w-full"><SelectValue placeholder="Pilih metode" /></SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue>{(v: string | null) => (v ? labelPengiriman(v) : "Pilih cara kirim")}</SelectValue></SelectTrigger>
                 <SelectContent>
                   {SHIPPING_METHODS.map((method) => (
-                    <SelectItem key={method} value={method}>{method}</SelectItem>
+                    <SelectItem key={method} value={method}>{labelPengiriman(method)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -237,22 +249,21 @@ export function DeliveryOrderDialog({
             <div className="grid gap-2">
               <Label>Status</Label>
               <Select value={status} onValueChange={(value) => setStatus(value ?? "Draft")}>
-                <SelectTrigger className="w-full"><SelectValue placeholder="Pilih status" /></SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue>{(v: string | null) => labelStatus(v)}</SelectValue></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Draft">Draft</SelectItem>
-                  <SelectItem value="In Transit">In Transit</SelectItem>
-                  <SelectItem value="Delivered">Delivered</SelectItem>
-                  <SelectItem value="Cancelled">Cancelled</SelectItem>
+                  {STATUS_SURAT_JALAN.map((value) => (
+                    <SelectItem key={value} value={value}>{labelStatus(value)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="grid gap-2">
-              <Label>No. Kendaraan</Label>
+              <Label>No. kendaraan</Label>
               <Input value={vehicleNumber} onChange={(event) => setVehicleNumber(event.target.value)} placeholder="B 1234 ABC" />
             </div>
             <div className="grid gap-2">
-              <Label>Nama Driver</Label>
+              <Label>Nama sopir</Label>
               <Input value={driverName} onChange={(event) => setDriverName(event.target.value)} />
             </div>
           </div>
@@ -260,24 +271,24 @@ export function DeliveryOrderDialog({
           <div className="rounded-xl border p-4 space-y-4">
             <h3 className="font-semibold">Penerima</h3>
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="grid gap-2"><Label>Nama Penerima</Label><Input value={recipientName} onChange={(event) => setRecipientName(event.target.value)} /></div>
+              <div className="grid gap-2"><Label>Nama penerima</Label><Input value={recipientName} onChange={(event) => setRecipientName(event.target.value)} /></div>
               <div className="grid gap-2"><Label>Perusahaan</Label><Input value={recipientCompany} onChange={(event) => setRecipientCompany(event.target.value)} /></div>
-              <div className="grid gap-2 md:col-span-2"><Label>Alamat Pengiriman</Label><Textarea rows={2} value={recipientAddress} onChange={(event) => setRecipientAddress(event.target.value)} /></div>
-              <div className="grid gap-2"><Label>No. Telepon Penerima</Label><Input value={recipientPhone} onChange={(event) => setRecipientPhone(event.target.value)} /></div>
+              <div className="grid gap-2 md:col-span-2"><Label>Alamat kirim</Label><Textarea rows={2} value={recipientAddress} onChange={(event) => setRecipientAddress(event.target.value)} /></div>
+              <div className="grid gap-2"><Label>No. HP penerima</Label><Input value={recipientPhone} onChange={(event) => setRecipientPhone(event.target.value)} /></div>
               <div className="grid gap-2"><Label>Perihal</Label><Input value={subject} onChange={(event) => setSubject(event.target.value)} /></div>
             </div>
           </div>
 
           <div className="rounded-xl border p-4 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold">Item Barang</h3>
+              <h3 className="font-semibold">Barang</h3>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setItems([...items, { description: "", qty: "1", unit: "Unit", serialNumber: "", notes: "" }])}
               >
-                Tambah Item
+                Tambah barang
               </Button>
             </div>
             <div className="grid gap-3">
@@ -305,7 +316,7 @@ export function DeliveryOrderDialog({
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <Label>Unit</Label>
+                    <Label>Satuan</Label>
                     <Input
                       value={item.unit}
                       onChange={(event) =>
@@ -314,7 +325,7 @@ export function DeliveryOrderDialog({
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <Label>Serial Number</Label>
+                    <Label>No. seri</Label>
                     <Input
                       value={item.serialNumber}
                       onChange={(event) =>
@@ -323,7 +334,7 @@ export function DeliveryOrderDialog({
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <Label>Catatan Item</Label>
+                    <Label>Catatan barang</Label>
                     <Input
                       value={item.notes}
                       onChange={(event) =>
@@ -337,6 +348,8 @@ export function DeliveryOrderDialog({
                         type="button"
                         variant="outline"
                         size="icon"
+                        className="size-10"
+                        aria-label={`Hapus barang ${index + 1}`}
                         onClick={() => setItems(items.filter((_, i) => i !== index))}
                       >
                         <Trash2 className="size-4" />
@@ -349,13 +362,13 @@ export function DeliveryOrderDialog({
           </div>
 
           <div className="rounded-xl border p-4 space-y-4">
-            <h3 className="font-semibold">Catatan & Tanda Tangan</h3>
+            <h3 className="font-semibold">Catatan & tanda tangan</h3>
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="grid gap-2 md:col-span-2"><Label>Pembuka Surat</Label><Textarea rows={2} value={introduction} onChange={(event) => setIntroduction(event.target.value)} /></div>
-              <div className="grid gap-2 md:col-span-2"><Label>Catatan Pengiriman</Label><Textarea rows={4} value={notes} onChange={(event) => setNotes(event.target.value)} /></div>
-              <div className="grid gap-2 md:col-span-2"><Label>Closing Note</Label><Textarea rows={2} value={closingNote} onChange={(event) => setClosingNote(event.target.value)} /></div>
-              <div className="grid gap-2"><Label>Nama Penanda Tangan</Label><Input value={signatoryName} onChange={(event) => setSignatoryName(event.target.value)} /></div>
-              <div className="grid gap-2"><Label>Jabatan Penanda Tangan</Label><Input value={signatoryTitle} onChange={(event) => setSignatoryTitle(event.target.value)} /></div>
+              <div className="grid gap-2 md:col-span-2"><Label>Kalimat pembuka</Label><Textarea rows={2} value={introduction} onChange={(event) => setIntroduction(event.target.value)} /></div>
+              <div className="grid gap-2 md:col-span-2"><Label>Catatan pengiriman</Label><Textarea rows={4} value={notes} onChange={(event) => setNotes(event.target.value)} /></div>
+              <div className="grid gap-2 md:col-span-2"><Label>Kalimat penutup</Label><Textarea rows={2} value={closingNote} onChange={(event) => setClosingNote(event.target.value)} /></div>
+              <div className="grid gap-2"><Label>Nama penanda tangan</Label><Input value={signatoryName} onChange={(event) => setSignatoryName(event.target.value)} /></div>
+              <div className="grid gap-2"><Label>Jabatan penanda tangan</Label><Input value={signatoryTitle} onChange={(event) => setSignatoryTitle(event.target.value)} /></div>
             </div>
           </div>
         </div>
@@ -394,7 +407,7 @@ export function DeliveryOrderDialog({
                     notes: item.notes.trim() || null,
                   })),
                 });
-                toast.success(delivery?.id ? "Surat jalan diupdate" : "Surat jalan dibuat");
+                toast.success(delivery?.id ? "Surat jalan disimpan" : "Surat jalan dibuat");
                 setOpen(false);
                 router.refresh();
               } catch (error) {

@@ -31,7 +31,7 @@ export async function acceptQuotationAndCreateProject(quotationId: number) {
       .insert(projects)
       .values({
         clientId: quotation.clientId,
-        name: `Project from QUO-${String(quotation.id).padStart(4, "0")}`,
+        name: `Proyek dari QUO-${String(quotation.id).padStart(4, "0")}`,
         value: quotation.total ?? quotation.subtotal ?? 0,
         status: "In Progress",
         progress: 0,

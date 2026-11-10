@@ -16,7 +16,9 @@ import { formatDocumentNumber } from "@/lib/format";
  */
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireRole(["admin", "finance", "sales", "project_manager"]);
+    const { role } = await requireRole(["admin", "finance", "sales", "project_manager"]);
+    // Tagihan, pembayaran & pengeluaran cuma buat admin/keuangan (sales gak boleh lihat keuangan).
+    const lihatUang = role === "admin" || role === "finance";
     const { id } = await params;
     const projectId = ensurePositiveInt(id, "project id");
 
@@ -39,7 +41,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
     ]);
 
     if (!project) {
-      return NextResponse.json({ error: "Project tidak ditemukan" }, { status: 404 });
+      return NextResponse.json({ error: "Proyek gak ketemu" }, { status: 404 });
     }
 
     const totalQuotationValue = quotationRows.reduce((sum, q) => sum + (q.total ?? 0), 0);
@@ -66,7 +68,8 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
         total: q.total ?? 0,
         date: q.date,
       })),
-      invoices: invoiceRows.map((inv) => ({
+      lihatUang,
+      invoices: (lihatUang ? invoiceRows : []).map((inv) => ({
         id: inv.id,
         code: formatDocumentNumber("INV", inv.id),
         date: inv.date,
@@ -75,7 +78,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
         amountPaid: inv.amountPaid ?? 0,
         outstanding: Math.max((inv.total ?? 0) - (inv.amountPaid ?? 0), 0),
       })),
-      expenses: expenseRows.map((exp) => ({
+      expenses: (lihatUang ? expenseRows : []).map((exp) => ({
         id: exp.id,
         code: formatDocumentNumber("EXP", exp.id),
         date: exp.date,
@@ -84,16 +87,11 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
         amount: exp.amount ?? 0,
         status: exp.status,
       })),
-      summary: {
-        totalQuotationValue,
-        totalInvoiceValue,
-        totalCollected,
-        totalOutstanding,
-        totalExpense,
-        netProjectMargin,
-      },
+      summary: lihatUang
+        ? { totalQuotationValue, totalInvoiceValue, totalCollected, totalOutstanding, totalExpense, netProjectMargin }
+        : { totalQuotationValue, totalInvoiceValue: 0, totalCollected: 0, totalOutstanding: 0, totalExpense: 0, netProjectMargin: 0 },
     });
   } catch (error) {
-    return toErrorResponse(error, "Failed to fetch project summary");
+    return toErrorResponse(error, "Gagal ambil ringkasan proyek");
   }
 }

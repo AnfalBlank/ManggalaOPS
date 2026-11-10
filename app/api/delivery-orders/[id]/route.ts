@@ -60,7 +60,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     await audit({ userId: user.id, action: "delivery_order.update", entity: "delivery_order", entityId: deliveryId });
     return NextResponse.json({ ok: true, data: await getDeliveryOrders() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to update delivery order");
+    return toErrorResponse(error, "Gagal simpan surat jalan");
   }
 }
 
@@ -76,6 +76,6 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
     await audit({ userId: user.id, action: "delivery_order.delete", entity: "delivery_order", entityId: deliveryId });
     return NextResponse.json({ ok: true, data: await getDeliveryOrders() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to delete delivery order");
+    return toErrorResponse(error, "Gagal hapus surat jalan");
   }
 }

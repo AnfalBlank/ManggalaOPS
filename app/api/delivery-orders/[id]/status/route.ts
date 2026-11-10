@@ -27,6 +27,6 @@ export async function PATCH(
     await audit({ userId: user.id, action: "delivery_order.status_change", entity: "delivery_order", entityId: deliveryId, payload: { status } });
     return NextResponse.json({ ok: true, status });
   } catch (error) {
-    return toErrorResponse(error, "Failed to update delivery order status");
+    return toErrorResponse(error, "Gagal ubah status surat jalan");
   }
 }

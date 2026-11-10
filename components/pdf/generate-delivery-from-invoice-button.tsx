@@ -18,10 +18,10 @@ export function GenerateDeliveryFromInvoiceButton({ invoiceId }: { invoiceId: nu
       const response = await fetch(`/api/delivery-orders/from-invoice/${invoiceId}`, { method: "POST" });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        toast.error(payload.error ?? "Gagal generate surat jalan");
+        toast.error(payload.error ?? "Gagal bikin surat jalan");
         return;
       }
-      toast.success(`Surat jalan #${payload.deliveryOrderId} berhasil dibuat. Buka menu Surat Jalan untuk download PDF.`);
+      toast.success(`Surat jalan #${payload.deliveryOrderId} udah dibuat. Lihat PDF-nya di menu Surat jalan.`);
       router.push("/delivery-orders");
       router.refresh();
     } finally {
@@ -37,14 +37,14 @@ export function GenerateDeliveryFromInvoiceButton({ invoiceId }: { invoiceId: nu
           size="sm"
           className="h-8 px-3 text-blue-700 hover:text-blue-800"
           disabled={loading}
-          title="Generate Surat Jalan dari invoice ini"
+          title="Bikin surat jalan dari tagihan ini"
         >
-          {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Truck className="size-4 mr-2" />} Surat Jalan
+          {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Truck className="size-4 mr-2" />} Surat jalan
         </Button>
       }
-      title="Generate surat jalan dari invoice ini?"
-      description="Surat jalan baru akan dibuat dengan item & detail penerima sama dengan invoice."
-      confirmText="Generate"
+      title="Bikin surat jalan dari tagihan ini?"
+      description="Surat jalan baru dibuat dengan barang & penerima yang sama dengan tagihan."
+      confirmText="Bikin"
       onConfirm={onConfirm}
     />
   );
