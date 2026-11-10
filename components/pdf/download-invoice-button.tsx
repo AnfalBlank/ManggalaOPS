@@ -32,7 +32,7 @@ export function DownloadInvoiceButton({ payload }: { payload: InvoicePdfPayload 
           dueDate: new Date(payload.dueDate),
         })
       }
-      title="Download Invoice PDF"
+      title="Lihat PDF invoice"
     >
       <Download className="size-4" />
     </Button>

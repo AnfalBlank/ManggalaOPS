@@ -1,7 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { clients, deliveryOrderItems, deliveryOrders, invoices, projects } from "@/db/schema";
+import { clientPos, clients, deliveryOrderItems, deliveryOrders, invoices, projects } from "@/db/schema";
 import { toIsoString } from "@/lib/db-utils";
 import { formatDocumentNumber } from "@/lib/format";
 
@@ -24,6 +24,8 @@ export type DeliveryOrderListItem = {
   invoiceId: number | null;
   invoiceCode: string | null;
   quotationId: number | null;
+  clientPoId: number | null;
+  poNumber: string | null;
   date: string | null;
   vehicleNumber: string | null;
   driverName: string | null;
@@ -52,6 +54,8 @@ export async function getDeliveryOrders(): Promise<DeliveryOrderListItem[]> {
       projectName: projects.name,
       invoiceId: deliveryOrders.invoiceId,
       quotationId: deliveryOrders.quotationId,
+      clientPoId: deliveryOrders.clientPoId,
+      poNumber: clientPos.poNumber,
       date: deliveryOrders.date,
       vehicleNumber: deliveryOrders.vehicleNumber,
       driverName: deliveryOrders.driverName,
@@ -71,6 +75,7 @@ export async function getDeliveryOrders(): Promise<DeliveryOrderListItem[]> {
     .from(deliveryOrders)
     .innerJoin(clients, eq(deliveryOrders.clientId, clients.id))
     .leftJoin(projects, eq(deliveryOrders.projectId, projects.id))
+    .leftJoin(clientPos, eq(deliveryOrders.clientPoId, clientPos.id))
     .orderBy(desc(deliveryOrders.id));
 
   const itemRows = await db.select().from(deliveryOrderItems);
@@ -85,6 +90,8 @@ export async function getDeliveryOrders(): Promise<DeliveryOrderListItem[]> {
     invoiceId: row.invoiceId,
     invoiceCode: row.invoiceId ? formatDocumentNumber("INV", row.invoiceId) : null,
     quotationId: row.quotationId,
+    clientPoId: row.clientPoId ?? null,
+    poNumber: row.poNumber ?? null,
     date: toIsoString(row.date),
     vehicleNumber: row.vehicleNumber,
     driverName: row.driverName,

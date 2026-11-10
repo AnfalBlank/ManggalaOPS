@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatCurrency } from "@/lib/format";
+import { tampilkanPdf } from "@/lib/dokumen-pdf";
 
 type AccountRow = { code: string; name: string; type: string; balance: number };
 
@@ -144,7 +145,7 @@ export function ExecutiveFinancialReport({ accounts }: { accounts: AccountRow[] 
       },
       columnStyles: { 1: { halign: "right" } },
     });
-    doc.save(`laporan-keuangan-eksekutif-${endDate}.pdf`);
+    tampilkanPdf(doc, `laporan-keuangan-eksekutif-${endDate}.pdf`);
   };
 
   const periodLabel = formatPeriodLabel(startDate, endDate);

@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { drawSignatureAndStamp, preloadSignatureStamp } from "@/lib/pdf-signature";
+import { tampilkanPdf } from "@/lib/dokumen-pdf";
 
 export type InvoicePdfItem = {
   description: string;
@@ -41,6 +42,7 @@ export type InvoicePdfData = {
   amountPaid?: number;
   outstandingAmount?: number;
   status: string;
+  clientPoNumber?: string | null;
 };
 
 const formatCurrency = (amount: number) =>
@@ -119,6 +121,7 @@ export async function generateInvoiceLetterPDF(data: InvoicePdfData) {
     ["Tanggal", format(data.date, "dd MMMM yyyy")],
     ["Jatuh Tempo", data.dueDate ? format(data.dueDate, "dd MMMM yyyy") : "-"],
     ["Pembayaran", data.paymentMethod || "CBD"],
+    ...(data.clientPoNumber ? [["No. PO", data.clientPoNumber] as [string, string]] : []),
   ];
   infoRows.forEach(([label, value]) => {
     doc.setFont("helvetica", "bold");
@@ -258,5 +261,5 @@ export async function generateInvoiceLetterPDF(data: InvoicePdfData) {
     doc.text(`Page ${i} of ${pages}`, 196, 292.5, { align: "right" });
   }
 
-  doc.save(`${letterNumber.replace(/\//g, "-")}.pdf`);
+  tampilkanPdf(doc, `${letterNumber.replace(/\//g, "-")}.pdf`);
 }

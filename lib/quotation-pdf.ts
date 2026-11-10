@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { drawSignatureAndStamp, preloadSignatureStamp } from "@/lib/pdf-signature";
+import { tampilkanPdf } from "@/lib/dokumen-pdf";
 
 export type QuotationPdfItem = {
   description: string;
@@ -318,5 +319,5 @@ export async function generateQuotationPDF(data: QuotationPdfData) {
     doc.text(`Page ${i} of ${pages}`, 196, 292.5, { align: "right" });
   }
 
-  doc.save(`${letterNumber.replace(/\//g, "-")}.pdf`);
+  tampilkanPdf(doc, `${letterNumber.replace(/\//g, "-")}.pdf`);
 }

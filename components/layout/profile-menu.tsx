@@ -19,7 +19,7 @@ const roleLabels: Record<string, string> = {
 export function ProfileMenu({ user }: { user?: { name: string; email: string; role: string; avatarUrl?: string | null } }) {
   const router = useRouter();
   const [openSettings, setOpenSettings] = useState(false);
-  const initials = user?.name?.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() ?? "AD";
+  const initials = user?.name?.replace(/[^\p{L}\s]/gu, "").split(/\s+/).filter(Boolean).map((part) => part[0]).join("").slice(0, 2).toUpperCase() ?? "AD";
   const avatarSrc = user?.avatarUrl ? user.avatarUrl.replace(/^\/uploads\//, "/api/uploads/") : "";
 
   return (

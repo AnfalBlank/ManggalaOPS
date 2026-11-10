@@ -1,8 +1,8 @@
 import {
   ArrowRight,
+  ClipboardCheck,
   Banknote,
   Clock,
-  FolderKanban,
   Landmark,
   TrendingUp,
   Users,
@@ -14,106 +14,112 @@ import { PageWrapper } from "@/components/layout/page-wrapper";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/state";
 import { getDashboardChartData } from "@/lib/dashboard-charts";
-import { getDashboardSummary, getInvoices, getLeads, getProjects } from "@/lib/data";
+import { getDashboardSummary, getInvoices, getLeads, getQuotations } from "@/lib/data";
+import { getClientPoList } from "@/lib/po";
+import { getCurrentUser } from "@/lib/session-auth";
 import { formatCurrency } from "@/lib/format";
 
 export default async function Dashboard() {
   try {
-    const [summary, leads, projects, invoices, charts] = await Promise.all([
+    const [summary, leads, invoices, charts, poList, quotations, user] = await Promise.all([
       getDashboardSummary(),
       getLeads(),
-      getProjects(),
       getInvoices(),
       getDashboardChartData(),
+      getClientPoList(),
+      getQuotations(),
+      getCurrentUser(),
     ]);
+    const lihatUang = ["admin", "finance"].includes(user?.role ?? "");
+    const poJalan = poList.filter((po) => !po.selesai);
+    const sudahPo = new Set(poList.map((po) => po.quotationId));
+    const nungguPo = quotations.filter((q) => q.status === "Sent" && !sudahPo.has(q.id));
 
-    const { totalLeads, wonLeads, totalRevenue, outstandingInvoices } = summary;
+    const { totalRevenue, outstandingInvoices } = summary;
 
     // Recent activity now reflects real DB state (last 4 records across leads, projects, invoices, payments).
-    const recentInvoices = invoices.slice(0, 2);
+    const recentInvoices = lihatUang ? invoices.slice(0, 2) : [];
     const recentLeads = leads.slice(0, 2);
 
     return (
       <PageWrapper>
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-primary">Dashboard Overview</h1>
-            <p className="text-muted-foreground mt-1">Monitor performa bisnis tahun {charts.year} secara real-time.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-primary">Beranda</h1>
+            <p className="text-muted-foreground mt-1">Ringkasan kerjaan dan uang tahun {charts.year}.</p>
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 mb-8">
+          {lihatUang ? (
+            <>
+              <ClickableStatCard
+                href="/invoices"
+                title="Total tagihan terbit"
+                value={formatCurrency(totalRevenue)}
+                hint={
+                  <span className="text-green-600 font-medium inline-flex items-center">
+                    <TrendingUp className="size-3 mr-1" /> semua invoice yang udah diterbitkan
+                  </span>
+                }
+                icon={<Banknote className="size-5" />}
+                accentClassName="bg-blue-50 text-blue-600"
+              />
+              <ClickableStatCard
+                href="/invoices?type=Overdue"
+                title="Belum dibayar klien"
+                value={formatCurrency(outstandingInvoices)}
+                hint="Perlu ditagih"
+                icon={<Clock className="size-5" />}
+                accentClassName="bg-amber-50 text-amber-600"
+              />
+            </>
+          ) : null}
           <ClickableStatCard
-            href="/finance?type=income"
-            title="Total Revenue"
-            value={formatCurrency(totalRevenue)}
-            hint={
-              <span className="text-green-600 font-medium inline-flex items-center">
-                <TrendingUp className="size-3 mr-1" /> total invoice yang sudah diterbitkan
-              </span>
-            }
-            icon={<Banknote className="size-5" />}
-            accentClassName="bg-blue-50 text-blue-600"
-          />
-          <ClickableStatCard
-            href="/invoices?type=Overdue"
-            title="Outstanding Invoices"
-            value={formatCurrency(outstandingInvoices)}
-            hint="Perlu follow-up payment"
-            icon={<Clock className="size-5" />}
-            accentClassName="bg-amber-50 text-amber-600"
-          />
-          <ClickableStatCard
-            href="/leads"
-            title="Total Leads"
-            value={totalLeads}
-            hint={`${leads.length} records di database`}
-            icon={<Users className="size-5" />}
+            href="/po"
+            title="PO belum selesai"
+            value={poJalan.length}
+            hint={`dari ${poList.length} PO klien`}
+            icon={<ClipboardCheck className="size-5" />}
             accentClassName="bg-purple-50 text-purple-600"
           />
           <ClickableStatCard
-            href="/leads?type=Won"
-            title="Deals Won"
-            value={wonLeads}
-            hint={
-              <>
-                <span className="font-medium mr-1 text-primary">
-                  {Math.round((wonLeads / Math.max(totalLeads, 1)) * 100) || 0}%
-                </span>{" "}
-                win rate
-              </>
-            }
+            href="/quotations?type=Sent"
+            title="Penawaran nunggu PO"
+            value={nungguPo.length}
+            hint={formatCurrency(nungguPo.reduce((sum, q) => sum + (q.total ?? 0), 0))}
             icon={<Landmark className="size-5" />}
             accentClassName="bg-emerald-50 text-emerald-600"
           />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          <DashboardCharts revenueData={charts.revenueData} cashflowData={charts.cashflowData} />
+          {lihatUang ? <DashboardCharts revenueData={charts.revenueData} cashflowData={charts.cashflowData} /> : null}
 
-          <div className="space-y-6">
-            <Card className="border-border/60 overflow-hidden relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-purple-600/5 opacity-50" />
-              <CardHeader className="pb-3 border-b border-border/50">
-                <CardTitle className="text-base font-semibold">Quick Snapshot</CardTitle>
+          <div className={lihatUang ? "space-y-6" : "lg:col-span-3 grid gap-6 lg:grid-cols-2 items-start"}>
+            <Card className="border-border/60">
+              <CardHeader className="pb-3 border-b border-border/50 flex flex-row items-center justify-between">
+                <CardTitle className="text-base font-semibold">PO belum selesai</CardTitle>
+                <a href="/po" className="text-sm font-medium text-primary inline-flex items-center gap-1">
+                  Semua <ArrowRight className="size-4" />
+                </a>
               </CardHeader>
-              <CardContent className="p-4 grid grid-cols-2 gap-3 relative z-10">
-                <a href="/leads" className="flex flex-col items-center justify-center p-4 rounded-xl bg-white border border-border shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                  <div className="size-10 rounded-full bg-blue-50 flex items-center justify-center mb-2">
-                    <Users className="size-5 text-blue-600" />
+              <CardContent className="p-0">
+                {poJalan.length === 0 ? (
+                  <p className="p-4 text-sm text-muted-foreground">Gak ada PO yang nyangkut.</p>
+                ) : (
+                  <div className="flex flex-col">
+                    {poJalan.slice(0, 5).map((po) => (
+                      <a key={po.id} href={`/po/${po.id}`} className="flex items-start justify-between gap-3 p-4 hover:bg-slate-50 transition-colors border-b border-border/40 last:border-b-0">
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold text-slate-800 truncate">{po.clientName}</span>
+                          <span className="block text-xs text-slate-500 truncate">PO {po.poNumber}</span>
+                        </span>
+                        <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-800 text-right max-w-[50%]">{po.posisi}</span>
+                      </a>
+                    ))}
                   </div>
-                  {leads.length} Leads
-                </a>
-                <a href="/projects" className="flex flex-col items-center justify-center p-4 rounded-xl bg-white border border-border shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                  <div className="size-10 rounded-full bg-emerald-50 flex items-center justify-center mb-2">
-                    <FolderKanban className="size-5 text-emerald-600" />
-                  </div>
-                  {projects.length} Projects
-                </a>
-                <a href="/invoices" className="col-span-2 w-full flex items-center justify-between p-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-sm hover:opacity-95 transition-opacity cursor-pointer">
-                  <span>{invoices.length} invoices tersinkron</span>
-                  <ArrowRight className="size-4 opacity-70" />
-                </a>
+                )}
               </CardContent>
             </Card>
 

@@ -13,21 +13,15 @@ import {
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard,
-  Users,
   FolderKanban,
   FileSignature,
-  MessageSquareMore,
   FileText,
-  Banknote,
   LineChart,
-  BookMarked,
-  PieChart,
   Settings,
   UserCog,
   Building2,
-  Calculator,
   ShieldCheck,
-  Truck,
+  ClipboardCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -35,22 +29,29 @@ import { usePathname } from "next/navigation";
 import type { AppRole } from "@/lib/auth";
 import { canAccessPath } from "@/lib/role-access";
 
-const navItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Chat", url: "/chat", icon: MessageSquareMore },
-  { title: "Clients", url: "/clients", icon: Building2 },
-  { title: "Leads", url: "/leads", icon: Users },
-  { title: "Projects", url: "/projects", icon: FolderKanban },
-  { title: "Quotations", url: "/quotations", icon: FileSignature },
-  { title: "Invoices", url: "/invoices", icon: FileText },
-  { title: "Surat Jalan", url: "/delivery-orders", icon: Truck },
-  { title: "Payments", url: "/payments", icon: Banknote },
-  { title: "Finance", url: "/finance", icon: LineChart },
-  { title: "Accounting", url: "/accounting", icon: BookMarked },
-  { title: "Calculator P&L", url: "/calculator", icon: Calculator },
-  { title: "Reports", url: "/reports", icon: PieChart },
-  { title: "Users", url: "/users", icon: UserCog },
+type Sub = { title: string; url: string };
+const navItems: { title: string; url: string; icon: typeof LayoutDashboard; sub?: Sub[] }[] = [
+  { title: "Beranda", url: "/", icon: LayoutDashboard },
+  { title: "Klien", url: "/clients", icon: Building2, sub: [{ title: "Calon klien", url: "/leads" }] },
+  { title: "Penawaran", url: "/quotations", icon: FileSignature, sub: [{ title: "Kalkulator untung", url: "/calculator" }] },
+  { title: "PO klien", url: "/po", icon: ClipboardCheck, sub: [{ title: "Surat jalan", url: "/delivery-orders" }] },
+  { title: "Proyek", url: "/projects", icon: FolderKanban },
+  { title: "Tagihan", url: "/invoices", icon: FileText, sub: [{ title: "Pembayaran masuk", url: "/payments" }] },
+  {
+    title: "Keuangan",
+    url: "/finance",
+    icon: LineChart,
+    sub: [
+      { title: "Akuntansi", url: "/accounting" },
+      { title: "Laporan", url: "/reports" },
+    ],
+  },
+  { title: "Pengguna", url: "/users", icon: UserCog },
 ];
+
+function aktif(pathname: string, url: string) {
+  return url === "/" ? pathname === "/" : pathname === url || pathname.startsWith(url + "/");
+}
 
 function getInitials(name?: string) {
   if (!name) return "MU";
@@ -63,7 +64,11 @@ function getInitials(name?: string) {
 export function AppSidebar({ role = "admin", user }: { role?: string; user?: { name: string; email: string } }) {
   const pathname = usePathname();
   const normalizedRole = (role ?? "admin") as AppRole;
-  const visibleItems = navItems.filter((item) => canAccessPath(normalizedRole, item.url));
+  // Menu utama tampil kalau jabatan boleh buka menu itu atau salah satu sub-menunya.
+  const visibleItems = navItems
+    .map((item) => ({ ...item, sub: item.sub?.filter((sub) => canAccessPath(normalizedRole, sub.url)) }))
+    .filter((item) => canAccessPath(normalizedRole, item.url) || (item.sub?.length ?? 0) > 0)
+    .map((item) => (canAccessPath(normalizedRole, item.url) ? item : { ...item, url: item.sub![0].url }));
 
   return (
     <Sidebar className="border-r-0 shadow-xl" variant="sidebar">
@@ -88,11 +93,12 @@ export function AppSidebar({ role = "admin", user }: { role?: string; user?: { n
 
         <SidebarContent className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar py-4">
           <SidebarGroup>
-            <SidebarGroupLabel className="text-[10px] uppercase font-bold text-blue-300/50 mb-2 px-4 tracking-wider">Main Navigation</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-[10px] uppercase font-bold text-blue-300/50 mb-2 px-4 tracking-wider">Menu</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="gap-1 px-2">
                 {visibleItems.map((item) => {
-                  const isActive = pathname === item.url;
+                  const isActive = aktif(pathname, item.url);
+                  const diBagian = isActive || (item.sub ?? []).some((sub) => aktif(pathname, sub.url));
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
@@ -106,6 +112,19 @@ export function AppSidebar({ role = "admin", user }: { role?: string; user?: { n
                         <item.icon className={`size-[18px] transition-colors ${isActive ? "text-blue-500" : "text-slate-500 group-hover:text-blue-400"}`} />
                         <span className="text-sm">{item.title}</span>
                       </SidebarMenuButton>
+                      {diBagian && item.sub && item.sub.length > 0 ? (
+                        <div className="ml-9 mt-1 mb-1 flex flex-col gap-0.5 border-l border-white/10 pl-3">
+                          {item.sub.map((sub) => (
+                            <Link
+                              key={sub.url}
+                              href={sub.url}
+                              className={`rounded-md px-2 py-1.5 text-[13px] transition-colors ${aktif(pathname, sub.url) ? "text-white bg-blue-600/10" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"}`}
+                            >
+                              {sub.title}
+                            </Link>
+                          ))}
+                        </div>
+                      ) : null}
                     </SidebarMenuItem>
                   );
                 })}
@@ -113,8 +132,9 @@ export function AppSidebar({ role = "admin", user }: { role?: string; user?: { n
             </SidebarGroupContent>
           </SidebarGroup>
 
+          {canAccessPath(normalizedRole, "/audit-log") || canAccessPath(normalizedRole, "/settings") ? (
           <SidebarGroup className="mt-8">
-            <SidebarGroupLabel className="text-[10px] uppercase font-bold text-blue-300/50 mb-2 px-4 tracking-wider">System</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-[10px] uppercase font-bold text-blue-300/50 mb-2 px-4 tracking-wider">Sistem</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="gap-1 px-2">
                 {canAccessPath(normalizedRole, "/audit-log") ? (
@@ -128,7 +148,7 @@ export function AppSidebar({ role = "admin", user }: { role?: string; user?: { n
                       }`}
                     >
                       <ShieldCheck className="size-[18px] text-slate-500 group-hover:text-amber-300 transition-colors" />
-                      <span className="text-sm">Audit Log</span>
+                      <span className="text-sm">Log aktivitas</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ) : null}
@@ -139,13 +159,14 @@ export function AppSidebar({ role = "admin", user }: { role?: string; user?: { n
                       className="h-10 rounded-lg flex items-center gap-3 px-3 transition-all duration-200 text-slate-400 group hover:bg-slate-800/50 hover:text-slate-200"
                     >
                       <Settings className="size-[18px] text-slate-500 group-hover:text-slate-300 transition-colors" />
-                      <span className="text-sm">Settings</span>
+                      <span className="text-sm">Setelan</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ) : null}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+          ) : null}
         </SidebarContent>
 
         <div className="p-4 mt-auto border-t border-white/5">

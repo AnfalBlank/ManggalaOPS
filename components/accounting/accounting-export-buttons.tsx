@@ -5,6 +5,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 import { Button } from "@/components/ui/button";
+import { tampilkanPdf } from "@/lib/dokumen-pdf";
 
 type LedgerEntry = { date: string; description: string; accountCode: string; debit: number; credit: number };
 type TaxRow = { date: string; source: string; client: string; dpp: number; ppn: number; total: number; type: string };
@@ -68,7 +69,7 @@ export function TaxReportPdfButton({ rows, periodLabel }: { rows: TaxRow[]; peri
         styles: { fontSize: 8.5 },
       });
 
-      doc.save(`laporan-pajak-${new Date().toISOString().slice(0, 10)}.pdf`);
+      tampilkanPdf(doc, `laporan-pajak-${new Date().toISOString().slice(0, 10)}.pdf`);
     }}>
       <FileText className="size-4" /> Export PDF Pajak
     </Button>

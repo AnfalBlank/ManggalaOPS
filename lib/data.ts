@@ -1,6 +1,7 @@
 import { desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
+  clientPos,
   clients,
   invoiceItems,
   invoices,
@@ -219,6 +220,8 @@ export async function getInvoices(): Promise<InvoiceListItem[]> {
       projectId: invoices.projectId,
       projectName: projects.name,
       quotationId: invoices.quotationId,
+      clientPoId: invoices.clientPoId,
+      clientPoNumber: clientPos.poNumber,
       date: invoices.date,
       dueDate: invoices.dueDate,
       paymentMethod: invoices.paymentMethod,
@@ -241,6 +244,7 @@ export async function getInvoices(): Promise<InvoiceListItem[]> {
     .innerJoin(clients, eq(invoices.clientId, clients.id))
     .leftJoin(projects, eq(invoices.projectId, projects.id))
     .leftJoin(paymentTotals, eq(invoices.id, paymentTotals.invoiceId))
+    .leftJoin(clientPos, eq(invoices.clientPoId, clientPos.id))
     .orderBy(desc(invoices.id));
 
   const itemRows = await db
@@ -277,6 +281,8 @@ export async function getInvoices(): Promise<InvoiceListItem[]> {
       projectId: row.projectId,
       projectName: row.projectName,
       quotationId: row.quotationId,
+      clientPoId: row.clientPoId ?? null,
+      clientPoNumber: row.clientPoNumber ?? null,
       date: toIsoString(row.date),
       dueDate: toIsoString(row.dueDate),
       paymentMethod: row.paymentMethod,

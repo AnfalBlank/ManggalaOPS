@@ -7,6 +7,7 @@ import { FileText, Landmark, TrendingDown, TrendingUp, Wallet } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/format";
+import { tampilkanPdf } from "@/lib/dokumen-pdf";
 
 type FinancialSummary = {
   totalRevenue: number;
@@ -63,7 +64,7 @@ export function AccountingFinancialReport({ summary, periodLabel }: { summary: F
       styles: { fontSize: 9 },
     });
 
-    doc.save(`laporan-keuangan-${new Date().toISOString().slice(0, 10)}.pdf`);
+    tampilkanPdf(doc, `laporan-keuangan-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
   return (

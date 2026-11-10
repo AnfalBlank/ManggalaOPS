@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+import Link from "next/link";
+
 import { DownloadQuotationButton } from "@/components/pdf/download-quotation-button";
+import { CatatPoDialog } from "@/components/po/po-dialogs";
 import { QuotationRowActions } from "@/components/forms/project-quotation-row-actions";
 import { TableFilterBar } from "@/components/filters/table-filter-bar";
 import { Badge } from "@/components/ui/badge";
@@ -31,18 +32,18 @@ export function QuotationActionsTable({
   projects,
   settings,
   filters,
+  poByQuotation = {},
 }: {
+  poByQuotation?: Record<number, { id: number; poNumber: string }>;
   quotations: QuotationListItem[];
   clients: { id: number; name: string }[];
   projects: { id: number; name: string }[];
   settings: { companyName?: string | null; companyEmail?: string | null; companyPhone?: string | null; companyAddress?: string | null; defaultSignatoryName?: string | null; defaultSignatoryTitle?: string | null; signatureImageUrl?: string | null; stampImageUrl?: string | null };
   filters?: { initialQuery?: string; initialPeriod?: FilterPeriod; initialType?: string };
 }) {
-  const router = useRouter();
   const [query, setQuery] = useState(filters?.initialQuery ?? "");
   const [period, setPeriod] = useState<FilterPeriod>(filters?.initialPeriod ?? "all");
   const [type, setType] = useState(filters?.initialType ?? "all");
-  const [loadingId, setLoadingId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
 
@@ -143,31 +144,17 @@ export function QuotationActionsTable({
                         status: quote.status,
                       }}
                     />
-                    {quote.status !== "Accepted" ? (
-                      <button
-                        className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
-                        disabled={loadingId === quote.id}
-                        onClick={async () => {
-                          setLoadingId(quote.id);
-                          try {
-                            const response = await fetch(`/api/quotations/${quote.id}/accept`, { method: "POST" });
-                            const payload = await response.json();
-                            if (!response.ok) {
-                              toast.error(payload.error ?? "Gagal accept quotation");
-                              return;
-                            }
-                            toast.success(`Quotation accepted. Project #${payload.projectId} & Invoice #${payload.invoiceId} dibuat.`);
-                            router.refresh();
-                          } finally {
-                            setLoadingId(null);
-                          }
-                        }}
-                      >
-                        {loadingId === quote.id ? "Processing..." : "Accept + Create"}
-                      </button>
-                    ) : (
-                      <span className="text-xs text-emerald-600 font-medium">Synced</span>
-                    )}
+                    {poByQuotation[quote.id] ? (
+                      <Link href={`/po/${poByQuotation[quote.id].id}`} className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">
+                        PO {poByQuotation[quote.id].poNumber}
+                      </Link>
+                    ) : quote.status !== "Rejected" ? (
+                      <CatatPoDialog
+                        terpilih={quote.id}
+                        penawaran={[{ id: quote.id, code: quote.code, clientName: quote.clientName, subject: quote.subject, total: quote.total ?? 0, status: quote.status }]}
+                        tombol={<button className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white">Catat PO klien</button>}
+                      />
+                    ) : null}
                     <QuotationRowActions quotation={quote} clients={clients} projects={projects} />
                   </div>
                 </TableCell>

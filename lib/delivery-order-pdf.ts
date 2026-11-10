@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
+import { tampilkanPdf } from "@/lib/dokumen-pdf";
 
 export type DeliveryOrderPdfItem = {
   description: string;
@@ -16,6 +17,7 @@ export type DeliveryOrderPdfData = {
   project?: string | null;
   date: Date;
   invoiceCode?: string | null;
+  poNumber?: string | null;
   vehicleNumber?: string | null;
   driverName?: string | null;
   shippingMethod?: string | null;
@@ -127,11 +129,14 @@ export function generateDeliveryOrderPDF(data: DeliveryOrderPdfData) {
   if (data.invoiceCode) {
     infoRows.push(["Ref. Invoice", data.invoiceCode]);
   }
+  if (data.poNumber) {
+    infoRows.push(["No. PO", data.poNumber]);
+  }
   infoRows.forEach(([label, value]) => {
     doc.setFont("helvetica", "bold");
     doc.text(label, infoX, infoY);
     doc.setFont("helvetica", "normal");
-    doc.text(`: ${value}`, infoX + 23, infoY);
+    doc.text(`: ${value}`, infoX + 29, infoY);
     infoY += 6;
   });
 
@@ -271,5 +276,5 @@ export function generateDeliveryOrderPDF(data: DeliveryOrderPdfData) {
     doc.text(`Page ${i} of ${pageCount}`, 196, 293, { align: "right" });
   }
 
-  doc.save(`${letterNumber.replace(/\//g, "-")}.pdf`);
+  tampilkanPdf(doc, `${letterNumber.replace(/\//g, "-")}.pdf`);
 }

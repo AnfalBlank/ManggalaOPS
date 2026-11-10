@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { drawSignatureAndStamp, preloadSignatureStamp } from "@/lib/pdf-signature";
+import { tampilkanPdf } from "@/lib/dokumen-pdf";
 
 type InvoicePdfData = {
   id: string;
@@ -137,7 +138,7 @@ export const generateInvoicePDF = (invoiceData: InvoicePdfData) => {
   doc.text("Please make payment to:", 14, finalY + 40);
   doc.text("Bank Mandiri: 123-456-7890 a/n PT. Manggala Utama Indonesia", 14, finalY + 45);
 
-  doc.save(`${invoiceData.id}.pdf`);
+  tampilkanPdf(doc, `${invoiceData.id}.pdf`);
 };
 
 export const generateKwitansiPDF = async (paymentData: ReceiptPdfData) => {
@@ -273,5 +274,5 @@ export const generateKwitansiPDF = async (paymentData: ReceiptPdfData) => {
   doc.setFont("helvetica", "normal");
   doc.text(signatoryTitle, signatureX + 13, 138);
 
-  doc.save(`Kwitansi_${paymentData.id}.pdf`);
+  tampilkanPdf(doc, `Kwitansi_${paymentData.id}.pdf`);
 };

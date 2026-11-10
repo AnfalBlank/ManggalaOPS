@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { invoiceItems, invoices } from "@/db/schema";
+import { clientPos, invoiceItems, invoices } from "@/db/schema";
 import { ensure, ensurePositiveInt, nullableTrim, toErrorResponse, trimString } from "@/lib/api-helpers";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
@@ -32,13 +33,20 @@ export async function POST(request: NextRequest) {
     ensure(subtotal > 0, "Subtotal invoice harus lebih besar dari 0");
     const { tax, total } = computeOutputTax(subtotal, normalizeTaxPercent(body.taxPercent, 11));
     const dueDate = body.dueDate ? new Date(body.dueDate) : null;
+    const clientPoId = body.clientPoId ? ensurePositiveInt(body.clientPoId, "clientPoId") : null;
+    if (clientPoId) {
+      const po = await db.query.clientPos.findFirst({ where: eq(clientPos.id, clientPoId) });
+      ensure(po, "PO klien tidak ditemukan");
+      ensure(po.clientId === clientId, "PO klien bukan milik client ini");
+    }
 
     const invoiceId = await db.transaction(async (tx) => {
       const inserted = await tx.insert(invoices).values({
         clientId,
         projectId: body.projectId ? ensurePositiveInt(body.projectId, "projectId") : null,
         quotationId: body.quotationId ? ensurePositiveInt(body.quotationId, "quotationId") : null,
-        date: new Date(),
+        clientPoId,
+        date: body.date ? new Date(body.date) : new Date(),
         dueDate,
         paymentMethod: trimString(body.paymentMethod, 50) || "CBD",
         attachment: nullableTrim(body.attachment, 500),
@@ -74,7 +82,7 @@ export async function POST(request: NextRequest) {
 
     await upsertInvoiceJournal(invoiceId);
     await createNotification({ title: "Invoice baru dibuat", message: `Invoice #${invoiceId} berhasil dibuat dengan total ${total.toLocaleString('id-ID')}.`, type: "info", targetRole: "finance" });
-    await audit({ userId: user.id, action: "invoice.create", entity: "invoice", entityId: invoiceId, payload: { clientId, total } });
+    await audit({ userId: user.id, action: "invoice.create", entity: "invoice", entityId: invoiceId, payload: { clientId, total, clientPoId } });
 
     return NextResponse.json({ ok: true, data: await getInvoices() });
   } catch (error) {

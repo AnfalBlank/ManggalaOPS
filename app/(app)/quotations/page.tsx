@@ -8,12 +8,14 @@ import { EmptyState, ErrorState } from "@/components/ui/state";
 import { getProjects, getQuotations } from "@/lib/data";
 import { formatCurrency } from "@/lib/format";
 import { getClientOptions } from "@/lib/options";
+import { getClientPoList } from "@/lib/po";
 import { getAppSettings } from "@/lib/settings";
 
 export default async function QuotationsPage({ searchParams }: { searchParams?: Promise<{ q?: string; period?: string; type?: string }> }) {
   try {
     const params = (await searchParams) ?? {};
-    const [quotations, clients, projects, settings] = await Promise.all([getQuotations(), getClientOptions(), getProjects(), getAppSettings()]);
+    const [quotations, clients, projects, settings, poList] = await Promise.all([getQuotations(), getClientOptions(), getProjects(), getAppSettings(), getClientPoList()]);
+    const poByQuotation = Object.fromEntries(poList.map((po) => [po.quotationId, { id: po.id, poNumber: po.poNumber }]));
     const totalQuotations = quotations.length;
     const acceptedQuotations = quotations.filter((quotation) => quotation.status === "Accepted").length;
     const pendingValue = quotations
@@ -25,8 +27,8 @@ export default async function QuotationsPage({ searchParams }: { searchParams?: 
       <PageWrapper>
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-primary">Quotations</h1>
-            <p className="text-muted-foreground mt-1">Manage service and procurement quotes sent to clients.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-primary">Penawaran</h1>
+            <p className="text-muted-foreground mt-1">Penawaran harga ke klien. Begitu klien kirim PO atau kontrak, klik "Catat PO klien".</p>
           </div>
           <QuotationDialog clients={clients} projects={projects.map((project) => ({ id: project.id, name: project.name, clientId: project.clientId, clientName: project.clientName }))} />
         </div>
@@ -45,7 +47,7 @@ export default async function QuotationsPage({ searchParams }: { searchParams?: 
               description="Tabel quotations masih kosong. Setelah tim sales bikin penawaran atau seed dijalankan, datanya akan muncul di sini."
             />
           ) : (
-            <QuotationActionsTable quotations={quotations} clients={clients} projects={projects.map((project) => ({ id: project.id, name: project.name, clientId: project.clientId, clientName: project.clientName }))} settings={{ companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, defaultSignatoryName: settings.defaultSignatoryName, defaultSignatoryTitle: settings.defaultSignatoryTitle, signatureImageUrl: settings.signatureImageUrl, stampImageUrl: settings.stampImageUrl }} filters={{ initialQuery: params.q, initialPeriod: (params.period as "all" | "30d" | "month" | "year") ?? "all", initialType: params.type ?? "all" }} />
+            <QuotationActionsTable poByQuotation={poByQuotation} quotations={quotations} clients={clients} projects={projects.map((project) => ({ id: project.id, name: project.name, clientId: project.clientId, clientName: project.clientName }))} settings={{ companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, defaultSignatoryName: settings.defaultSignatoryName, defaultSignatoryTitle: settings.defaultSignatoryTitle, signatureImageUrl: settings.signatureImageUrl, stampImageUrl: settings.stampImageUrl }} filters={{ initialQuery: params.q, initialPeriod: (params.period as "all" | "30d" | "month" | "year") ?? "all", initialType: params.type ?? "all" }} />
           )}
         </div>
       </PageWrapper>

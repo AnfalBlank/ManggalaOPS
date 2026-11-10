@@ -4,7 +4,6 @@ import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { ChatMenu } from "@/components/layout/chat-menu";
 import { NotificationsMenu } from "@/components/layout/notifications-menu";
 import { ProfileMenu } from "@/components/layout/profile-menu";
 import { Input } from "@/components/ui/input";
@@ -26,6 +25,9 @@ const SEARCH_TARGETS = [
   { keyword: "invoice", path: "/invoices" },
   { keyword: "payment", path: "/payments" },
   { keyword: "kwitansi", path: "/payments" },
+  { keyword: "po klien", path: "/po" },
+  { keyword: "purchase order", path: "/po" },
+  { keyword: "supplier", path: "/po" },
   { keyword: "surat jalan", path: "/delivery-orders" },
   { keyword: "delivery", path: "/delivery-orders" },
   { keyword: "expense", path: "/finance" },
@@ -35,7 +37,6 @@ const SEARCH_TARGETS = [
   { keyword: "calculator", path: "/calculator" },
   { keyword: "user", path: "/users" },
   { keyword: "settings", path: "/settings" },
-  { keyword: "chat", path: "/chat" },
 ];
 
 export function Topbar({ user }: { user?: { name: string; email: string; role: string; avatarUrl?: string } }) {
@@ -86,7 +87,6 @@ export function Topbar({ user }: { user?: { name: string; email: string; role: s
           </div>
         ) : null}
 
-        <ChatMenu />
         <NotificationsMenu />
         <ProfileMenu user={user} />
       </div>

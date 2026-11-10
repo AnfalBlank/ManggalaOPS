@@ -34,6 +34,9 @@ const STATUS_COLORS: Record<string, string> = {
   "On Hold": "bg-amber-100 text-amber-700",
   "In Transit": "bg-blue-100 text-blue-700",
   Delivered: "bg-emerald-100 text-emerald-700",
+  "Dikirim ke supplier": "bg-blue-100 text-blue-700",
+  "Barang diterima": "bg-emerald-100 text-emerald-700",
+  Batal: "bg-rose-100 text-rose-700",
   Cancelled: "bg-rose-100 text-rose-700",
 };
 

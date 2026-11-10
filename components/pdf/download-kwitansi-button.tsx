@@ -5,6 +5,7 @@ import { Loader2, Receipt } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { generateKwitansiPDF } from "@/lib/pdf";
+import { batalkanTab, siapkanTab } from "@/lib/dokumen-pdf";
 
 type ReceiptPayload = {
   id: string;
@@ -31,14 +32,18 @@ export function DownloadKwitansiButton({ payload }: { payload: ReceiptPayload })
       className="h-8 w-8 px-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-full border-emerald-200"
       disabled={loading}
       onClick={async () => {
+        siapkanTab();
         try {
           setLoading(true);
           await generateKwitansiPDF(payload);
+        } catch (error) {
+          batalkanTab();
+          throw error;
         } finally {
           setLoading(false);
         }
       }}
-      title="Download Kwitansi"
+      title="Lihat kwitansi"
     >
       {loading ? <Loader2 className="size-4 animate-spin" /> : <Receipt className="size-4" />}
     </Button>

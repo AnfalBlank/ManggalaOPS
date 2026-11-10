@@ -192,6 +192,7 @@ export const invoices = sqliteTable('invoices', {
   subtotal: real('subtotal'),
   tax: real('tax_ppn'),
   total: real('total'),
+  clientPoId: integer('client_po_id'),
   status: text('status').default('Unpaid'),
 });
 
@@ -262,6 +263,7 @@ export const deliveryOrders = sqliteTable('delivery_orders', {
   projectId: integer('project_id').references(() => projects.id),
   invoiceId: integer('invoice_id').references(() => invoices.id),
   quotationId: integer('quotation_id').references(() => quotations.id),
+  clientPoId: integer('client_po_id'),
   date: integer('date', { mode: 'timestamp' }).notNull(),
   vehicleNumber: text('vehicle_number'),
   driverName: text('driver_name'),
@@ -283,6 +285,7 @@ export const deliveryOrders = sqliteTable('delivery_orders', {
 export const deliveryOrderItems = sqliteTable('delivery_order_items', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   deliveryOrderId: integer('delivery_order_id').references(() => deliveryOrders.id).notNull(),
+  clientPoItemId: integer('client_po_item_id'),
   description: text('description').notNull(),
   qty: integer('qty').notNull(),
   unit: text('unit').default('Unit'),
@@ -344,4 +347,60 @@ export const estimations = sqliteTable('estimations', {
   sellIncludePpn: integer('sell_include_ppn', { mode: 'boolean' }).notNull(),
   ppnRate: real('ppn_rate').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }),
+});
+
+// 6. PO klien & PO ke supplier
+export const clientPos = sqliteTable('client_pos', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  quotationId: integer('quotation_id').references(() => quotations.id).notNull(),
+  clientId: integer('client_id').references(() => clients.id).notNull(),
+  projectId: integer('project_id').references(() => projects.id),
+  poNumber: text('po_number').notNull(),
+  poDate: integer('po_date', { mode: 'timestamp' }).notNull(),
+  value: real('value'),
+  fileUrl: text('file_url'),
+  notes: text('notes'),
+  closedAt: integer('closed_at', { mode: 'timestamp' }),
+  createdBy: integer('created_by').references(() => users.id),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+});
+
+export const clientPoItems = sqliteTable('client_po_items', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  clientPoId: integer('client_po_id').references(() => clientPos.id).notNull(),
+  description: text('description').notNull(),
+  qty: integer('qty').notNull(),
+  unit: text('unit').default('Unit'),
+  unitPrice: real('unit_price').notNull(),
+  unitCost: real('unit_cost').default(0),
+  amount: real('amount').notNull(),
+});
+
+export const supplierPos = sqliteTable('supplier_pos', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  clientPoId: integer('client_po_id').references(() => clientPos.id).notNull(),
+  supplierName: text('supplier_name').notNull(),
+  supplierContact: text('supplier_contact'),
+  supplierPhone: text('supplier_phone'),
+  supplierAddress: text('supplier_address'),
+  date: integer('date', { mode: 'timestamp' }).notNull(),
+  expectedDate: integer('expected_date', { mode: 'timestamp' }),
+  paymentTerms: text('payment_terms'),
+  notes: text('notes'),
+  subtotal: real('subtotal').default(0),
+  tax: real('tax').default(0),
+  total: real('total').default(0),
+  status: text('status').default('Draft'),
+  createdBy: integer('created_by').references(() => users.id),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+});
+
+export const supplierPoItems = sqliteTable('supplier_po_items', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  supplierPoId: integer('supplier_po_id').references(() => supplierPos.id).notNull(),
+  description: text('description').notNull(),
+  qty: integer('qty').notNull(),
+  unit: text('unit').default('Unit'),
+  unitPrice: real('unit_price').notNull(),
+  amount: real('amount').notNull(),
 });

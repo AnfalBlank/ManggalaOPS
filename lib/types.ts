@@ -93,6 +93,8 @@ export type InvoiceListItem = {
   projectId: number | null;
   projectName: string | null;
   quotationId: number | null;
+  clientPoId?: number | null;
+  clientPoNumber?: string | null;
   date: string | null;
   dueDate: string | null;
   paymentMethod: string | null;

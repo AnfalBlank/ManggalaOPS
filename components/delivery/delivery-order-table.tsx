@@ -136,6 +136,7 @@ export function DeliveryOrdersTable({
                         project: delivery.projectName,
                         date: delivery.date ? new Date(delivery.date) : new Date(),
                         invoiceCode: delivery.invoiceCode,
+                        poNumber: delivery.poNumber,
                         vehicleNumber: delivery.vehicleNumber,
                         driverName: delivery.driverName,
                         shippingMethod: delivery.shippingMethod,
