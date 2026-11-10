@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { buatPoSupplierPdf, type Kop } from "@/lib/dokumen-pdf";
 import type { PoSupplier } from "@/lib/po";
+import { labelStatus } from "@/lib/label-status";
 
 export type KopTtd = Kop & { defaultSignatoryName?: string | null; defaultSignatoryTitle?: string | null };
 
@@ -64,14 +65,14 @@ function PilihStatus({ nilai, pilihan, onUbah, disabled }: { nilai: string; pili
   return (
     <select
       aria-label="Status"
-      className="h-8 rounded-md border bg-white px-2 text-sm"
+      className="h-10 sm:h-8 rounded-md border bg-white px-2 text-sm"
       value={nilai}
       disabled={disabled}
       onChange={(e) => onUbah(e.target.value)}
     >
       {pilihan.map((p) => (
         <option key={p} value={p}>
-          {p}
+          {labelStatus(p)}
         </option>
       ))}
     </select>
@@ -92,7 +93,7 @@ export function AksiPoSupplier({ id, status }: { id: number; status: string }) {
         <Button
           variant="ghost"
           size="sm"
-          className="text-rose-600"
+          className="text-rose-600 min-h-10 min-w-10 sm:min-h-0 sm:min-w-0"
           aria-label="Hapus PO supplier"
           disabled={loading}
           onClick={() => {

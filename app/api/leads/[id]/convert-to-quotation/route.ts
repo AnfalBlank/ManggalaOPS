@@ -22,7 +22,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
 
     const lead = await db.query.leads.findFirst({ where: eq(leads.id, leadId) });
     if (!lead) {
-      return NextResponse.json({ error: "Lead tidak ditemukan" }, { status: 404 });
+      return NextResponse.json({ error: "Calon klien tidak ditemukan" }, { status: 404 });
     }
 
     const settings = await getAppSettings();
@@ -51,7 +51,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
       }).returning({ id: quotations.id });
 
       const newId = inserted[0]?.id;
-      if (!newId) throw new Error("Gagal membuat quotation");
+      if (!newId) throw new Error("Gagal membuat penawaran");
 
       await tx.insert(quotationItems).values({
         quotationId: newId,
@@ -74,6 +74,6 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     await audit({ userId: user.id, action: "lead.convert_to_quotation", entity: "lead", entityId: leadId, payload: { quotationId } });
     return NextResponse.json({ ok: true, quotationId });
   } catch (error) {
-    return toErrorResponse(error, "Failed to convert lead to quotation");
+    return toErrorResponse(error, "Gagal menjadikan calon klien penawaran");
   }
 }

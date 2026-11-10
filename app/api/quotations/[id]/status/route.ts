@@ -20,13 +20,13 @@ export async function PATCH(
     const body = await request.json();
     const status = trimString(body.status, 50);
     if (!VALID_STATUSES.includes(status)) {
-      return NextResponse.json({ error: `Status tidak valid. Pilih: ${VALID_STATUSES.join(", ")}` }, { status: 400 });
+      return NextResponse.json({ error: "Status tidak dikenal" }, { status: 400 });
     }
 
     await db.update(quotations).set({ status }).where(eq(quotations.id, quotationId));
     await audit({ userId: user.id, action: "quotation.status_change", entity: "quotation", entityId: quotationId, payload: { status } });
     return NextResponse.json({ ok: true, status });
   } catch (error) {
-    return toErrorResponse(error, "Failed to update quotation status");
+    return toErrorResponse(error, "Gagal mengubah status penawaran");
   }
 }

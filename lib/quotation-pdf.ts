@@ -168,7 +168,7 @@ export async function generateQuotationPDF(data: QuotationPdfData) {
   // ========== ITEM TABLE ==========
   autoTable(doc, {
     startY: y,
-    head: [["No", "Nama Barang / Jasa", "Qty", "Satuan", "Harga Satuan", "Jumlah Harga"]],
+    head: [["No", "Nama Barang / Jasa", "Jml", "Satuan", "Harga Satuan", "Jumlah Harga"]],
     body: data.items.map((item, i) => [
       String(i + 1),
       item.description,
@@ -317,7 +317,7 @@ export async function generateQuotationPDF(data: QuotationPdfData) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
     doc.text(`${companyName}  •  ${companyEmail}  •  ${companyAddress}`, 14, 292.5);
-    doc.text(`Page ${i} of ${pages}`, 196, 292.5, { align: "right" });
+    doc.text(`Halaman ${i} dari ${pages}`, 196, 292.5, { align: "right" });
   }
 
   tampilkanPdf(doc, `${letterNumber.replace(/\//g, "-")}.pdf`);

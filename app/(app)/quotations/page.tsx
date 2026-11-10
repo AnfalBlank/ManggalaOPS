@@ -27,24 +27,24 @@ export default async function QuotationsPage({ searchParams }: { searchParams?: 
       <PageWrapper>
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-primary">Penawaran</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Penawaran</h1>
             <p className="text-muted-foreground mt-1">Penawaran harga ke klien. Begitu klien kirim PO atau kontrak, klik "Catat PO klien".</p>
           </div>
           <QuotationDialog clients={clients} projects={projects.map((project) => ({ id: project.id, name: project.name, clientId: project.clientId, clientName: project.clientName }))} />
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <ClickableStatCard href="/quotations" title="Total Quotes" value={totalQuotations} hint="Lihat semua quotation" icon={<FileSignature className="size-5" />} accentClassName="bg-blue-50 text-blue-600" />
-          <ClickableStatCard href="/quotations?type=Accepted" title="Accepted" value={acceptedQuotations} hint="Quotation diterima" icon={<CheckCircle className="size-5" />} accentClassName="bg-emerald-50 text-emerald-600" />
-          <ClickableStatCard href="/quotations?type=Sent" title="Pending Value" value={formatCurrency(pendingValue)} hint="Quotation menunggu closing" icon={<Clock className="size-5" />} accentClassName="bg-amber-50 text-amber-600" />
-          <ClickableStatCard href="/quotations?type=Rejected" title="Rejected" value={rejectedQuotations} hint="Quotation ditolak" icon={<FileX className="size-5" />} accentClassName="bg-rose-50 text-rose-600" />
+          <ClickableStatCard href="/quotations" title="Semua penawaran" value={totalQuotations} hint="Lihat semua penawaran" icon={<FileSignature className="size-5" />} accentClassName="bg-blue-50 text-blue-600" />
+          <ClickableStatCard href="/quotations?type=Accepted" title="Diterima" value={acceptedQuotations} hint="Penawaran yang diterima klien" icon={<CheckCircle className="size-5" />} accentClassName="bg-emerald-50 text-emerald-600" />
+          <ClickableStatCard href="/quotations?type=Sent" title="Nilai nunggu jawaban" value={formatCurrency(pendingValue)} hint="Penawaran terkirim, belum ada jawaban" icon={<Clock className="size-5" />} accentClassName="bg-amber-50 text-amber-600" />
+          <ClickableStatCard href="/quotations?type=Rejected" title="Ditolak" value={rejectedQuotations} hint="Penawaran yang ditolak klien" icon={<FileX className="size-5" />} accentClassName="bg-rose-50 text-rose-600" />
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-border p-4 md:p-6">
           {quotations.length === 0 ? (
             <EmptyState
-              title="Belum ada data quotations"
-              description="Tabel quotations masih kosong. Setelah tim sales bikin penawaran atau seed dijalankan, datanya akan muncul di sini."
+              title="Belum ada penawaran"
+              description="Penawaran yang dibikin tim sales bakal muncul di sini."
             />
           ) : (
             <QuotationActionsTable poByQuotation={poByQuotation} quotations={quotations} clients={clients} projects={projects.map((project) => ({ id: project.id, name: project.name, clientId: project.clientId, clientName: project.clientName }))} settings={{ companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, defaultSignatoryName: settings.defaultSignatoryName, defaultSignatoryTitle: settings.defaultSignatoryTitle, signatureImageUrl: settings.signatureImageUrl, stampImageUrl: settings.stampImageUrl, quotationSignatoryName: settings.quotationSignatoryName, quotationSignatoryTitle: settings.quotationSignatoryTitle, quotationSignatureImageUrl: settings.quotationSignatureImageUrl }} filters={{ initialQuery: params.q, initialPeriod: (params.period as "all" | "30d" | "month" | "year") ?? "all", initialType: params.type ?? "all" }} />
@@ -56,8 +56,8 @@ export default async function QuotationsPage({ searchParams }: { searchParams?: 
     return (
       <PageWrapper>
         <ErrorState
-          title="Gagal memuat quotations"
-          description={error instanceof Error ? error.message : "Terjadi error saat membaca data quotation dari database."}
+          title="Gagal memuat penawaran"
+          description={error instanceof Error ? error.message : "Ada error waktu membaca data penawaran."}
         />
       </PageWrapper>
     );

@@ -14,6 +14,9 @@ import { formatCurrency } from "@/lib/format";
 import { getClientPoDetail } from "@/lib/po";
 import { getCurrentUser } from "@/lib/session-auth";
 import { getAppSettings } from "@/lib/settings";
+import { labelStatus } from "@/lib/label-status";
+import { canAccessPath } from "@/lib/role-access";
+import type { AppRole } from "@/lib/auth";
 
 const tgl = (iso: string | null) => (iso ? new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(new Date(iso)) : "-");
 const baris1 = (t: string) => t.split("\n")[0];
@@ -74,9 +77,13 @@ export default async function DetailPo({ params }: { params: Promise<{ id: strin
               <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-primary break-words">PO {po.poNumber}</h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 Tanggal PO {tgl(po.poDate)} · dari{" "}
-                <Link href="/quotations" className="font-medium text-primary underline">
-                  {po.quotationCode}
-                </Link>
+                {canAccessPath(role as AppRole, "/quotations") ? (
+                  <Link href={`/quotations?q=${encodeURIComponent(po.quotationCode)}`} className="font-medium text-primary underline">
+                    {po.quotationCode}
+                  </Link>
+                ) : (
+                  <span className="font-medium">{po.quotationCode}</span>
+                )}
                 {po.quotationSubject ? ` · ${po.quotationSubject}` : ""}
               </p>
             </div>
@@ -94,7 +101,7 @@ export default async function DetailPo({ params }: { params: Promise<{ id: strin
                 <FileText className="size-4" /> Lihat file PO dari klien
               </a>
             ) : (
-              <span className="text-sm text-muted-foreground">File PO dari klien belum diupload.</span>
+              <span className="text-sm text-muted-foreground">File PO dari klien belum diunggah.</span>
             )}
             {bisaUang ? <AksiPo id={po.id} ditutup={!terbuka} bisaDihapus={role === "admin" && suratJalan.length === 0 && tagihan.length === 0 && poSupplier.length === 0} /> : null}
           </div>
@@ -251,7 +258,7 @@ export default async function DetailPo({ params }: { params: Promise<{ id: strin
                 </div>
                 <div className="text-right shrink-0">
                   <p className="font-semibold whitespace-nowrap">{formatCurrency(t.total)}</p>
-                  <p className="text-xs text-muted-foreground">{t.status}</p>
+                  <p className="text-xs text-muted-foreground">{labelStatus(t.status)}</p>
                 </div>
               </li>
             ))}

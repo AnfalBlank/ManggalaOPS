@@ -9,6 +9,7 @@ import { ProjectDialog, QuotationDialog } from "@/components/forms/project-quota
 import { ProjectDetailDialog } from "@/components/projects/project-detail-dialog";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { labelStatus, namaProyek } from "@/lib/label-status";
 
 type ClientOption = { id: number; name: string };
 type ProjectOption = { id: number; name: string };
@@ -56,10 +57,10 @@ export function ProjectRowActions({ project, clients }: { project: ProjectRow; c
     const response = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
     const payload = await response.json();
     if (!response.ok) {
-      toast.error(payload.error ?? "Gagal hapus project");
+      toast.error(payload.error ?? "Gagal hapus proyek");
       return;
     }
-    toast.success("Project dihapus");
+    toast.success("Proyek dihapus");
     router.refresh();
   };
 
@@ -68,9 +69,9 @@ export function ProjectRowActions({ project, clients }: { project: ProjectRow; c
       <ProjectDetailDialog projectId={project.id} />
       <ProjectDialog clients={clients} project={project} />
       <ConfirmDialog
-        trigger={<Button variant="outline" size="sm" className="text-destructive"><Trash2 className="size-4" /> Delete</Button>}
-        title={`Hapus project "${project.name}"?`}
-        description="Project akan dihapus. Data invoice/payment yang sudah terhubung tetap aman, tapi link ke project akan kosong."
+        trigger={<Button variant="outline" size="sm" className="text-destructive"><Trash2 className="size-4" /> Hapus</Button>}
+        title={`Hapus proyek "${project.name}"?`}
+        description="Proyek bakal dihapus. Tagihan & pembayaran yang nyambung tetap aman, cuma kaitannya ke proyek jadi kosong."
         confirmText="Hapus"
         variant="destructive"
         onConfirm={onDelete}
@@ -86,34 +87,34 @@ export function QuotationRowActions({ quotation, clients, projects }: { quotatio
     const response = await fetch(`/api/quotations/${quotation.id}`, { method: "DELETE" });
     const payload = await response.json();
     if (!response.ok) {
-      toast.error(payload.error ?? "Gagal hapus quotation");
+      toast.error(payload.error ?? "Gagal hapus penawaran");
       return;
     }
-    toast.success("Quotation dihapus");
+    toast.success("Penawaran dihapus");
     router.refresh();
   };
 
   return (
     <div className="flex justify-end gap-2">
       <DetailDialog
-        title={`Detail Quotation #${quotation.id}`}
-        description="Ringkasan lengkap data quotation"
+        title={`Detail penawaran QUO-${String(quotation.id).padStart(4, "0")}`}
+        description="Ringkasan data penawaran"
         rows={[
-          { label: "Quotation ID", value: `QUO-${String(quotation.id).padStart(4, "0")}` },
-          { label: "Client", value: quotation.clientName ?? "-" },
-          { label: "Project", value: quotation.projectName ?? "-" },
+          { label: "No. penawaran", value: `QUO-${String(quotation.id).padStart(4, "0")}` },
+          { label: "Klien", value: quotation.clientName ?? "-" },
+          { label: "Proyek", value: namaProyek(quotation.projectName) },
           { label: "Subtotal", value: formatCurrency(quotation.subtotal) },
           { label: "PPN", value: formatCurrency(quotation.tax) },
           { label: "Total", value: formatCurrency(quotation.total) },
-          { label: "Status", value: quotation.status },
-          { label: "Valid Until", value: formatDateSafe(quotation.validUntil) },
+          { label: "Status", value: labelStatus(quotation.status) },
+          { label: "Berlaku sampai", value: formatDateSafe(quotation.validUntil) },
         ]}
       />
       <QuotationDialog clients={clients} projects={projects} quotation={quotation} />
       <ConfirmDialog
-        trigger={<Button variant="outline" size="sm" className="text-destructive"><Trash2 className="size-4" /> Delete</Button>}
-        title={`Hapus quotation QUO-${String(quotation.id).padStart(4, "0")}?`}
-        description="Quotation akan dihapus permanen beserta seluruh item-nya."
+        trigger={<Button variant="outline" size="sm" className="text-destructive"><Trash2 className="size-4" /> Hapus</Button>}
+        title={`Hapus penawaran QUO-${String(quotation.id).padStart(4, "0")}?`}
+        description="Penawaran bakal dihapus permanen beserta semua barangnya."
         confirmText="Hapus"
         variant="destructive"
         onConfirm={onDelete}

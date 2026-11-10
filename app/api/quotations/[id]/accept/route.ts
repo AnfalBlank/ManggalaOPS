@@ -14,7 +14,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
 
     const project = await acceptQuotationAndCreateProject(quotationId);
     const invoice = await createInvoiceFromQuotation(quotationId);
-    await createNotification({ title: "Quotation accepted", message: `Quotation #${quotationId} berhasil diubah menjadi project #${project.projectId} dan invoice #${invoice.invoiceId}.`, type: "success", targetRole: "sales" });
+    await createNotification({ title: "Penawaran diterima", message: `QUO-${String(quotationId).padStart(4, "0")} diterima: proyek #${project.projectId} dan tagihan #${invoice.invoiceId} dibikin.`, type: "success", targetRole: "sales" });
     await audit({ userId: user.id, action: "quotation.accept", entity: "quotation", entityId: quotationId, payload: { projectId: project.projectId, invoiceId: invoice.invoiceId } });
 
     return NextResponse.json({
@@ -24,6 +24,6 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
       invoiceId: invoice.invoiceId,
     });
   } catch (error) {
-    return toErrorResponse(error, "Failed to accept quotation");
+    return toErrorResponse(error, "Gagal menerima penawaran");
   }
 }

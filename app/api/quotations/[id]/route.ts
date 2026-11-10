@@ -17,7 +17,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const quotationId = ensurePositiveInt(id, "quotation id");
     const body = await request.json();
     const items = (Array.isArray(body.items) ? body.items : []) as Array<{ description?: string; qty?: number | string; unit?: string; unitPrice?: number | string; unitCost?: number | string; amount?: number | string; imageUrl?: string | null }>;
-    ensure(items.length > 0, "Minimal satu item quotation");
+    ensure(items.length > 0, "Isi minimal satu barang");
     const subtotal = items.reduce((sum: number, item) => sum + parseMoneyInput(item.amount), 0);
 
     const subtotalCost = items.reduce((sum: number, item) => {
@@ -72,7 +72,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     await audit({ userId: user.id, action: "quotation.update", entity: "quotation", entityId: quotationId });
     return NextResponse.json({ ok: true, data: await getQuotations() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to update quotation");
+    return toErrorResponse(error, "Gagal menyimpan penawaran");
   }
 }
 
@@ -88,6 +88,6 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
     await audit({ userId: user.id, action: "quotation.delete", entity: "quotation", entityId: quotationId });
     return NextResponse.json({ ok: true, data: await getQuotations() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to delete quotation");
+    return toErrorResponse(error, "Gagal menghapus penawaran");
   }
 }

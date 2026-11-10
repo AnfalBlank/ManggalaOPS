@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 import Link from "next/link";
@@ -15,15 +16,16 @@ import { InlineStatusSelect } from "@/components/ui/inline-status-select";
 import { Pagination, paginate } from "@/components/ui/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/format";
+import { labelStatus, namaProyek } from "@/lib/label-status";
 import type { QuotationListItem } from "@/lib/types";
 import { isWithinPeriod, type FilterPeriod } from "@/lib/view-filters";
 
 const quotationStatusOptions = [
   { label: "Semua status", value: "all" },
-  { label: "Draft", value: "Draft" },
-  { label: "Sent", value: "Sent" },
-  { label: "Accepted", value: "Accepted" },
-  { label: "Rejected", value: "Rejected" },
+  { label: "Draf", value: "Draft" },
+  { label: "Terkirim", value: "Sent" },
+  { label: "Diterima", value: "Accepted" },
+  { label: "Ditolak", value: "Rejected" },
 ];
 
 export function QuotationActionsTable({
@@ -58,7 +60,7 @@ export function QuotationActionsTable({
 
   const filtered = useMemo(
     () => quotations.filter((quote) => {
-      const matchesQuery = `${quote.code} ${quote.clientName} ${quote.projectName ?? ""} ${quote.status}`.toLowerCase().includes(query.toLowerCase());
+      const matchesQuery = `${quote.code} ${quote.clientName} ${quote.projectName ?? ""} ${quote.status} ${labelStatus(quote.status)}`.toLowerCase().includes(query.toLowerCase());
       const matchesPeriod = isWithinPeriod(quote.date, period);
       const matchesType = type === "all" || quote.status === type;
       return matchesQuery && matchesPeriod && matchesType;
@@ -73,7 +75,7 @@ export function QuotationActionsTable({
       <TableFilterBar
         value={query}
         onChange={setQuery}
-        placeholder="Search quotations..."
+        placeholder="Cari nomor, klien, proyek..."
         periodValue={period}
         onPeriodChange={(value) => setPeriod(value as FilterPeriod)}
         typeValue={type}
@@ -81,25 +83,25 @@ export function QuotationActionsTable({
         typeOptions={quotationStatusOptions}
       />
       <div className="w-full overflow-x-auto pb-4 rounded-xl border">
-        <Table className="min-w-[980px]">
+        <Table className="min-w-[980px] xl:min-w-0">
           <TableHeader className="bg-slate-50 sticky top-0 z-10">
             <TableRow>
-              <TableHead>Quote ID</TableHead>
-              <TableHead>Client & Project</TableHead>
-              <TableHead>Dates</TableHead>
+              <TableHead>No. penawaran</TableHead>
+              <TableHead>Klien & proyek</TableHead>
+              <TableHead>Tanggal</TableHead>
               <TableHead className="text-right">Total</TableHead>
               <TableHead className="text-right">Margin</TableHead>
-              <TableHead className="text-right">Margin %</TableHead>
+              <TableHead className="text-right">Margin (%)</TableHead>
               <TableHead className="text-center">Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paged.map((quote) => (
               <TableRow key={quote.id}>
                 <TableCell>{quote.code}</TableCell>
-                <TableCell>{quote.clientName}<div className="text-xs text-muted-foreground">{quote.projectName ?? "-"}</div></TableCell>
-                <TableCell>{quote.date ? format(new Date(quote.date), "dd MMM yyyy") : "-"}<div className="text-xs text-muted-foreground">Valid {quote.validUntil ? format(new Date(quote.validUntil), "dd MMM yyyy") : "-"}</div></TableCell>
+                <TableCell>{quote.clientName}<div className="text-xs text-muted-foreground">{namaProyek(quote.projectName)}</div></TableCell>
+                <TableCell>{quote.date ? format(new Date(quote.date), "dd MMM yyyy", { locale: localeId }) : "-"}<div className="text-xs text-muted-foreground">Berlaku s/d {quote.validUntil ? format(new Date(quote.validUntil), "dd MMM yyyy", { locale: localeId }) : "-"}</div></TableCell>
                 <TableCell className="text-right">{formatCurrency(quote.total)}</TableCell>
                 <TableCell className={cn("text-right font-medium", quote.totalMargin >= 0 ? "text-green-600" : "text-red-600")}>{formatCurrency(quote.totalMargin)}</TableCell>
                 <TableCell className={cn("text-right font-medium", quote.totalMargin >= 0 ? "text-green-600" : "text-red-600")}>{quote.marginPercentage.toFixed(1)}%</TableCell>
@@ -117,7 +119,7 @@ export function QuotationActionsTable({
                       payload={{
                         id: quote.code,
                         client: quote.clientName,
-                        project: quote.projectName ?? "-",
+                        project: namaProyek(quote.projectName),
                         date: quote.date ? new Date(quote.date) : new Date(),
                         validUntil: quote.validUntil ? new Date(quote.validUntil) : null,
                         companyName: settings.companyName,
@@ -146,7 +148,7 @@ export function QuotationActionsTable({
                       }}
                     />
                     {poByQuotation[quote.id] ? (
-                      <Link href={`/po/${poByQuotation[quote.id].id}`} className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">
+                      <Link href={`/po/${poByQuotation[quote.id].id}`} className="inline-flex min-h-10 sm:min-h-0 items-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">
                         PO {poByQuotation[quote.id].poNumber}
                       </Link>
                     ) : quote.status !== "Rejected" ? (

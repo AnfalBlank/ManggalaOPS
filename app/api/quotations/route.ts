@@ -15,7 +15,7 @@ export async function GET() {
     const data = await getQuotations();
     return NextResponse.json(data);
   } catch (error) {
-    return toErrorResponse(error, "Failed to fetch quotations");
+    return toErrorResponse(error, "Gagal memuat penawaran");
   }
 }
 
@@ -25,9 +25,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const clientId = ensurePositiveInt(body.clientId, "clientId");
     const items = (Array.isArray(body.items) ? body.items : []) as Array<{ description?: string; qty?: number | string; unit?: string; unitPrice?: number | string; unitCost?: number | string; amount?: number | string; imageUrl?: string | null }>;
-    ensure(items.length > 0, "Minimal satu item quotation");
+    ensure(items.length > 0, "Isi minimal satu barang");
     const subtotal = items.reduce((sum: number, item) => sum + parseMoneyInput(item.amount), 0);
-    ensure(subtotal > 0, "Subtotal quotation harus lebih besar dari 0");
+    ensure(subtotal > 0, "Subtotal penawaran harus lebih dari 0");
 
     const subtotalCost = items.reduce((sum: number, item) => {
       const cost = parseMoneyInput(item.unitCost ?? 0);
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       }).returning({ id: quotations.id });
 
       const newId = inserted[0]?.id;
-      if (!newId) throw new Error("Failed to insert quotation");
+      if (!newId) throw new Error("Gagal menyimpan penawaran");
 
       await tx.insert(quotationItems).values(items.map((item) => ({
         quotationId: newId,
@@ -84,6 +84,6 @@ export async function POST(request: NextRequest) {
     await audit({ userId: user.id, action: "quotation.create", entity: "quotation", entityId: quotationId, payload: { clientId, total } });
     return NextResponse.json({ ok: true, data: await getQuotations() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to create quotation");
+    return toErrorResponse(error, "Gagal membuat penawaran");
   }
 }
