@@ -37,7 +37,52 @@ type SettingsData = {
   allowUserSelfReset: boolean;
   signatureImageUrl: string | null;
   stampImageUrl: string | null;
+  quotationSignatoryName: string;
+  quotationSignatoryTitle: string;
+  quotationSignatureImageUrl: string | null;
 };
+
+type GambarKey = "signatureImageUrl" | "stampImageUrl" | "quotationSignatureImageUrl";
+
+// Satu kolom upload gambar (ttd/stempel): pratinjau, pilih file, hapus.
+function KolomGambar({ label, nilai, onUbah }: { label: string; nilai: string | null; onUbah: (url: string | null) => void }) {
+  const [mengunggah, setMengunggah] = useState(false);
+  return (
+    <div className="grid gap-2">
+      <Label>{label}</Label>
+      <div className="flex flex-wrap items-center gap-3">
+        {nilai ? (
+          <img src={nilai.replace(/^\/uploads\//, "/api/uploads/")} alt={label} className="h-14 max-w-40 rounded border bg-white object-contain p-1" />
+        ) : <span className="text-xs italic text-muted-foreground">Belum ada gambar</span>}
+        <input
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          className="text-xs"
+          disabled={mengunggah}
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            setMengunggah(true);
+            try {
+              const form = new FormData();
+              form.append("file", file);
+              const res = await fetch("/api/upload", { method: "POST", body: form });
+              const data = await res.json();
+              if (!res.ok || !data.url) throw new Error(data.error ?? "Gagal upload gambar");
+              onUbah(data.url);
+              toast.success("Gambar terunggah. Tekan Simpan setelan biar kepakai.");
+            } catch (error) {
+              toast.error(error instanceof Error ? error.message : "Gagal upload gambar");
+            } finally {
+              setMengunggah(false);
+            }
+          }}
+        />
+        {nilai ? <Button type="button" variant="outline" size="sm" onClick={() => onUbah(null)}>Hapus gambar</Button> : null}
+      </div>
+    </div>
+  );
+}
 
 const accountOptions = [
   { code: "1001", name: "Kas", type: "Asset" },
@@ -100,8 +145,8 @@ export function SettingsPanel({ initialSettings, accountOptions: dbAccountOption
           <div className="grid gap-2"><Label>Quotation Validity (hari)</Label><Input type="number" value={settings.quotationValidityDays} onChange={(e) => update("quotationValidityDays", Number(e.target.value) || 0)} /></div>
           <div className="grid gap-2"><Label>Invoice Due (hari)</Label><Input type="number" value={settings.invoiceDueDays} onChange={(e) => update("invoiceDueDays", Number(e.target.value) || 0)} /></div>
           <div className="grid gap-2"><Label>Default Payment Method</Label><Select value={settings.defaultPaymentMethod} onValueChange={(value) => update("defaultPaymentMethod", value ?? "CBD")}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="CBD">CBD</SelectItem><SelectItem value="Term">Term</SelectItem><SelectItem value="Transfer">Transfer</SelectItem></SelectContent></Select></div>
-          <div className="grid gap-2"><Label>Nama Penanda Tangan Default</Label><Input value={settings.defaultSignatoryName} onChange={(e) => update("defaultSignatoryName", e.target.value)} /></div>
-          <div className="grid gap-2"><Label>Jabatan Penanda Tangan Default</Label><Input value={settings.defaultSignatoryTitle} onChange={(e) => update("defaultSignatoryTitle", e.target.value)} /></div>
+          <div className="grid gap-2"><Label>Nama Penanda Tangan Tagihan & Kwitansi</Label><Input value={settings.defaultSignatoryName} onChange={(e) => update("defaultSignatoryName", e.target.value)} /></div>
+          <div className="grid gap-2"><Label>Jabatan Penanda Tangan Tagihan & Kwitansi</Label><Input value={settings.defaultSignatoryTitle} onChange={(e) => update("defaultSignatoryTitle", e.target.value)} /></div>
           {[
             ["Akun Kas Default", "defaultCashAccountCode"],
             ["Akun Bank Mandiri", "defaultBankMandiriAccountCode"],
@@ -127,61 +172,21 @@ export function SettingsPanel({ initialSettings, accountOptions: dbAccountOption
           <label className="flex items-center justify-between gap-4"><div><Label>User Self Reset</Label><p className="text-xs text-muted-foreground">Izinkan user reset password sendiri.</p></div><input type="checkbox" checked={settings.allowUserSelfReset} onChange={(e) => update("allowUserSelfReset", e.target.checked)} className="h-4 w-4" /></label>
 
           <div className="border-t pt-4 space-y-4">
-            <h4 className="font-semibold text-sm text-foreground">Tanda Tangan & Stempel Digital</h4>
-            <p className="text-xs text-muted-foreground">Upload gambar tanda tangan dan stempel perusahaan. Akan ditampilkan otomatis di PDF invoice, quotation, dan kwitansi.</p>
-            <div className="grid gap-3">
-              <div className="grid gap-2">
-                <Label>Tanda Tangan (PNG/JPG, bg transparan direkomendasikan)</Label>
-                <div className="flex items-center gap-3">
-                  {settings.signatureImageUrl ? (
-                    <img src={settings.signatureImageUrl.replace(/^\/uploads\//, "/api/uploads/")} alt="Signature" className="h-12 border rounded p-1 bg-white" />
-                  ) : <span className="text-xs text-muted-foreground italic">Belum diupload</span>}
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    className="text-xs"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      const form = new FormData();
-                      form.append("file", file);
-                      const res = await fetch("/api/upload", { method: "POST", body: form });
-                      const data = await res.json();
-                      if (res.ok && data.url) {
-                        update("signatureImageUrl", data.url);
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label>Stempel Perusahaan (PNG/JPG, bg transparan direkomendasikan)</Label>
-                <div className="flex items-center gap-3">
-                  {settings.stampImageUrl ? (
-                    <img src={settings.stampImageUrl.replace(/^\/uploads\//, "/api/uploads/")} alt="Stamp" className="h-12 border rounded p-1 bg-white" />
-                  ) : <span className="text-xs text-muted-foreground italic">Belum diupload</span>}
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    className="text-xs"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      const form = new FormData();
-                      form.append("file", file);
-                      const res = await fetch("/api/upload", { method: "POST", body: form });
-                      const data = await res.json();
-                      if (res.ok && data.url) {
-                        update("stampImageUrl", data.url);
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
+            <h4 className="font-semibold text-sm text-foreground">Penanda tangan penawaran</h4>
+            <p className="text-xs text-muted-foreground">Dipakai di PDF penawaran. PNG latar transparan paling rapi; tanda tangan & stempel boleh jadi satu gambar.</p>
+            <div className="grid gap-2"><Label>Nama</Label><Input value={settings.quotationSignatoryName} onChange={(e) => update("quotationSignatoryName", e.target.value)} /></div>
+            <div className="grid gap-2"><Label>Jabatan</Label><Input value={settings.quotationSignatoryTitle} onChange={(e) => update("quotationSignatoryTitle", e.target.value)} /></div>
+            <KolomGambar label="Tanda tangan penawaran" nilai={settings.quotationSignatureImageUrl} onUbah={(url) => update("quotationSignatureImageUrl" as GambarKey, url)} />
           </div>
 
-          <div className="pt-4 flex flex-col gap-2"><Button disabled={saving} onClick={save}>{saving ? "Menyimpan..." : "Simpan Settings"}</Button></div>
+          <div className="border-t pt-4 space-y-4">
+            <h4 className="font-semibold text-sm text-foreground">Tanda tangan tagihan & kwitansi</h4>
+            <p className="text-xs text-muted-foreground">Dipakai di PDF tagihan dan kwitansi, atas nama penanda tangan default ({settings.defaultSignatoryName}). Kosong = PDF tanpa tanda tangan.</p>
+            <KolomGambar label="Tanda tangan" nilai={settings.signatureImageUrl} onUbah={(url) => update("signatureImageUrl" as GambarKey, url)} />
+            <KolomGambar label="Stempel" nilai={settings.stampImageUrl} onUbah={(url) => update("stampImageUrl" as GambarKey, url)} />
+          </div>
+
+          <div className="pt-4 flex flex-col gap-2"><Button disabled={saving} onClick={save}>{saving ? "Menyimpan..." : "Simpan setelan"}</Button></div>
         </CardContent>
       </Card>
     </div>

@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 import { drawSignatureAndStamp, preloadSignatureStamp } from "@/lib/pdf-signature";
 import { tampilkanPdf } from "@/lib/dokumen-pdf";
 
@@ -125,7 +126,7 @@ export async function generateQuotationPDF(data: QuotationPdfData) {
   const infoY = 46;
   const fields = [
     ["Nomor", letterNumber],
-    ["Tanggal", format(data.date, "dd MMMM yyyy")],
+    ["Tanggal", format(data.date, "dd MMMM yyyy", { locale: localeId })],
     ["Lampiran", data.attachment || "-"],
     ["Perihal", data.subject || "Surat Penawaran"],
   ];
@@ -167,7 +168,7 @@ export async function generateQuotationPDF(data: QuotationPdfData) {
   // ========== ITEM TABLE ==========
   autoTable(doc, {
     startY: y,
-    head: [["No", "Nama Barang / Jasa", "Qty", "Unit", "Harga Satuan", "Jumlah Harga"]],
+    head: [["No", "Nama Barang / Jasa", "Qty", "Satuan", "Harga Satuan", "Jumlah Harga"]],
     body: data.items.map((item, i) => [
       String(i + 1),
       item.description,
@@ -225,7 +226,7 @@ export async function generateQuotationPDF(data: QuotationPdfData) {
   doc.setFont("helvetica", "bolditalic");
   doc.setFontSize(10);
   doc.setTextColor(0, 0, 0);
-  doc.text("Term and Conditions", 14, y);
+  doc.text("Syarat dan Ketentuan", 14, y);
   y += 5;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);

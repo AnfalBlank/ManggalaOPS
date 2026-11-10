@@ -95,6 +95,10 @@ export const appSettings = sqliteTable('app_settings', {
   allowUserSelfReset: integer('allow_user_self_reset', { mode: 'boolean' }).default(false),
   signatureImageUrl: text('signature_image_url'),
   stampImageUrl: text('stamp_image_url'),
+  // Penawaran ditandatangani marketing (beda dengan tagihan & kwitansi yang pakai penanda tangan default).
+  quotationSignatoryName: text('quotation_signatory_name').default('Adiatma Pasau'),
+  quotationSignatoryTitle: text('quotation_signatory_title').default('Manager Marketing'),
+  quotationSignatureImageUrl: text('quotation_signature_image_url'),
   updatedAt: integer('updated_at', { mode: 'timestamp' }),
 });
 

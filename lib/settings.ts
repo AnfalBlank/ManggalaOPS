@@ -33,6 +33,9 @@ export async function getAppSettings() {
     allowUserSelfReset: false,
     signatureImageUrl: null,
     stampImageUrl: null,
+    quotationSignatoryName: "Adiatma Pasau",
+    quotationSignatoryTitle: "Manager Marketing",
+    quotationSignatureImageUrl: null,
     updatedAt: new Date(),
   };
 }

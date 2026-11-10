@@ -34,6 +34,9 @@ export default async function SettingsPage() {
     allowUserSelfReset: settingsRow.allowUserSelfReset ?? false,
     signatureImageUrl: settingsRow.signatureImageUrl ?? null,
     stampImageUrl: settingsRow.stampImageUrl ?? null,
+    quotationSignatoryName: settingsRow.quotationSignatoryName ?? "Adiatma Pasau",
+    quotationSignatoryTitle: settingsRow.quotationSignatoryTitle ?? "Manager Marketing",
+    quotationSignatureImageUrl: settingsRow.quotationSignatureImageUrl ?? null,
   };
 
   return (

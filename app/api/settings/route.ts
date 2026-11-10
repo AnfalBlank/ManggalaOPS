@@ -49,6 +49,10 @@ export async function PUT(request: NextRequest) {
       allowUserSelfReset: Boolean(body.allowUserSelfReset),
       signatureImageUrl: String(body.signatureImageUrl ?? "").trim() || null,
       stampImageUrl: String(body.stampImageUrl ?? "").trim() || null,
+      // Kalau field gak dikirim (halaman lama), pakai nilai yang tersimpan biar gak kehapus.
+      quotationSignatoryName: String(body.quotationSignatoryName ?? current?.quotationSignatoryName ?? "Adiatma Pasau").trim() || "Adiatma Pasau",
+      quotationSignatoryTitle: String(body.quotationSignatoryTitle ?? current?.quotationSignatoryTitle ?? "Manager Marketing").trim() || "Manager Marketing",
+      quotationSignatureImageUrl: (body.quotationSignatureImageUrl === undefined ? current?.quotationSignatureImageUrl ?? "" : String(body.quotationSignatureImageUrl ?? "")).trim() || null,
       updatedAt: new Date(),
     };
 

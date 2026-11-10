@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 import { drawSignatureAndStamp, preloadSignatureStamp } from "@/lib/pdf-signature";
 import { tampilkanPdf } from "@/lib/dokumen-pdf";
 
@@ -110,16 +111,22 @@ export async function generateInvoiceLetterPDF(data: InvoicePdfData) {
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
+  // Kolom kiri dibatasi 104 mm biar alamat panjang turun ke baris baru, gak numpuk ke "Detail invoice" di kanan.
+  const lebarKiri = 104;
   let leftY = 53;
-  doc.text(data.recipientName || data.client, 14, leftY); leftY += 5;
-  if (data.recipientCompany) { doc.text(data.recipientCompany, 14, leftY); leftY += 5; }
-  doc.text(data.recipientAddress || "Di tempat", 14, leftY);
+  for (const teks of [data.recipientName || data.client, data.recipientCompany, data.recipientAddress || "Di tempat"]) {
+    if (!teks) continue;
+    const baris = doc.splitTextToSize(teks, lebarKiri) as string[];
+    doc.text(baris, 14, leftY);
+    leftY += baris.length * 5;
+  }
+  leftY -= 5;
 
   let infoY = 53;
   const infoRows: [string, string][] = [
     ["Nomor", letterNumber],
-    ["Tanggal", format(data.date, "dd MMMM yyyy")],
-    ["Jatuh Tempo", data.dueDate ? format(data.dueDate, "dd MMMM yyyy") : "-"],
+    ["Tanggal", format(data.date, "dd MMMM yyyy", { locale: localeId })],
+    ["Jatuh Tempo", data.dueDate ? format(data.dueDate, "dd MMMM yyyy", { locale: localeId }) : "-"],
     ["Pembayaran", data.paymentMethod || "CBD"],
     ...(data.clientPoNumber ? [["No. PO", data.clientPoNumber] as [string, string]] : []),
   ];
@@ -144,7 +151,7 @@ export async function generateInvoiceLetterPDF(data: InvoicePdfData) {
   // ========== TABLE ==========
   autoTable(doc, {
     startY: y,
-    head: [["No", "Description", "Qty", "Unit", "Price", "Amount"]],
+    head: [["No", "Uraian", "Qty", "Satuan", "Harga Satuan", "Jumlah"]],
     body: data.items.map((item, i) => [
       String(i + 1),
       item.description,
@@ -234,7 +241,7 @@ export async function generateInvoiceLetterPDF(data: InvoicePdfData) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
   doc.setTextColor(20, 41, 68);
-  doc.text(format(data.date, "dd MMMM yyyy"), signX, signY); signY += 6;
+  doc.text(format(data.date, "dd MMMM yyyy", { locale: localeId }), signX, signY); signY += 6;
   doc.text("Hormat kami,", signX, signY);
   const signImgY = signY + 2;
   signY += 22;

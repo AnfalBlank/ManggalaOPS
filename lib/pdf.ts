@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 import { drawSignatureAndStamp, preloadSignatureStamp } from "@/lib/pdf-signature";
 import { tampilkanPdf } from "@/lib/dokumen-pdf";
 
@@ -92,8 +93,8 @@ export const generateInvoicePDF = (invoiceData: InvoicePdfData) => {
 
   doc.setFont("helvetica", "normal");
   doc.text(invoiceData.id, 160, 55);
-  doc.text(format(invoiceData.date, "dd MMM yyyy"), 160, 60);
-  doc.text(format(invoiceData.dueDate, "dd MMM yyyy"), 160, 65);
+  doc.text(format(invoiceData.date, "dd MMM yyyy", { locale: localeId }), 160, 60);
+  doc.text(format(invoiceData.dueDate, "dd MMM yyyy", { locale: localeId }), 160, 65);
 
   autoTable(doc, {
     startY: 75,
@@ -155,7 +156,7 @@ export const generateKwitansiPDF = async (paymentData: ReceiptPdfData) => {
 
   const amountInWords = toWordsId(paymentData.amount);
   const receiptNumber = `KWT-${paymentData.id}`;
-  const today = format(new Date(), "dd MMMM yyyy");
+  const today = format(new Date(), "dd MMMM yyyy", { locale: localeId });
   const companyName = paymentData.companyName || "PT. Manggala Utama Indonesia";
   const companyEmail = paymentData.companyEmail || "admin@manggala-utama.id";
   const companyPhone = paymentData.companyPhone || "+62 878-8424-1703";

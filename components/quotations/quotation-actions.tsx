@@ -38,7 +38,7 @@ export function QuotationActionsTable({
   quotations: QuotationListItem[];
   clients: { id: number; name: string }[];
   projects: { id: number; name: string }[];
-  settings: { companyName?: string | null; companyEmail?: string | null; companyPhone?: string | null; companyAddress?: string | null; defaultSignatoryName?: string | null; defaultSignatoryTitle?: string | null; signatureImageUrl?: string | null; stampImageUrl?: string | null };
+  settings: { companyName?: string | null; companyEmail?: string | null; companyPhone?: string | null; companyAddress?: string | null; defaultSignatoryName?: string | null; defaultSignatoryTitle?: string | null; signatureImageUrl?: string | null; stampImageUrl?: string | null; quotationSignatoryName?: string | null; quotationSignatoryTitle?: string | null; quotationSignatureImageUrl?: string | null };
   filters?: { initialQuery?: string; initialPeriod?: FilterPeriod; initialType?: string };
 }) {
   const [query, setQuery] = useState(filters?.initialQuery ?? "");
@@ -133,10 +133,11 @@ export function QuotationActionsTable({
                         introduction: quote.introduction,
                         terms: quote.terms,
                         closingNote: quote.closingNote,
-                        signatoryName: quote.signatoryName || settings.defaultSignatoryName,
-                        signatoryTitle: quote.signatoryTitle || settings.defaultSignatoryTitle,
-                        signatureImageUrl: settings.signatureImageUrl,
-                        stampImageUrl: settings.stampImageUrl,
+                        // Penawaran selalu atas nama penanda tangan penawaran (marketing) + tanda tangannya.
+                        signatoryName: settings.quotationSignatoryName || "Adiatma Pasau",
+                        signatoryTitle: settings.quotationSignatoryTitle || "Manager Marketing",
+                        signatureImageUrl: settings.quotationSignatureImageUrl ?? null,
+                        stampImageUrl: null,
                         items: quote.items,
                         subtotal: quote.subtotal,
                         ppn: quote.tax,
