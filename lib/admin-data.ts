@@ -29,8 +29,7 @@ export async function getFinanceOverviewData() {
       })
       .from(expenses)
       .leftJoin(accounts, eq(expenses.paymentAccountCode, accounts.code))
-      .orderBy(desc(expenses.id))
-      .limit(20),
+      .orderBy(desc(expenses.id)),
     db
       .select({
         code: accounts.code,

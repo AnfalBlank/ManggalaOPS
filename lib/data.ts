@@ -262,12 +262,15 @@ export async function getInvoices(): Promise<InvoiceListItem[]> {
   return rows.map((row) => {
     const total = row.total ?? 0;
     const amountPaid = row.amountPaid ?? 0;
-    const outstandingAmount = Math.max(total - amountPaid, 0);
+    // Total lama ada yang punya pecahan sen (mis. 14.700.000,24) sementara bayarnya bulat:
+    // sisa di bawah Rp 1 dianggap lunas.
+    const sisaMentah = total - amountPaid;
+    const outstandingAmount = sisaMentah < 1 ? 0 : sisaMentah;
     const now = new Date();
     const dueDate = row.dueDate ? new Date(row.dueDate) : null;
 
     let status = "Unpaid";
-    if (amountPaid >= total && total > 0) status = "Paid";
+    if (outstandingAmount === 0 && total > 0) status = "Paid";
     else if (amountPaid > 0) status = "Partially Paid";
     else if (dueDate && dueDate < now) status = "Overdue";
 

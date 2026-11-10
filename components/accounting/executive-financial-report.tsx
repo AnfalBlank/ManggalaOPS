@@ -71,7 +71,7 @@ export function ExecutiveFinancialReport({ accounts }: { accounts: AccountRow[] 
     autoTable(doc, {
       startY: 34,
       theme: "grid",
-      body: [["A. LAPORAN LABA RUGI (Income Statement)", ""]],
+      body: [["A. LAPORAN LABA RUGI", ""]],
       styles: { fontStyle: "bold", fillColor: [255, 255, 255], textColor: [0, 0, 0] },
       columnStyles: { 1: { halign: "right" } },
     });
@@ -84,7 +84,7 @@ export function ExecutiveFinancialReport({ accounts }: { accounts: AccountRow[] 
         ["BEBAN OPERASIONAL & HPP", ""],
         ...incomeStatement.expenses.map((row) => [row.name, `(${formatCurrency(row.value)})`]),
         ["Total Beban", `(${formatCurrency(incomeStatement.totalExpense)})`],
-        ["LABA BERSIH TAHUN BERJALAN (NET INCOME)", formatCurrency(incomeStatement.netIncome)],
+        ["LABA BERSIH PERIODE INI", formatCurrency(incomeStatement.netIncome)],
       ],
       theme: "grid",
       headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
@@ -92,7 +92,7 @@ export function ExecutiveFinancialReport({ accounts }: { accounts: AccountRow[] 
       alternateRowStyles: { fillColor: [252, 252, 252] },
       didParseCell: (data) => {
         const text = String(data.cell.raw ?? "");
-        if (text.includes("LABA BERSIH TAHUN BERJALAN")) {
+        if (text.includes("LABA BERSIH PERIODE INI")) {
           data.cell.styles.textColor = [34, 139, 34];
           data.cell.styles.fontStyle = "bold";
         }
@@ -106,7 +106,7 @@ export function ExecutiveFinancialReport({ accounts }: { accounts: AccountRow[] 
     autoTable(doc, {
       startY: ((doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? 100) + 8,
       theme: "grid",
-      body: [["B. NERACA KEUANGAN (Balance Sheet)", ""]],
+      body: [["B. NERACA", ""]],
       styles: { fontStyle: "bold", fillColor: [255, 255, 255], textColor: [0, 0, 0] },
       columnStyles: { 1: { halign: "right" } },
     });
@@ -124,7 +124,7 @@ export function ExecutiveFinancialReport({ accounts }: { accounts: AccountRow[] 
         ...balanceSheet.liabilities.map((row) => [row.name, formatCurrency(row.value)]),
         ["Ekuitas (Modal Pemilik)", ""],
         ...balanceSheet.equity.map((row) => [row.name, formatCurrency(row.value)]),
-        ["Laba Tahun Berjalan (Net Income)", formatCurrency(balanceSheet.retainedEarnings)],
+        ["Laba periode berjalan", formatCurrency(balanceSheet.retainedEarnings)],
         ["TOTAL KEWAJIBAN & EKUITAS", formatCurrency(balanceSheet.totalLiabilities + balanceSheet.totalEquity)],
       ],
       theme: "grid",
@@ -154,20 +154,20 @@ export function ExecutiveFinancialReport({ accounts }: { accounts: AccountRow[] 
     <div className="bg-white rounded-2xl shadow-sm border border-border p-4 md:p-6 mb-8 space-y-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h2 className="text-[28px] font-bold tracking-tight text-foreground">Laporan Keuangan Eksekutif PT. Manggala Utama Indonesia</h2>
+          <h2 className="text-xl md:text-[28px] font-bold tracking-tight text-foreground">Laporan Keuangan Eksekutif PT. Manggala Utama Indonesia</h2>
           <p className="text-sm text-muted-foreground">{periodLabel}</p>
         </div>
-        <Button className="gap-2 bg-primary hover:bg-primary/90 text-white" onClick={exportPdf}><FileText className="size-4" /> Download PDF</Button>
+        <Button className="gap-2 bg-primary hover:bg-primary/90 text-white" onClick={exportPdf}><FileText className="size-4" /> Lihat PDF</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2"><Label>Periode Mulai</Label><Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
-        <div className="space-y-2"><Label>Periode Akhir / Tutup Buku</Label><Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
+        <div className="space-y-2"><Label>Periode mulai</Label><Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
+        <div className="space-y-2"><Label>Periode akhir / tutup buku</Label><Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
       </div>
 
       <Card>
         <CardContent className="p-0 overflow-hidden">
-          <div className="p-4 font-bold text-lg">A. LAPORAN LABA RUGI (Income Statement)</div>
+          <div className="p-4 font-bold text-lg">A. LAPORAN LABA RUGI</div>
           <table className="w-full text-sm border-t">
             <tbody>
               <tr className="bg-muted/40 font-semibold"><td className="border px-3 py-2">PENDAPATAN</td><td className="border px-3 py-2 text-right"></td></tr>
@@ -176,7 +176,7 @@ export function ExecutiveFinancialReport({ accounts }: { accounts: AccountRow[] 
               <tr className="bg-muted/40 font-semibold"><td className="border px-3 py-2">BEBAN OPERASIONAL &amp; HPP</td><td className="border px-3 py-2 text-right"></td></tr>
               {incomeStatement.expenses.map((row) => <tr key={row.code}><td className="border px-3 py-2">{row.name}</td><td className="border px-3 py-2 text-right">({formatCurrency(row.value)})</td></tr>)}
               <tr className="font-semibold"><td className="border px-3 py-2">Total Beban</td><td className="border px-3 py-2 text-right">({formatCurrency(incomeStatement.totalExpense)})</td></tr>
-              <tr className="font-bold text-green-600"><td className="border px-3 py-2">LABA BERSIH TAHUN BERJALAN (NET INCOME)</td><td className="border px-3 py-2 text-right">{formatCurrency(incomeStatement.netIncome)}</td></tr>
+              <tr className="font-bold text-green-600"><td className="border px-3 py-2">LABA BERSIH PERIODE INI</td><td className="border px-3 py-2 text-right">{formatCurrency(incomeStatement.netIncome)}</td></tr>
             </tbody>
           </table>
         </CardContent>
@@ -184,7 +184,7 @@ export function ExecutiveFinancialReport({ accounts }: { accounts: AccountRow[] 
 
       <Card>
         <CardContent className="p-0 overflow-hidden">
-          <div className="p-4 font-bold text-lg">B. NERACA KEUANGAN (Balance Sheet)</div>
+          <div className="p-4 font-bold text-lg">B. NERACA</div>
           <table className="w-full text-sm border-t">
             <tbody>
               <tr className="bg-blue-100 font-semibold"><td className="border px-3 py-2">I. ASET (HARTA)</td><td className="border px-3 py-2 text-right"></td></tr>
@@ -198,7 +198,7 @@ export function ExecutiveFinancialReport({ accounts }: { accounts: AccountRow[] 
               {balanceSheet.liabilities.map((row) => <tr key={row.code}><td className="border px-3 py-2">{row.name}</td><td className="border px-3 py-2 text-right">{formatCurrency(row.value)}</td></tr>)}
               <tr className="font-semibold"><td className="border px-3 py-2">Ekuitas (Modal Pemilik)</td><td className="border px-3 py-2 text-right"></td></tr>
               {balanceSheet.equity.map((row) => <tr key={row.code}><td className="border px-3 py-2">{row.name}</td><td className="border px-3 py-2 text-right">{formatCurrency(row.value)}</td></tr>)}
-              <tr><td className="border px-3 py-2">Laba Tahun Berjalan (Net Income)</td><td className="border px-3 py-2 text-right">{formatCurrency(balanceSheet.retainedEarnings)}</td></tr>
+              <tr><td className="border px-3 py-2">Laba periode berjalan</td><td className="border px-3 py-2 text-right">{formatCurrency(balanceSheet.retainedEarnings)}</td></tr>
               <tr className="font-bold"><td className="border px-3 py-2">TOTAL KEWAJIBAN &amp; EKUITAS</td><td className="border px-3 py-2 text-right">{formatCurrency(balanceSheet.totalLiabilities + balanceSheet.totalEquity)}</td></tr>
             </tbody>
           </table>

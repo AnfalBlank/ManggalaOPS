@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { labelStatus, namaProyek } from "@/lib/label-status";
 import type { InvoiceListItem, PaymentListItem } from "@/lib/types";
 
 type ClientOption = { id: number; name: string };
@@ -26,8 +27,8 @@ async function requestJson(url: string, method: "PATCH" | "DELETE", body?: Recor
     headers: body ? { "Content-Type": "application/json" } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
-  const payload = await response.json();
-  if (!response.ok) throw new Error(payload.error ?? "Request failed");
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error ?? "Gagal menyimpan, coba lagi");
   return payload;
 }
 
@@ -38,36 +39,36 @@ export function InvoiceRowActions({ row, clients }: { row: InvoiceListItem; clie
     <div className="flex justify-end gap-2 flex-wrap">
       <DetailDialog
         title={`Detail ${row.code}`}
-        description="Ringkasan lengkap data invoice"
+        description="Ringkasan lengkap data tagihan"
         rows={[
-          { label: "Invoice ID", value: row.code },
-          { label: "Client", value: row.clientName },
-          { label: "Project", value: row.projectName ?? "-" },
-          { label: "Issued", value: formatDateSafe(row.date) },
-          { label: "Due Date", value: formatDateSafe(row.dueDate) },
-          { label: "Payment Method", value: row.paymentMethod ?? "-" },
+          { label: "No. tagihan", value: row.code },
+          { label: "Klien", value: row.clientName },
+          { label: "Proyek", value: namaProyek(row.projectName) },
+          { label: "Tanggal terbit", value: formatDateSafe(row.date) },
+          { label: "Jatuh tempo", value: formatDateSafe(row.dueDate) },
+          { label: "Cara bayar", value: row.paymentMethod === "Term" ? "Tempo" : (row.paymentMethod ?? "-") },
           { label: "Subtotal", value: formatCurrency(row.subtotal) },
           { label: "PPN", value: formatCurrency(row.tax) },
           { label: "Total", value: formatCurrency(row.total) },
-          { label: "Paid", value: formatCurrency(row.amountPaid) },
-          { label: "Outstanding", value: formatCurrency(row.outstandingAmount) },
-          { label: "Status", value: row.status },
+          { label: "Sudah dibayar", value: formatCurrency(row.amountPaid) },
+          { label: "Sisa", value: formatCurrency(row.outstandingAmount) },
+          { label: "Status", value: labelStatus(row.status) },
         ]}
       />
       <InvoiceDialog clients={clients} invoice={row} />
       <ConfirmDialog
-        trigger={<Button variant="outline" size="sm" className="text-destructive"><Trash2 className="size-4" /> Delete</Button>}
-        title={`Hapus invoice ${row.code}?`}
-        description="Invoice akan dihapus permanen. Invoice yang sudah punya payment tidak bisa dihapus."
+        trigger={<Button variant="outline" size="sm" className="text-destructive"><Trash2 className="size-4" /> Hapus</Button>}
+        title={`Hapus tagihan ${row.code}?`}
+        description="Tagihan dihapus permanen. Tagihan yang sudah ada pembayarannya gak bisa dihapus."
         confirmText="Hapus"
         variant="destructive"
         onConfirm={async () => {
           try {
             await requestJson(`/api/invoices/${row.id}`, "DELETE");
-            toast.success("Invoice dihapus");
+            toast.success("Tagihan dihapus");
             router.refresh();
           } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Gagal hapus invoice");
+            toast.error(error instanceof Error ? error.message : "Gagal menghapus tagihan");
           }
         }}
       />
@@ -90,61 +91,61 @@ export function PaymentRowActions({ row, clients, invoices, paymentAccounts = []
     <div className="flex justify-end gap-2 flex-wrap">
       <DetailDialog
         title={`Detail ${row.code}`}
-        description="Ringkasan lengkap data payment"
+        description="Ringkasan lengkap data pembayaran"
         rows={[
-          { label: "Payment ID", value: row.code },
-          { label: "Client", value: row.clientName },
-          { label: "Invoice", value: row.invoiceCode },
-          { label: "Date", value: formatDateSafe(row.date) },
-          { label: "Amount", value: formatCurrency(row.amount) },
-          { label: "Method", value: row.paymentMethod ?? "-" },
-          { label: "Akun Masuk", value: paymentAccounts.find((account) => account.code === row.paymentAccountCode)?.name ?? row.paymentAccountCode ?? "-" },
-          { label: "Reference", value: row.referenceCode ?? "-" },
+          { label: "No. pembayaran", value: row.code },
+          { label: "Klien", value: row.clientName },
+          { label: "Tagihan", value: row.invoiceCode },
+          { label: "Tanggal", value: formatDateSafe(row.date) },
+          { label: "Nominal", value: formatCurrency(row.amount) },
+          { label: "Cara bayar", value: row.paymentMethod ?? "-" },
+          { label: "Masuk ke akun", value: paymentAccounts.find((account) => account.code === row.paymentAccountCode)?.name ?? row.paymentAccountCode ?? "-" },
+          { label: "No. referensi", value: row.referenceCode ?? "-" },
         ]}
       />
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger render={<Button variant="outline" size="sm"><Pencil className="size-4" /> Edit</Button>} />
+        <DialogTrigger render={<Button variant="outline" size="sm"><Pencil className="size-4" /> Ubah</Button>} />
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Edit Payment</DialogTitle>
+            <DialogTitle>Ubah pembayaran {row.code}</DialogTitle>
             <DialogDescription>Perbarui data pembayaran masuk.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
-            <div className="grid gap-2"><Label>Client</Label><Select value={clientId} onValueChange={(value) => { setClientId(value ?? ""); setInvoiceId(""); }}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih client">{clients.find((client) => String(client.id) === clientId)?.name}</SelectValue></SelectTrigger><SelectContent>{clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}</SelectContent></Select></div>
-            <div className="grid gap-2"><Label>Invoice</Label><Select value={invoiceId} onValueChange={(value) => setInvoiceId(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih invoice">{filteredInvoices.find((invoice) => String(invoice.id) === invoiceId)?.code}</SelectValue></SelectTrigger><SelectContent>{filteredInvoices.map((invoice) => <SelectItem key={invoice.id} value={String(invoice.id)}>{invoice.code}{invoice.clientName ? ` — ${invoice.clientName}` : ""}</SelectItem>)}</SelectContent></Select></div>
-            <div className="grid gap-2"><Label>Amount</Label><MoneyInput value={amount} onChange={setAmount} placeholder="10.000.000" /></div>
-            <div className="grid gap-2"><Label>Akun Penerimaan</Label><Select value={paymentAccountCode} onValueChange={(value) => setPaymentAccountCode(value ?? "1002")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih akun penerimaan" /></SelectTrigger><SelectContent>{paymentAccounts.map((account) => <SelectItem key={account.code} value={account.code}>{account.code} - {account.name}</SelectItem>)}</SelectContent></Select></div>
-            <div className="grid gap-2"><Label>Payment Method</Label><Input value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)} /></div>
-            <div className="grid gap-2"><Label>Reference Code</Label><Input value={referenceCode} onChange={(event) => setReferenceCode(event.target.value)} /></div>
+            <div className="grid gap-2"><Label>Klien</Label><Select value={clientId} onValueChange={(value) => { setClientId(value ?? ""); setInvoiceId(""); }}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih klien">{clients.find((client) => String(client.id) === clientId)?.name}</SelectValue></SelectTrigger><SelectContent>{clients.map((client) => <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="grid gap-2"><Label>Tagihan</Label><Select value={invoiceId} onValueChange={(value) => setInvoiceId(value ?? "")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih tagihan">{filteredInvoices.find((invoice) => String(invoice.id) === invoiceId)?.code}</SelectValue></SelectTrigger><SelectContent>{filteredInvoices.map((invoice) => <SelectItem key={invoice.id} value={String(invoice.id)}>{invoice.code}{invoice.clientName ? ` — ${invoice.clientName}` : ""}</SelectItem>)}</SelectContent></Select></div>
+            <div className="grid gap-2"><Label>Nominal</Label><MoneyInput value={amount} onChange={setAmount} placeholder="10.000.000" /></div>
+            <div className="grid gap-2"><Label>Masuk ke akun</Label><Select value={paymentAccountCode} onValueChange={(value) => setPaymentAccountCode(value ?? "1002")}><SelectTrigger className="w-full"><SelectValue placeholder="Pilih akun penerimaan">{(value: string) => { const akun = paymentAccounts.find((account) => account.code === value); return akun ? `${akun.code} - ${akun.name}` : value; }}</SelectValue></SelectTrigger><SelectContent>{paymentAccounts.map((account) => <SelectItem key={account.code} value={account.code}>{account.code} - {account.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="grid gap-2"><Label>Cara bayar</Label><Input value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)} /></div>
+            <div className="grid gap-2"><Label>No. referensi (opsional)</Label><Input value={referenceCode} onChange={(event) => setReferenceCode(event.target.value)} /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Batal</Button>
             <Button onClick={async () => {
               try {
                 await requestJson(`/api/payments/${row.id}`, "PATCH", { clientId, invoiceId, amount, paymentMethod, paymentAccountCode, referenceCode });
-                toast.success("Payment diupdate");
+                toast.success("Pembayaran diperbarui");
                 setOpen(false);
                 router.refresh();
               } catch (error) {
-                toast.error(error instanceof Error ? error.message : "Gagal update payment");
+                toast.error(error instanceof Error ? error.message : "Gagal menyimpan pembayaran");
               }
             }}>Simpan</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
       <ConfirmDialog
-        trigger={<Button variant="outline" size="sm" className="text-destructive"><Trash2 className="size-4" /> Delete</Button>}
-        title={`Hapus payment ${row.code}?`}
-        description="Payment akan dihapus permanen dan jurnal akuntansi terkait juga akan dirollback."
+        trigger={<Button variant="outline" size="sm" className="text-destructive"><Trash2 className="size-4" /> Hapus</Button>}
+        title={`Hapus pembayaran ${row.code}?`}
+        description="Pembayaran dihapus permanen dan jurnal akuntansinya ikut dibatalkan."
         confirmText="Hapus"
         variant="destructive"
         onConfirm={async () => {
           try {
             await requestJson(`/api/payments/${row.id}`, "DELETE");
-            toast.success("Payment dihapus");
+            toast.success("Pembayaran dihapus");
             router.refresh();
           } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Gagal hapus payment");
+            toast.error(error instanceof Error ? error.message : "Gagal menghapus pembayaran");
           }
         }}
       />

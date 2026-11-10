@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { labelStatus } from "@/lib/label-status";
 import {
   buildWhatsappReminderUrl,
   chooseReminderTone,
@@ -49,7 +50,7 @@ export function WhatsappReminderButton({
   const onSend = async () => {
     const phone = normalizePhoneForWhatsapp(invoice.clientPhone);
     if (!phone) {
-      toast.error("Nomor telepon client tidak valid. Update di halaman Clients.");
+      toast.error("Nomor HP klien belum benar. Perbaiki dulu di halaman Klien.");
       return;
     }
     try {
@@ -82,52 +83,52 @@ export function WhatsappReminderButton({
             variant="outline"
             size="sm"
             className="h-8 px-3 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 border-emerald-200"
-            title={phoneOk ? "Kirim pengingat lewat WhatsApp" : "Nomor client tidak valid"}
+            title={phoneOk ? "Kirim pengingat lewat WhatsApp" : "Nomor HP klien belum benar"}
             disabled={!phoneOk}
           >
-            <MessageCircle className="size-4 mr-1" /> Reminder
+            <MessageCircle className="size-4 mr-1" /> Ingatkan
           </Button>
         }
       />
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Kirim Pengingat WhatsApp</DialogTitle>
+          <DialogTitle>Kirim pengingat lewat WhatsApp</DialogTitle>
           <DialogDescription>
-            Pesan akan dibuka di WhatsApp Web/App untuk dikirim ke nomor client. Anda bisa edit dulu sebelum kirim.
+            Pesan dibuka di WhatsApp buat dikirim ke nomor klien. Kamu bisa ubah dulu isinya sebelum kirim.
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4">
           <div className="rounded-lg border bg-muted/20 p-3 text-sm grid grid-cols-2 gap-2">
             <div>
-              <div className="text-xs text-muted-foreground uppercase">Invoice</div>
+              <div className="text-xs text-muted-foreground uppercase">Tagihan</div>
               <div className="font-semibold">{invoice.code}</div>
             </div>
             <div>
               <div className="text-xs text-muted-foreground uppercase">Status</div>
-              <div className="font-semibold">{invoice.status}</div>
+              <div className="font-semibold">{labelStatus(invoice.status)}</div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground uppercase">Client</div>
+              <div className="text-xs text-muted-foreground uppercase">Klien</div>
               <div className="font-semibold">{invoice.clientName}</div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground uppercase">Telepon</div>
+              <div className="text-xs text-muted-foreground uppercase">No. HP</div>
               <div className={`font-semibold ${phoneOk ? "text-emerald-700" : "text-rose-600"}`}>{phoneDisplay}</div>
             </div>
           </div>
 
           {!phoneOk ? (
             <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
-              Nomor client tidak valid atau belum diisi. Silakan update telepon client melalui menu <span className="font-semibold">Clients</span> dulu.
+              Nomor HP klien belum diisi atau belum benar. Perbaiki dulu lewat menu <span className="font-semibold">Klien</span>.
             </div>
           ) : null}
 
           <div className="grid gap-2">
-            <Label>Tipe Pengingat</Label>
+            <Label>Jenis pengingat</Label>
             <Select value={tone} onValueChange={onToneChange}>
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue>{(value: ReminderTone) => getReminderToneLabel(value)}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {TONES.map((t) => (
@@ -138,7 +139,7 @@ export function WhatsappReminderButton({
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Default disesuaikan dengan status invoice. Ganti tipe untuk re-generate pesan.
+              Jenis awal dipilih sesuai status tagihan. Ganti jenis buat bikin ulang pesannya.
             </p>
           </div>
 
@@ -151,7 +152,7 @@ export function WhatsappReminderButton({
               className="font-mono text-xs"
             />
             <p className="text-xs text-muted-foreground">
-              Anda boleh edit pesan sebelum kirim. Format markdown WhatsApp didukung (*tebal*, _miring_).
+              Pesan boleh diubah sebelum dikirim. Format WhatsApp bisa dipakai (*tebal*, _miring_).
             </p>
           </div>
         </div>
@@ -162,7 +163,7 @@ export function WhatsappReminderButton({
           </Button>
           <Button disabled={sending || !phoneOk || !message.trim()} onClick={onSend} className="gap-2">
             {sending ? <Loader2 className="size-4 animate-spin" /> : <MessageCircle className="size-4" />}
-            Kirim via WhatsApp
+            Buka di WhatsApp
           </Button>
         </DialogFooter>
       </DialogContent>

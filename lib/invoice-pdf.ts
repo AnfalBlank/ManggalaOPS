@@ -106,8 +106,8 @@ export async function generateInvoiceLetterPDF(data: InvoicePdfData) {
   doc.setTextColor(20, 41, 68);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text("INVOICE KEPADA", 14, 46);
-  doc.text("DETAIL INVOICE", 126, 46);
+  doc.text("DITAGIHKAN KEPADA", 14, 46);
+  doc.text("DETAIL TAGIHAN", 126, 46);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
@@ -127,7 +127,7 @@ export async function generateInvoiceLetterPDF(data: InvoicePdfData) {
     ["Nomor", letterNumber],
     ["Tanggal", format(data.date, "dd MMMM yyyy", { locale: localeId })],
     ["Jatuh Tempo", data.dueDate ? format(data.dueDate, "dd MMMM yyyy", { locale: localeId }) : "-"],
-    ["Pembayaran", data.paymentMethod || "CBD"],
+    ["Pembayaran", data.paymentMethod === "Term" ? "Tempo" : (data.paymentMethod || "CBD")],
     ...(data.clientPoNumber ? [["No. PO", data.clientPoNumber] as [string, string]] : []),
   ];
   infoRows.forEach(([label, value]) => {
@@ -143,7 +143,7 @@ export async function generateInvoiceLetterPDF(data: InvoicePdfData) {
   doc.setFontSize(9);
   y = wrapText(
     doc,
-    data.introduction || "Bersama ini kami sampaikan invoice/tagihan atas pekerjaan atau pengadaan yang telah kami laksanakan dengan rincian sebagai berikut:",
+    data.introduction || "Bersama ini kami sampaikan tagihan atas pekerjaan atau pengadaan yang telah kami laksanakan dengan rincian sebagai berikut:",
     14, y, 182, 4.5,
   );
   y += 4;
@@ -220,7 +220,7 @@ export async function generateInvoiceLetterPDF(data: InvoicePdfData) {
   doc.text("Catatan", 14, ny); ny += 5;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  const terms = (data.terms || "Pembayaran sesuai metode yang disepakati\nMohon mencantumkan nomor invoice pada transfer\nInvoice dianggap sah tanpa tanda tangan basah")
+  const terms = (data.terms || "Pembayaran sesuai metode yang disepakati\nMohon mencantumkan nomor tagihan pada transfer\nTagihan sah tanpa tanda tangan basah")
     .split("\n").filter(Boolean);
   for (const t of terms) {
     if (needsNewPage(ny, 5)) ny = pageBreak(doc);
@@ -265,7 +265,7 @@ export async function generateInvoiceLetterPDF(data: InvoicePdfData) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
     doc.text(`${companyName}  •  ${companyEmail}  •  ${companyPhone}`, 14, 292.5);
-    doc.text(`Page ${i} of ${pages}`, 196, 292.5, { align: "right" });
+    doc.text(`Halaman ${i} dari ${pages}`, 196, 292.5, { align: "right" });
   }
 
   tampilkanPdf(doc, `${letterNumber.replace(/\//g, "-")}.pdf`);

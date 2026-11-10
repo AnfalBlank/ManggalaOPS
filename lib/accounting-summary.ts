@@ -40,3 +40,35 @@ export function buildFinancialSummary(accounts: AccountRow[], mapping: Mapping) 
     receivables: getBalance(mapping.receivable),
   };
 }
+
+// Label tampilan. Nilai tipe akun & keterangan jurnal di database tetap apa adanya.
+const LABEL_TIPE_AKUN: Record<string, string> = {
+  Asset: "Aset",
+  Liability: "Kewajiban",
+  Equity: "Modal",
+  Revenue: "Pendapatan",
+  Expense: "Beban",
+};
+
+export function labelTipeAkun(type: string | null | undefined) {
+  if (!type) return "-";
+  return LABEL_TIPE_AKUN[type] ?? type;
+}
+
+const nomor = (prefix: string, id: string) => `${prefix}-${id.padStart(4, "0")}`;
+
+export function labelJurnal(description: string | null | undefined) {
+  if (!description) return "-";
+  const pola: [RegExp, (id: string) => string][] = [
+    [/^Invoice issued #(\d+)$/, (id) => `Tagihan terbit ${nomor("INV", id)}`],
+    [/^Invoice from quotation #(\d+)$/, (id) => `Tagihan dari penawaran ${nomor("QUO", id)}`],
+    [/^Payment received for invoice #(\d+)$/, (id) => `Pembayaran masuk untuk ${nomor("INV", id)}`],
+    [/^Expense recorded #(\d+)$/, (id) => `Pengeluaran ${nomor("EXP", id)}`],
+  ];
+  for (const [regex, ubah] of pola) {
+    const cocok = description.match(regex);
+    if (cocok) return ubah(cocok[1]);
+  }
+  if (description === "Opening Balance Setup") return "Saldo awal";
+  return description;
+}

@@ -30,24 +30,24 @@ export default async function PaymentsPage({ searchParams }: { searchParams?: Pr
       <PageWrapper>
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-primary">Payments</h1>
-            <p className="text-muted-foreground mt-1">Track incoming payments and generate official receipts (Kwitansi).</p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Pembayaran masuk</h1>
+            <p className="text-muted-foreground mt-1">Catat uang yang masuk dari klien dan cetak kwitansinya.</p>
           </div>
           <RecordPaymentDialog clients={clients} invoices={invoices} paymentAccounts={paymentAccounts} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <ClickableStatCard href="/payments" title="Payments Recorded" value={totalPayments} hint="Lihat semua pembayaran" icon={<Banknote className="size-5" />} accentClassName="bg-emerald-50 text-emerald-600" />
+          <ClickableStatCard href="/payments" title="Jumlah pembayaran" value={totalPayments} hint="Lihat semua pembayaran" icon={<Banknote className="size-5" />} accentClassName="bg-emerald-50 text-emerald-600" />
           <div className="md:col-span-2">
-            <ClickableStatCard href="/payments?period=month" title="Total Funds Received" value={formatCurrency(totalValueReceived)} hint="Filter pembayaran periode aktif" icon={<ShieldCheck className="size-5" />} accentClassName="bg-blue-50 text-blue-600" />
+            <ClickableStatCard href="/payments?period=month" title="Total uang diterima" value={formatCurrency(totalValueReceived)} hint="Semua waktu (klik: bulan ini)" icon={<ShieldCheck className="size-5" />} accentClassName="bg-blue-50 text-blue-600" />
           </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-border p-4 md:p-6">
           {payments.length === 0 ? (
             <EmptyState
-              title="Belum ada data payments"
-              description="Belum ada pembayaran tercatat. Setelah finance merekam pembayaran, daftar payment akan muncul di sini."
+              title="Belum ada pembayaran"
+              description="Belum ada pembayaran yang dicatat. Begitu pembayaran dicatat, datanya muncul di sini."
             />
           ) : (
             <FilterablePaymentsTable payments={payments} clients={clients} invoices={invoices} settings={{ companyName: settings.companyName, companyEmail: settings.companyEmail, companyPhone: settings.companyPhone, companyAddress: settings.companyAddress, defaultSignatoryName: settings.defaultSignatoryName, defaultSignatoryTitle: settings.defaultSignatoryTitle, signatureImageUrl: settings.signatureImageUrl, stampImageUrl: settings.stampImageUrl }} filters={{ initialQuery: params.q, initialPeriod: (params.period as "all" | "30d" | "month" | "year") ?? "all", initialType: params.type ?? "all" }} />
@@ -59,8 +59,8 @@ export default async function PaymentsPage({ searchParams }: { searchParams?: Pr
     return (
       <PageWrapper>
         <ErrorState
-          title="Gagal memuat payments"
-          description={error instanceof Error ? error.message : "Terjadi error saat membaca data payment dari database."}
+          title="Gagal memuat pembayaran"
+          description={error instanceof Error ? error.message : "Ada error saat membaca data pembayaran."}
         />
       </PageWrapper>
     );

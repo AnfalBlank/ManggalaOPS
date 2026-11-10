@@ -23,7 +23,7 @@ export function AccountingDetailedReports({ accounts }: { accounts: AccountRow[]
       <CardContent className="p-4">
         <h3 className="font-semibold mb-3">{title}</h3>
         <div className="space-y-2 text-sm">
-          {rows.map((row) => <div key={row.code} className="flex justify-between gap-3"><span>{row.code} - {row.name}</span><span className="font-medium">{formatCurrency(sign === "abs" ? Math.abs(row.balance) : row.balance)}</span></div>)}
+          {rows.map((row) => <div key={row.code} className="flex justify-between gap-3"><span className="min-w-0">{row.code} - {row.name}</span><span className="font-medium shrink-0">{formatCurrency(sign === "abs" ? Math.abs(row.balance) : row.balance)}</span></div>)}
         </div>
       </CardContent>
     </Card>

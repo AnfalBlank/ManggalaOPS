@@ -8,7 +8,7 @@ const VAT_INPUT_ACCOUNT_CODE = "1301";
 
 export async function upsertExpenseJournal(expenseId: number) {
   const expense = await db.query.expenses.findFirst({ where: eq(expenses.id, expenseId) });
-  if (!expense) throw new Error("Expense tidak ditemukan");
+  if (!expense) throw new Error("Pengeluaran tidak ditemukan");
 
   const mapping = await getAccountMapping();
   const existingJournal = await db.query.journals.findFirst({
@@ -26,7 +26,7 @@ export async function upsertExpenseJournal(expenseId: number) {
     journalId = inserted[0]?.id;
   }
 
-  if (!journalId) throw new Error("Gagal membuat jurnal expense");
+  if (!journalId) throw new Error("Gagal membuat jurnal pengeluaran");
 
   await db.delete(journalEntries).where(eq(journalEntries.journalId, journalId));
 

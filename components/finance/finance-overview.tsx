@@ -1,41 +1,36 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { format } from "date-fns";
-import { ArrowDownCircle, ArrowUpCircle, CreditCard, Wallet } from "lucide-react";
+import { CreditCard } from "lucide-react";
 
-import { ClickableStatCard } from "@/components/cards/clickable-stat-card";
 import { ExpenseRowActions } from "@/components/forms/expense-dialogs";
 import { TableFilterBar } from "@/components/filters/table-filter-bar";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/format";
+import { expenseCategoryOptions, labelKategori } from "@/lib/expense-categories";
+import { labelStatus } from "@/lib/label-status";
 import { isWithinPeriod, type FilterPeriod } from "@/lib/view-filters";
 
 const expenseTypeOptions = [
   { label: "Semua kategori", value: "all" },
-  { label: "Operational", value: "Operational" },
-  { label: "Project", value: "Project" },
-  { label: "Marketing", value: "Marketing" },
-  { label: "Office", value: "Office" },
+  ...expenseCategoryOptions.map((item) => ({ label: labelKategori(item), value: item })),
 ];
 
 type ExpenseRow = { id: number; date: Date; category: string; description: string; amount: number; taxMode?: string | null; taxPercent?: number | null; taxAmount?: number | null; baseAmount?: number | null; status: string | null; projectId: number | null; paymentAccountCode?: string | null; paymentAccountName?: string | null };
 type ProjectOption = { id: number; name: string; clientId?: number; clientName?: string };
 type PaymentAccount = { code: string; name: string; balance: number };
 
+function tanggal(value: Date) {
+  return new Date(value).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 export function FinanceOverview({
-  totalIncome,
-  totalExpense,
-  netCashFlow,
   recentExpenses,
   paymentAccounts = [],
   projects = [],
   filters,
 }: {
-  totalIncome: number;
-  totalExpense: number;
-  netCashFlow: number;
   recentExpenses: ExpenseRow[];
   paymentAccounts?: PaymentAccount[];
   projects?: ProjectOption[];
@@ -44,6 +39,7 @@ export function FinanceOverview({
   const [query, setQuery] = useState(filters?.initialQuery ?? "");
   const [period, setPeriod] = useState<FilterPeriod>(filters?.initialPeriod ?? "all");
   const [type, setType] = useState(filters?.initialType ?? "all");
+  const [range, setRange] = useState({ start: "", end: "" });
 
   useEffect(() => {
     setQuery(filters?.initialQuery ?? "");
@@ -53,63 +49,68 @@ export function FinanceOverview({
 
   const filteredExpenses = useMemo(
     () => recentExpenses.filter((expense) => {
-      const matchesQuery = `${expense.category} ${expense.description} ${expense.status ?? ""}`.toLowerCase().includes(query.toLowerCase());
-      const matchesPeriod = isWithinPeriod(expense.date, period);
+      const matchesQuery = `${expense.category} ${labelKategori(expense.category)} ${expense.description} ${labelStatus(expense.status)}`.toLowerCase().includes(query.toLowerCase());
+      const matchesPeriod = isWithinPeriod(expense.date, period, range);
       const matchesType = type === "all" || expense.category === type;
       return matchesQuery && matchesPeriod && matchesType;
     }),
-    [period, query, recentExpenses, type],
+    [period, query, recentExpenses, type, range],
   );
+  const totalTersaring = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
 
   return (
     <>
-      <div className="grid gap-6 md:grid-cols-3 mb-8">
-        <ClickableStatCard href="/finance?type=income" title="Total Income" value={formatCurrency(totalIncome)} hint="Dari payment tercatat" icon={<ArrowUpCircle className="size-5" />} accentClassName="bg-emerald-50 text-emerald-600" />
-        <ClickableStatCard href="/finance?type=Operational" title="Total Expenses" value={formatCurrency(totalExpense)} hint="Expense operasional" icon={<ArrowDownCircle className="size-5" />} accentClassName="bg-rose-50 text-rose-600" />
-        <ClickableStatCard href="/finance?period=month" title="Net Cash Flow" value={formatCurrency(netCashFlow)} hint="Arus kas periode aktif" icon={<Wallet className="size-5" />} accentClassName="bg-primary/10 text-primary" featured />
+      <div className="flex flex-col gap-1 mb-4 sm:flex-row sm:items-end sm:justify-between">
+        <h2 className="text-xl font-bold tracking-tight text-foreground">Daftar pengeluaran</h2>
+        <p className="text-sm text-muted-foreground">{filteredExpenses.length} pengeluaran · total {formatCurrency(totalTersaring)}</p>
       </div>
-
-      <h2 className="text-xl font-bold tracking-tight text-foreground mb-4">Recent Expenses</h2>
       <div className="bg-white rounded-2xl shadow-sm border border-border p-4 md:p-6 mb-8">
         <TableFilterBar
           value={query}
           onChange={setQuery}
-          placeholder="Search expenses..."
+          placeholder="Cari pengeluaran..."
           periodValue={period}
           onPeriodChange={(value) => setPeriod(value as FilterPeriod)}
           typeValue={type}
           onTypeChange={setType}
           typeOptions={expenseTypeOptions}
+          customStart={range.start}
+          customEnd={range.end}
+          onCustomRangeChange={setRange}
         />
 
-        <div className="w-full overflow-x-auto pb-4 rounded-xl border mt-4">
-          <Table className="min-w-[1050px]">
+        <div className="w-full overflow-x-auto pb-4 rounded-xl border mt-4 max-md:border-0 max-md:pb-0">
+          <Table className="min-w-[1050px] xl:min-w-0">
             <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[120px] rounded-tl-xl text-xs uppercase tracking-wider">Expense ID</TableHead>
-                <TableHead className="text-xs uppercase tracking-wider">Date</TableHead>
-                <TableHead className="text-xs uppercase tracking-wider">Category</TableHead>
-                <TableHead className="text-xs uppercase tracking-wider">Description</TableHead>
+                <TableHead className="w-[120px] rounded-tl-xl text-xs uppercase tracking-wider">No.</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider">Tanggal</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider">Kategori</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider">Keterangan</TableHead>
                 <TableHead className="text-right text-xs uppercase tracking-wider">DPP</TableHead>
                 <TableHead className="text-right text-xs uppercase tracking-wider">PPN</TableHead>
-                <TableHead className="text-right text-xs uppercase tracking-wider">Total (IDR)</TableHead>
-                <TableHead className="text-xs uppercase tracking-wider">Akun Bayar</TableHead>
+                <TableHead className="text-right text-xs uppercase tracking-wider">Total (Rp)</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider">Dibayar dari</TableHead>
                 <TableHead className="text-center text-xs uppercase tracking-wider">Status</TableHead>
-                <TableHead className="text-right w-[120px] rounded-tr-xl text-xs uppercase tracking-wider">Actions</TableHead>
+                <TableHead className="text-right w-[120px] rounded-tr-xl text-xs uppercase tracking-wider">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredExpenses.map((expense) => (
+              {filteredExpenses.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={10} className="py-10 text-center text-sm text-muted-foreground">Belum ada pengeluaran yang cocok dengan filter.</TableCell>
+                </TableRow>
+              ) : filteredExpenses.map((expense) => (
                 <TableRow key={expense.id} className="group hover:bg-muted/30 transition-colors border-b last:border-0">
                   <TableCell className="font-medium text-muted-foreground py-4">EXP-{String(expense.id).padStart(4, "0")}</TableCell>
-                  <TableCell className="text-sm py-4">{format(new Date(expense.date), "dd MMM yyyy")}</TableCell>
-                  <TableCell className="py-4 font-medium text-slate-700"><div className="flex items-center gap-2"><CreditCard className="size-4 text-muted-foreground" />{expense.category}</div></TableCell>
+                  <TableCell className="text-sm py-4">{tanggal(expense.date)}</TableCell>
+                  <TableCell className="py-4 font-medium text-slate-700"><div className="flex items-center gap-2"><CreditCard className="size-4 text-muted-foreground" />{labelKategori(expense.category)}</div></TableCell>
                   <TableCell className="text-sm py-4 max-w-[250px] truncate" title={expense.description}>{expense.description}</TableCell>
                   <TableCell className="text-right py-4 text-foreground">{formatCurrency(expense.baseAmount ?? expense.amount)}</TableCell>
                   <TableCell className="text-right py-4 text-foreground">{formatCurrency(expense.taxAmount ?? 0)}</TableCell>
                   <TableCell className="text-right font-medium py-4 text-foreground">{formatCurrency(expense.amount)}</TableCell>
                   <TableCell className="py-4 text-sm">{expense.paymentAccountName ?? expense.paymentAccountCode ?? "-"}</TableCell>
-                  <TableCell className="text-center py-4"><Badge>{expense.status}</Badge></TableCell>
+                  <TableCell className="text-center py-4"><Badge>{labelStatus(expense.status)}</Badge></TableCell>
                   <TableCell className="text-right py-4"><ExpenseRowActions expense={expense} paymentAccounts={paymentAccounts} projects={projects} /></TableCell>
                 </TableRow>
               ))}

@@ -50,7 +50,7 @@ export async function getInvoiceOptions() {
     .filter((row) => {
       const total = Number(row.total ?? 0);
       const paid = Number(row.amountPaid ?? 0);
-      return total > 0 && paid < total;
+      return total > 0 && total - paid >= 1; // sisa di bawah Rp 1 (pecahan sen) = lunas
     })
     .map((row) => ({
       id: row.id,

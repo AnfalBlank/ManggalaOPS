@@ -9,6 +9,7 @@ import { requireRole } from "@/lib/auth";
 import { computeExpenseTax, normalizeExpenseTaxMode, normalizeExpenseTaxPercent } from "@/lib/expense-tax";
 import { upsertExpenseJournal } from "@/lib/expense-journal";
 import { parseMoneyInput } from "@/lib/money";
+import { labelKategori } from "@/lib/expense-categories";
 import { createNotification } from "@/lib/notifications";
 import { getAccountMapping } from "@/lib/account-mapping";
 
@@ -39,16 +40,16 @@ export async function POST(request: NextRequest) {
     const { user } = await requireRole(["admin", "finance"]);
     const body = await request.json();
     const rawAmount = parseMoneyInput(body.amount);
-    ensure(rawAmount > 0, "Amount expense harus lebih besar dari 0");
+    ensure(rawAmount > 0, "Nominal pengeluaran harus lebih dari 0");
     const taxMode = normalizeExpenseTaxMode(body.taxMode);
     const taxPercent = normalizeExpenseTaxPercent(body.taxPercent, 11);
     const computedTax = computeExpenseTax(rawAmount, taxMode, taxPercent);
     const mapping = await getAccountMapping();
     const paymentAccountCode = trimString(body.paymentAccountCode, 50) || mapping.bankMandiri;
     const category = trimString(body.category, 200);
-    ensure(category.length > 0, "Kategori expense wajib diisi");
+    ensure(category.length > 0, "Kategori pengeluaran wajib diisi");
     const description = trimString(body.description, 500);
-    ensure(description.length > 0, "Deskripsi expense wajib diisi");
+    ensure(description.length > 0, "Keterangan pengeluaran wajib diisi");
 
     await ensureSufficientBalance(paymentAccountCode, computedTax.totalAmount);
 
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     if (inserted[0]?.id) {
       await upsertExpenseJournal(inserted[0].id);
-      await createNotification({ title: "Expense baru dibuat", message: `${category} sebesar ${computedTax.totalAmount.toLocaleString('id-ID')} menunggu pemantauan.`, type: "warning", targetRole: "finance" });
+      await createNotification({ title: "Pengeluaran baru", message: `${labelKategori(category)} sebesar Rp ${computedTax.totalAmount.toLocaleString('id-ID')} dicatat.`, type: "warning", targetRole: "finance" });
       await audit({ userId: user.id, action: "expense.create", entity: "expense", entityId: inserted[0].id, payload: { category, amount: computedTax.totalAmount } });
     }
 

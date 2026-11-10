@@ -86,7 +86,7 @@ export async function saveOpeningBalance(input: {
     await db.update(journals).set({ date: now, description: "Opening Balance Setup" }).where(eq(journals.id, journalId));
   }
 
-  if (!journalId) throw new Error("Failed to create opening journal");
+  if (!journalId) throw new Error("Gagal membuat jurnal saldo awal");
 
   await db.delete(journalEntries).where(eq(journalEntries.journalId, journalId));
 

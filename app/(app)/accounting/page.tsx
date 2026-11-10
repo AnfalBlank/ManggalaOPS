@@ -32,15 +32,15 @@ export default async function AccountingPage({ searchParams }: { searchParams?: 
         <RoleGuard allow={["admin", "finance"]}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-primary">Accounting System</h1>
-              <p className="text-muted-foreground mt-1">General Ledger, Journals, and Chart of Accounts.</p>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Akuntansi</h1>
+              <p className="text-muted-foreground mt-1">Saldo awal, laporan keuangan, daftar akun, jurnal, dan laporan pajak.</p>
             </div>
             <div className="flex gap-2" />
           </div>
 
           <OpeningBalancePanel initial={openingBalance} mapping={mapping} />
           <ExecutiveFinancialReport accounts={data.accounts} />
-          <AccountingFinancialReport summary={financialSummary} periodLabel="Sampai periode aktif" />
+          <AccountingFinancialReport summary={financialSummary} periodLabel="sampai hari ini" />
           <AccountingDetailedReports accounts={data.accounts} />
           <AccountingOverview
             accounts={data.accounts}
@@ -54,7 +54,7 @@ export default async function AccountingPage({ searchParams }: { searchParams?: 
   } catch (error) {
     return (
       <PageWrapper>
-        <ErrorState title="Gagal memuat accounting" description={error instanceof Error ? error.message : "Terjadi error saat memuat accounting overview."} />
+        <ErrorState title="Gagal memuat akuntansi" description={error instanceof Error ? error.message : "Ada error saat memuat data akuntansi."} />
       </PageWrapper>
     );
   }

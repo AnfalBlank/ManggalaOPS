@@ -43,7 +43,7 @@ export function AccountingFinancialReport({ summary, periodLabel }: { summary: F
     drawDocumentHeader(doc, "Laporan Keuangan", `Periode ${periodLabel}`);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text(`Generated: ${new Date().toLocaleString("id-ID")}`, 14, 44);
+    doc.text(`Dibuat: ${new Date().toLocaleString("id-ID")}`, 14, 44);
 
     autoTable(doc, {
       startY: 50,
@@ -74,7 +74,7 @@ export function AccountingFinancialReport({ summary, periodLabel }: { summary: F
           <h2 className="text-xl font-bold tracking-tight text-foreground">Laporan Keuangan</h2>
           <p className="text-sm text-muted-foreground">Ringkasan posisi keuangan, performa laba rugi, dan akun kas utama. Dipisah dari pelaporan pajak.</p>
         </div>
-        <Button className="gap-2 bg-primary hover:bg-primary/90 text-white" onClick={exportPdf}><FileText className="size-4" /> Download PDF Keuangan</Button>
+        <Button className="gap-2 bg-primary hover:bg-primary/90 text-white" onClick={exportPdf}><FileText className="size-4" /> Lihat PDF</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">

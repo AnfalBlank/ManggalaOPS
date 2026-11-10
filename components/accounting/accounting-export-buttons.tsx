@@ -39,8 +39,8 @@ function drawDocumentHeader(doc: jsPDF, title: string, subtitle: string) {
 
 export function LedgerExportButton({ entries }: { entries: LedgerEntry[] }) {
   return (
-    <Button variant="outline" className="gap-2" onClick={() => downloadCsv(`ledger-${new Date().toISOString().slice(0, 10)}.csv`, ["Date", "Description", "Account", "Debit", "Credit"], entries.map((entry) => [entry.date, entry.description, entry.accountCode, entry.debit, entry.credit]))}>
-      <FileSpreadsheet className="size-4" /> Export Ledger
+    <Button variant="outline" className="gap-2" onClick={() => downloadCsv(`jurnal-${new Date().toISOString().slice(0, 10)}.csv`, ["Tanggal", "Keterangan", "Akun", "Debit", "Kredit"], entries.map((entry) => [entry.date, entry.description, entry.accountCode, entry.debit, entry.credit]))}>
+      <FileSpreadsheet className="size-4" /> Unduh CSV jurnal
     </Button>
   );
 }
@@ -56,11 +56,11 @@ export function TaxReportPdfButton({ rows, periodLabel }: { rows: TaxRow[]; peri
       drawDocumentHeader(doc, "Laporan Pajak", `Periode ${periodLabel}`);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      doc.text(`Generated: ${new Date().toLocaleString("id-ID")}`, 14, 44);
+      doc.text(`Dibuat: ${new Date().toLocaleString("id-ID")}`, 14, 44);
 
       autoTable(doc, {
         startY: 50,
-        head: [["Tanggal", "Sumber", "Jenis", "Client", "DPP", "PPN", "Total"]],
+        head: [["Tanggal", "Sumber", "Jenis", "Klien", "DPP", "PPN", "Total"]],
         body: rows.map((row) => [row.date, row.source, row.type, row.client, row.dpp.toLocaleString("id-ID"), row.ppn.toLocaleString("id-ID"), row.total.toLocaleString("id-ID")]),
         foot: [["", "", "", "TOTAL", totalDpp.toLocaleString("id-ID"), totalPpn.toLocaleString("id-ID"), totalGrand.toLocaleString("id-ID")]],
         theme: "grid",
@@ -71,7 +71,7 @@ export function TaxReportPdfButton({ rows, periodLabel }: { rows: TaxRow[]; peri
 
       tampilkanPdf(doc, `laporan-pajak-${new Date().toISOString().slice(0, 10)}.pdf`);
     }}>
-      <FileText className="size-4" /> Export PDF Pajak
+      <FileText className="size-4" /> Lihat PDF pajak
     </Button>
   );
 }

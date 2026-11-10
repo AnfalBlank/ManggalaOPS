@@ -134,7 +134,7 @@ export function CalculatorPnL() {
       });
 
       if (res.ok) {
-        toast.success(isUpdate ? "Estimasi diupdate" : "Estimasi disimpan");
+        toast.success(isUpdate ? "Estimasi diperbarui" : "Estimasi disimpan");
         setName("");
         setEditingId(null);
         fetchEstimations();
@@ -143,7 +143,7 @@ export function CalculatorPnL() {
         toast.error(data.error || "Gagal menyimpan estimasi");
       }
     } catch {
-      toast.error("Terjadi kesalahan sistem");
+      toast.error("Ada gangguan, coba lagi");
     } finally {
       setSaving(false);
     }
@@ -160,7 +160,7 @@ export function CalculatorPnL() {
         toast.error("Gagal menghapus estimasi");
       }
     } catch {
-      toast.error("Terjadi kesalahan sistem");
+      toast.error("Ada gangguan, coba lagi");
     }
   };
 
@@ -173,7 +173,7 @@ export function CalculatorPnL() {
     setSellIncludePpn(est.sellIncludePpn);
     setPpnRate(est.ppnRate);
     setEditingId(est.id);
-    toast.success(`Editing "${est.name}". Klik Simpan untuk update.`);
+    toast.success(`Lagi ngubah "${est.name}". Klik "Simpan perubahan" kalau sudah.`);
   };
 
   const handleNewEstimation = () => {
@@ -223,7 +223,7 @@ export function CalculatorPnL() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Nama Estimasi (Project)</Label>
+              <Label>Nama estimasi (proyek)</Label>
               <Input
                 type="text"
                 placeholder="Misal: Proyek Pengadaan Laptop Dinas"
@@ -234,10 +234,10 @@ export function CalculatorPnL() {
 
             <div className="rounded-lg border p-4 space-y-3 bg-rose-50/30">
               <div className="flex items-center gap-2 text-sm font-semibold text-rose-700">
-                <ArrowUpCircle className="size-4" /> Harga Beli (dari vendor)
+                <ArrowUpCircle className="size-4" /> Harga beli (dari supplier)
               </div>
               <div className="space-y-2">
-                <Label className="text-xs">Harga Beli per Unit</Label>
+                <Label className="text-xs">Harga beli per unit</Label>
                 <Input
                   type="text"
                   inputMode="numeric"
@@ -257,8 +257,8 @@ export function CalculatorPnL() {
                 {vBuy > 0 ? (
                   <p className="text-[11px] text-muted-foreground italic">
                     {buyIncludePpn
-                      ? `DPP (tanpa PPN): ${formatRupiah(c.dppBuyUnit)} • Total bayar ke vendor: ${formatRupiah(c.grossBuyUnit)}`
-                      : `Total bayar ke vendor (+ PPN): ${formatRupiah(c.grossBuyUnit)}`}
+                      ? `DPP (tanpa PPN): ${formatRupiah(c.dppBuyUnit)} • Total bayar ke supplier: ${formatRupiah(c.grossBuyUnit)}`
+                      : `Total bayar ke supplier (+ PPN): ${formatRupiah(c.grossBuyUnit)}`}
                   </p>
                 ) : null}
               </div>
@@ -266,10 +266,10 @@ export function CalculatorPnL() {
 
             <div className="rounded-lg border p-4 space-y-3 bg-emerald-50/30">
               <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
-                <ArrowDownCircle className="size-4" /> Harga Jual (ke client)
+                <ArrowDownCircle className="size-4" /> Harga jual (ke klien)
               </div>
               <div className="space-y-2">
-                <Label className="text-xs">Harga Jual per Unit</Label>
+                <Label className="text-xs">Harga jual per unit</Label>
                 <Input
                   type="text"
                   inputMode="numeric"
@@ -289,8 +289,8 @@ export function CalculatorPnL() {
                 {vSell > 0 ? (
                   <p className="text-[11px] text-muted-foreground italic">
                     {sellIncludePpn
-                      ? `DPP (tanpa PPN): ${formatRupiah(c.dppSellUnit)} • Total tagih ke client: ${formatRupiah(c.grossSellUnit)}`
-                      : `Total tagih ke client (+ PPN): ${formatRupiah(c.grossSellUnit)}`}
+                      ? `DPP (tanpa PPN): ${formatRupiah(c.dppSellUnit)} • Total tagih ke klien: ${formatRupiah(c.grossSellUnit)}`
+                      : `Total tagih ke klien (+ PPN): ${formatRupiah(c.grossSellUnit)}`}
                   </p>
                 ) : null}
               </div>
@@ -298,7 +298,7 @@ export function CalculatorPnL() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Quantity</Label>
+                <Label>Jumlah (qty)</Label>
                 <Input
                   type="text"
                   inputMode="numeric"
@@ -323,21 +323,21 @@ export function CalculatorPnL() {
         {/* ============== OUTPUT ============== */}
         <Card>
           <CardHeader>
-            <CardTitle>Ringkasan P&L</CardTitle>
+            <CardTitle>Ringkasan untung-rugi</CardTitle>
             <CardDescription>
-              Perhitungan margin dan kewajiban PPN. Profit dihitung dari DPP (harga tanpa PPN) sesuai standar pajak.
+              Hitungan margin dan PPN. Untung dihitung dari DPP (harga tanpa PPN), sesuai aturan pajak.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             {/* CASH FLOW BLOCK — what user actually pays/receives */}
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-2">
-              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Arus Kas (Total)</div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Arus kas (total)</div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-600">Cash Out — Bayar vendor</span>
+                <span className="text-slate-600">Uang keluar: bayar supplier</span>
                 <span className="font-medium text-rose-600">{formatRupiah(c.totalGrossBuy)}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-600">Cash In — Terima dari client</span>
+                <span className="text-slate-600">Uang masuk: terima dari klien</span>
                 <span className="font-medium text-emerald-600">{formatRupiah(c.totalGrossSell)}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
@@ -348,7 +348,7 @@ export function CalculatorPnL() {
               </div>
               <div className="h-px bg-slate-200 my-2" />
               <div className="flex justify-between items-center">
-                <span className="font-semibold text-slate-800">Net Cash (Profit Bersih)</span>
+                <span className="font-semibold text-slate-800">Untung bersih</span>
                 <span className={`font-bold text-lg ${c.profit > 0 ? "text-emerald-600" : c.profit < 0 ? "text-rose-600" : "text-slate-800"}`}>
                   {formatRupiah(c.profit)}
                 </span>
@@ -374,7 +374,7 @@ export function CalculatorPnL() {
               </div>
               <div className="h-px bg-blue-200 my-2" />
               <div className="flex justify-between items-center">
-                <span className="font-semibold text-blue-800">PPN Harus Disetor</span>
+                <span className="font-semibold text-blue-800">PPN yang harus disetor</span>
                 <span className="font-bold text-blue-800">{formatRupiah(c.ppnDisetor)}</span>
               </div>
               {c.ppnDisetor < 0 && (
@@ -384,7 +384,7 @@ export function CalculatorPnL() {
 
             {/* DPP DETAIL — for tax docs */}
             <div className="rounded-lg border bg-muted/20 p-4 space-y-2">
-              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Detail DPP (Dasar Pajak)</div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Detail DPP (dasar pengenaan pajak)</div>
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
                   <div className="text-slate-500">DPP Beli per unit</div>
@@ -408,12 +408,12 @@ export function CalculatorPnL() {
             <div className="flex gap-2">
               {editingId !== null ? (
                 <Button variant="outline" onClick={handleNewEstimation} className="flex-1">
-                  Estimasi Baru
+                  Estimasi baru
                 </Button>
               ) : null}
               <Button onClick={handleSave} disabled={saving} className="flex-1">
                 {saving ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Save className="size-4 mr-2" />}
-                {editingId !== null ? "Update Estimasi" : "Simpan Estimasi"}
+                {editingId !== null ? "Simpan perubahan" : "Simpan estimasi"}
               </Button>
             </div>
           </CardContent>
@@ -423,8 +423,8 @@ export function CalculatorPnL() {
       {/* ============== HISTORY ============== */}
       <Card>
         <CardHeader>
-          <CardTitle>Riwayat Estimasi</CardTitle>
-          <CardDescription>Daftar estimasi yang pernah disimpan sebagai patokan project.</CardDescription>
+          <CardTitle>Riwayat estimasi</CardTitle>
+          <CardDescription>Estimasi yang pernah disimpan, buat patokan penawaran.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -445,11 +445,11 @@ export function CalculatorPnL() {
                       <h4 className="font-semibold text-sm line-clamp-2 min-h-[2.5em]" title={est.name}>{est.name}</h4>
                       <p className="text-[11px] text-muted-foreground">Qty {est.qty} · PPN {est.ppnRate}%</p>
                       <p className="text-[10px] text-muted-foreground">
-                        Beli {est.buyIncludePpn ? "inc" : "exc"} · Jual {est.sellIncludePpn ? "inc" : "exc"} PPN
+                        Beli {est.buyIncludePpn ? "sudah" : "belum"} PPN · Jual {est.sellIncludePpn ? "sudah" : "belum"} PPN
                       </p>
                       <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t text-[11px]">
                         <div>
-                          <p className="text-muted-foreground">Net Cash</p>
+                          <p className="text-muted-foreground">Untung bersih</p>
                           <p className={`font-semibold text-sm ${ec.profit > 0 ? "text-emerald-600" : ec.profit < 0 ? "text-rose-600" : ""}`}>
                             {formatRupiah(ec.profit)}
                           </p>
@@ -462,10 +462,10 @@ export function CalculatorPnL() {
                     </div>
                     <div className="flex justify-between items-center gap-2">
                       <Button variant={editingId === est.id ? "default" : "outline"} size="sm" className="flex-1 text-xs" onClick={() => handleLoad(est)}>
-                        <FolderOpen className="size-3 mr-2" /> {editingId === est.id ? "Editing" : "Edit"}
+                        <FolderOpen className="size-3 mr-2" /> {editingId === est.id ? "Lagi diubah" : "Buka"}
                       </Button>
                       <ConfirmDialog
-                        trigger={<Button variant="ghost" size="sm" className="text-rose-500 hover:bg-rose-50 hover:text-rose-600 px-2"><Trash2 className="size-4" /></Button>}
+                        trigger={<Button variant="ghost" size="sm" className="text-rose-500 hover:bg-rose-50 hover:text-rose-600 px-2" aria-label="Hapus estimasi" title="Hapus estimasi"><Trash2 className="size-4" /></Button>}
                         title={`Hapus estimasi "${est.name}"?`}
                         description="Estimasi akan dihapus permanen."
                         confirmText="Hapus"

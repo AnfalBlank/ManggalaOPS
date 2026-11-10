@@ -1,22 +1,8 @@
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { drawSignatureAndStamp, preloadSignatureStamp } from "@/lib/pdf-signature";
 import { tampilkanPdf } from "@/lib/dokumen-pdf";
-
-type InvoicePdfData = {
-  id: string;
-  client: string;
-  project: string;
-  date: Date;
-  dueDate: Date;
-  subtotal: number;
-  ppn: number;
-  total: number;
-  amountPaid?: number;
-  status: string;
-};
 
 type ReceiptPdfData = {
   id: string;
@@ -31,12 +17,6 @@ type ReceiptPdfData = {
   signatoryTitle?: string | null;
   signatureImageUrl?: string | null;
   stampImageUrl?: string | null;
-};
-
-type JsPdfWithLastAutoTable = jsPDF & {
-  lastAutoTable?: {
-    finalY?: number;
-  };
 };
 
 const formatCurrency = (amount: number) => {
@@ -64,83 +44,6 @@ function toWordsId(value: number) {
 
   return `${spell(Math.round(value)).replace(/\s+/g, " ").trim()} Rupiah`;
 }
-
-export const generateInvoicePDF = (invoiceData: InvoicePdfData) => {
-  const doc = new jsPDF();
-
-  doc.setFontSize(22);
-  doc.setTextColor(29, 78, 216);
-  doc.setFont("helvetica", "bold");
-  doc.text("INVOICE", 14, 22);
-
-  doc.setFontSize(10);
-  doc.setTextColor(100);
-  doc.setFont("helvetica", "normal");
-  doc.text("PT. Manggala Utama Indonesia", 14, 30);
-  doc.text("Jl. Gatot Subroto No. 45, Jakarta Selatan", 14, 35);
-  doc.text("Email: info@manggala.co.id", 14, 40);
-
-  doc.setTextColor(0);
-  doc.setFont("helvetica", "bold");
-  doc.text("Bill To:", 14, 55);
-  doc.setFont("helvetica", "normal");
-  doc.text(invoiceData.client, 14, 60);
-
-  doc.setFont("helvetica", "bold");
-  doc.text("Invoice #:", 130, 55);
-  doc.text("Date:", 130, 60);
-  doc.text("Due Date:", 130, 65);
-
-  doc.setFont("helvetica", "normal");
-  doc.text(invoiceData.id, 160, 55);
-  doc.text(format(invoiceData.date, "dd MMM yyyy", { locale: localeId }), 160, 60);
-  doc.text(format(invoiceData.dueDate, "dd MMM yyyy", { locale: localeId }), 160, 65);
-
-  autoTable(doc, {
-    startY: 75,
-    head: [["Description", "Amount"]],
-    body: [[invoiceData.project, formatCurrency(invoiceData.subtotal)]],
-    theme: "striped",
-    headStyles: { fillColor: [29, 78, 216] },
-    styles: { font: "helvetica" },
-  });
-
-  const finalY = (doc as JsPdfWithLastAutoTable).lastAutoTable?.finalY ?? 75;
-
-  doc.setFont("helvetica", "normal");
-  doc.text("Subtotal:", 130, finalY + 10);
-  doc.text("PPN 11%:", 130, finalY + 15);
-
-  doc.setFont("helvetica", "bold");
-  doc.text("Total:", 130, finalY + 22);
-
-  doc.setFont("helvetica", "normal");
-  doc.text(formatCurrency(invoiceData.subtotal), 160, finalY + 10);
-  doc.text(formatCurrency(invoiceData.ppn), 160, finalY + 15);
-
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(29, 78, 216);
-  doc.text(formatCurrency(invoiceData.total), 160, finalY + 22);
-
-  if (invoiceData.status === "Paid") {
-    doc.setTextColor(22, 163, 74);
-    doc.setFontSize(24);
-    doc.text("PAID", 14, finalY + 20);
-  } else if (invoiceData.status === "Partially Paid" && invoiceData.amountPaid) {
-    doc.setTextColor(217, 119, 6);
-    doc.setFontSize(14);
-    doc.text(`Paid: ${formatCurrency(invoiceData.amountPaid)}`, 14, finalY + 20);
-    doc.text(`Due: ${formatCurrency(invoiceData.total - invoiceData.amountPaid)}`, 14, finalY + 26);
-  }
-
-  doc.setTextColor(100);
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text("Please make payment to:", 14, finalY + 40);
-  doc.text("Bank Mandiri: 123-456-7890 a/n PT. Manggala Utama Indonesia", 14, finalY + 45);
-
-  tampilkanPdf(doc, `${invoiceData.id}.pdf`);
-};
 
 export const generateKwitansiPDF = async (paymentData: ReceiptPdfData) => {
   const doc = new jsPDF({
@@ -188,7 +91,7 @@ export const generateKwitansiPDF = async (paymentData: ReceiptPdfData) => {
   doc.setFont("helvetica", "normal");
   doc.setTextColor(90);
   doc.setFontSize(7.2);
-  doc.text("IT Solutions • Procurement • Software Development • Infrastructure", 14, 25);
+  doc.text("Solusi TI • Pengadaan • Pengembangan Software • Infrastruktur", 14, 25);
   doc.text(`${companyAddress} • ${companyPhone} • ${companyEmail}`, 14, 29.5);
 
   doc.setDrawColor(0, 0, 0);

@@ -13,11 +13,21 @@ import { Label } from "@/components/ui/label";
 
 type ReportRow = Record<string, string | number | null | undefined>;
 
-type ReportsCenterProps = {
-  financeRows: ReportRow[];
-  salesRows: ReportRow[];
-  projectRows: ReportRow[];
-  taxRows: ReportRow[];
+export type LaporanData = {
+  id: "pengeluaran" | "penjualan" | "proyek" | "pajak";
+  rows: ReportRow[];
+  kunciTanggal: string;
+  kunciTanggalCadangan?: string;
+  kunciNilai: string;
+  labelNilai: string;
+  filterNilai?: { kunci: string; nilai: string };
+};
+
+const INFO: Record<LaporanData["id"], { title: string; description: string; icon: typeof Calculator; color: string; bg: string }> = {
+  pengeluaran: { title: "Pengeluaran", description: "Semua biaya yang dicatat di periode terpilih.", icon: Calculator, color: "text-blue-600", bg: "bg-blue-50" },
+  penjualan: { title: "Penjualan & tagihan", description: "Calon klien, tagihan terbit, dan pembayaran masuk di periode terpilih.", icon: BarChart3, color: "text-emerald-600", bg: "bg-emerald-50" },
+  proyek: { title: "Proyek", description: "Status dan nilai proyek yang mulai (atau tenggatnya) di periode terpilih.", icon: Briefcase, color: "text-purple-600", bg: "bg-purple-50" },
+  pajak: { title: "Pajak (PPN)", description: "PPN dari tagihan yang terbit di periode terpilih.", icon: PiggyBank, color: "text-amber-600", bg: "bg-amber-50" },
 };
 
 function withinRange(value: string | number | null | undefined, start: string, end: string) {
@@ -29,67 +39,41 @@ function withinRange(value: string | number | null | undefined, start: string, e
   return !Number.isNaN(date.getTime()) && date >= from && date <= to;
 }
 
-export function ReportsCenter({ financeRows, salesRows, projectRows, taxRows }: ReportsCenterProps) {
+const rupiah = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
+
+export function ReportsCenter({ laporan }: { laporan: LaporanData[] }) {
   const currentDate = format(new Date(), "yyyy-MM-dd");
   const lastMonthDate = format(subMonths(new Date(), 1), "yyyy-MM-dd");
   const [startDate, setStartDate] = useState(lastMonthDate);
   const [endDate, setEndDate] = useState(currentDate);
 
-  const reports = useMemo(() => ([
-    {
-      id: "finance",
-      title: "Financial Statements",
-      description: "Income, expenses, and finance movements in the selected period.",
-      icon: Calculator,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
-      rows: financeRows.filter((row) => withinRange(row.date, startDate, endDate)),
-    },
-    {
-      id: "sales",
-      title: "Sales & Revenue",
-      description: "Won leads, invoices, and collected payments in the selected period.",
-      icon: BarChart3,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-      rows: salesRows.filter((row) => withinRange(row.date, startDate, endDate)),
-    },
-    {
-      id: "projects",
-      title: "Project Operations",
-      description: "Project status and procurement operations in the selected period.",
-      icon: Briefcase,
-      color: "text-purple-600",
-      bg: "bg-purple-50",
-      rows: projectRows.filter((row) => withinRange(row.startDate ?? row.deadline, startDate, endDate)),
-    },
-    {
-      id: "tax",
-      title: "Tax & Compliance",
-      description: "PPN from issued invoices in the selected period.",
-      icon: PiggyBank,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-      rows: taxRows.filter((row) => withinRange(row.date, startDate, endDate)),
-    },
-  ]), [endDate, financeRows, projectRows, salesRows, startDate, taxRows]);
+  const reports = useMemo(() => laporan.map((item) => {
+    const rows = item.rows.filter((row) => withinRange(row[item.kunciTanggal] || (item.kunciTanggalCadangan ? row[item.kunciTanggalCadangan] : null), startDate, endDate));
+    const total = rows
+      .filter((row) => !item.filterNilai || row[item.filterNilai.kunci] === item.filterNilai.nilai)
+      .reduce((sum, row) => {
+        const amount = Number(row[item.kunciNilai] ?? 0);
+        return sum + (Number.isFinite(amount) ? amount : 0);
+      }, 0);
+    return { ...item, ...INFO[item.id], rows, total };
+  }), [endDate, laporan, startDate]);
 
   return (
     <PageWrapper>
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary">Reports Center</h1>
-          <p className="text-muted-foreground mt-1">Generate and export analytics with real data from the selected period.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Laporan</h1>
+          <p className="text-muted-foreground mt-1">Pilih periode, lalu unduh laporan dari data asli CRM.</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         <div className="space-y-2">
-          <Label>Start Date</Label>
+          <Label>Dari tanggal</Label>
           <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
         </div>
         <div className="space-y-2">
-          <Label>End Date</Label>
+          <Label>Sampai tanggal</Label>
           <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
         </div>
       </div>
@@ -113,22 +97,15 @@ export function ReportsCenter({ financeRows, salesRows, projectRows, taxRows }: 
                 <div className="space-y-4 pt-4 border-t border-slate-100">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-lg border bg-muted/20 p-3">
-                      <div className="text-xs uppercase text-muted-foreground tracking-wide">Records</div>
+                      <div className="text-xs uppercase text-muted-foreground tracking-wide">Jumlah data</div>
                       <div className="text-lg font-bold mt-1">{report.rows.length}</div>
                     </div>
-                    <div className="rounded-lg border bg-muted/20 p-3">
-                      <div className="text-xs uppercase text-muted-foreground tracking-wide">Total Nilai</div>
-                      <div className="text-lg font-bold mt-1">
-                        {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(
-                          report.rows.reduce((sum, row) => {
-                            const amount = Number(row.amount ?? row.value ?? row.total ?? row.tax ?? 0);
-                            return sum + (Number.isFinite(amount) ? amount : 0);
-                          }, 0),
-                        )}
-                      </div>
+                    <div className="rounded-lg border bg-muted/20 p-3 min-w-0">
+                      <div className="text-xs uppercase text-muted-foreground tracking-wide">{report.labelNilai}</div>
+                      <div className="text-lg font-bold mt-1 break-words">{rupiah(report.total)}</div>
                     </div>
                   </div>
-                  <ExportReportButtons title={report.title} filenamePrefix={`report-${report.id}-${endDate}`} rows={report.rows} />
+                  <ExportReportButtons title={`Laporan ${report.title} (${startDate} s/d ${endDate})`} filenamePrefix={`laporan-${report.id}-${endDate}`} rows={report.rows} />
                 </div>
               </CardContent>
             </Card>

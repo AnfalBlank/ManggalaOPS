@@ -19,7 +19,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const invoiceId = ensurePositiveInt(id, "invoice id");
     const body = await request.json();
     const items = (Array.isArray(body.items) ? body.items : []) as Array<{ description?: string; qty?: number | string; unit?: string; unitPrice?: number | string; amount?: number | string }>;
-    ensure(items.length > 0, "Minimal satu item invoice");
+    ensure(items.length > 0, "Isi minimal satu baris barang/jasa");
     const subtotal = items.reduce((sum: number, item) => sum + parseMoneyInput(item.amount), 0);
     const { tax, total } = computeOutputTax(subtotal, normalizeTaxPercent(body.taxPercent, 11));
 

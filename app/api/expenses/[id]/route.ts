@@ -33,7 +33,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const expenseId = ensurePositiveInt(id, "expense id");
     const body = await request.json();
     const rawAmount = parseMoneyInput(body.amount);
-    ensure(rawAmount > 0, "Amount expense harus lebih besar dari 0");
+    ensure(rawAmount > 0, "Nominal pengeluaran harus lebih dari 0");
     const taxMode = normalizeExpenseTaxMode(body.taxMode);
     const taxPercent = normalizeExpenseTaxPercent(body.taxPercent, 11);
     const computedTax = computeExpenseTax(rawAmount, taxMode, taxPercent);

@@ -20,7 +20,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const invoiceId = ensurePositiveInt(body.invoiceId, "invoiceId");
     const clientId = ensurePositiveInt(body.clientId, "clientId");
     const amount = parseMoneyInput(body.amount);
-    ensure(amount > 0, "Amount payment harus lebih besar dari 0");
+    ensure(amount > 0, "Nominal pembayaran harus lebih dari 0");
 
     await ensurePaymentMatchesInvoice({
       invoiceId,

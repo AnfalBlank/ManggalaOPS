@@ -31,8 +31,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     });
 
     await createNotification({
-      title: `Reminder ${channel} terkirim`,
-      message: `${user.name} mengirim pengingat ${tone} untuk invoice #${invoiceId}.`,
+      title: `Pengingat ${channel === "whatsapp" ? "WhatsApp" : channel} terkirim`,
+      message: `${user.name} ngirim pengingat ke klien untuk tagihan INV-${String(invoiceId).padStart(4, "0")}.`,
       type: "info",
       targetRole: "finance",
     });

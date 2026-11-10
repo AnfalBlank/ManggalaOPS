@@ -28,9 +28,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const clientId = ensurePositiveInt(body.clientId, "clientId");
     const items = (Array.isArray(body.items) ? body.items : []) as Array<{ description?: string; qty?: number | string; unit?: string; unitPrice?: number | string; amount?: number | string }>;
-    ensure(items.length > 0, "Minimal satu item invoice");
+    ensure(items.length > 0, "Isi minimal satu baris barang/jasa");
     const subtotal = items.reduce((sum: number, item) => sum + parseMoneyInput(item.amount), 0);
-    ensure(subtotal > 0, "Subtotal invoice harus lebih besar dari 0");
+    ensure(subtotal > 0, "Subtotal tagihan harus lebih dari 0");
     const { tax, total } = computeOutputTax(subtotal, normalizeTaxPercent(body.taxPercent, 11));
     const dueDate = body.dueDate ? new Date(body.dueDate) : null;
     const clientPoId = body.clientPoId ? ensurePositiveInt(body.clientPoId, "clientPoId") : null;
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       }).returning({ id: invoices.id });
 
       const newId = inserted[0]?.id;
-      if (!newId) throw new Error("Gagal membuat invoice");
+      if (!newId) throw new Error("Gagal membuat tagihan");
 
       await tx.insert(invoiceItems).values(items.map((item) => ({
         invoiceId: newId,
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     });
 
     await upsertInvoiceJournal(invoiceId);
-    await createNotification({ title: "Invoice baru dibuat", message: `Invoice #${invoiceId} berhasil dibuat dengan total ${total.toLocaleString('id-ID')}.`, type: "info", targetRole: "finance" });
+    await createNotification({ title: "Tagihan baru", message: `INV-${String(invoiceId).padStart(4, "0")} dibuat, total Rp ${total.toLocaleString('id-ID')}.`, type: "info", targetRole: "finance" });
     await audit({ userId: user.id, action: "invoice.create", entity: "invoice", entityId: invoiceId, payload: { clientId, total, clientPoId } });
 
     return NextResponse.json({ ok: true, data: await getInvoices() });
