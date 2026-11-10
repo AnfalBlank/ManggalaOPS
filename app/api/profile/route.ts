@@ -10,7 +10,7 @@ import { getCurrentUser, validatePasswordStrength } from "@/lib/session-auth";
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "Belum login" }, { status: 401 });
 
   return NextResponse.json({
     id: user.id,
@@ -23,7 +23,7 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "Belum login" }, { status: 401 });
 
   try {
     const body = await request.json();
@@ -49,6 +49,6 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ ok: true, user: updated });
   } catch (error) {
-    return toErrorResponse(error, "Failed to update profile");
+    return toErrorResponse(error, "Gagal nyimpen profil");
   }
 }

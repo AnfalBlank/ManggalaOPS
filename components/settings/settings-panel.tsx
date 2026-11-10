@@ -115,12 +115,12 @@ export function SettingsPanel({ initialSettings, accountOptions: dbAccountOption
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(settings),
       });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error ?? "Gagal simpan settings");
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error ?? "Gagal nyimpen setelan");
       setSettings(payload.data);
-      toast.success("Settings berhasil disimpan ke database");
+      toast.success("Setelan disimpan");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal simpan settings");
+      toast.error(error instanceof Error ? error.message : "Gagal nyimpen setelan");
     } finally {
       setSaving(false);
     }
@@ -129,49 +129,47 @@ export function SettingsPanel({ initialSettings, accountOptions: dbAccountOption
   return (
     <div className="grid gap-6 md:grid-cols-3">
       <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><Settings2 className="size-5 text-primary" /> General</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Settings2 className="size-5 text-primary" /> Data perusahaan</CardTitle></CardHeader>
         <CardContent className="space-y-4 text-sm text-muted-foreground">
-          <div className="grid gap-2"><Label>Nama Perusahaan</Label><Input value={settings.companyName} onChange={(e) => update("companyName", e.target.value)} /></div>
-          <div className="grid gap-2"><Label>Email Perusahaan</Label><Input value={settings.companyEmail ?? ""} onChange={(e) => update("companyEmail", e.target.value)} /></div>
+          <div className="grid gap-2"><Label>Nama perusahaan</Label><Input value={settings.companyName} onChange={(e) => update("companyName", e.target.value)} /></div>
+          <div className="grid gap-2"><Label>Email perusahaan</Label><Input value={settings.companyEmail ?? ""} onChange={(e) => update("companyEmail", e.target.value)} /></div>
           <div className="grid gap-2"><Label>Telepon</Label><Input value={settings.companyPhone ?? ""} onChange={(e) => update("companyPhone", e.target.value)} /></div>
           <div className="grid gap-2"><Label>Alamat</Label><Textarea rows={4} value={settings.companyAddress ?? ""} onChange={(e) => update("companyAddress", e.target.value)} /></div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><UserCog className="size-5 text-primary" /> Sales, Billing & Mapping</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2"><UserCog className="size-5 text-primary" /> Penawaran, tagihan & akun</CardTitle></CardHeader>
         <CardContent className="space-y-4 text-sm text-muted-foreground">
-          <div className="grid gap-2"><Label>Default Pajak (%)</Label><Input type="number" value={settings.defaultTaxPercent} onChange={(e) => update("defaultTaxPercent", Number(e.target.value) || 0)} /></div>
-          <div className="grid gap-2"><Label>Quotation Validity (hari)</Label><Input type="number" value={settings.quotationValidityDays} onChange={(e) => update("quotationValidityDays", Number(e.target.value) || 0)} /></div>
-          <div className="grid gap-2"><Label>Invoice Due (hari)</Label><Input type="number" value={settings.invoiceDueDays} onChange={(e) => update("invoiceDueDays", Number(e.target.value) || 0)} /></div>
-          <div className="grid gap-2"><Label>Default Payment Method</Label><Select value={settings.defaultPaymentMethod} onValueChange={(value) => update("defaultPaymentMethod", value ?? "CBD")}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="CBD">CBD</SelectItem><SelectItem value="Term">Term</SelectItem><SelectItem value="Transfer">Transfer</SelectItem></SelectContent></Select></div>
-          <div className="grid gap-2"><Label>Nama Penanda Tangan Tagihan & Kwitansi</Label><Input value={settings.defaultSignatoryName} onChange={(e) => update("defaultSignatoryName", e.target.value)} /></div>
-          <div className="grid gap-2"><Label>Jabatan Penanda Tangan Tagihan & Kwitansi</Label><Input value={settings.defaultSignatoryTitle} onChange={(e) => update("defaultSignatoryTitle", e.target.value)} /></div>
+          <div className="grid gap-2"><Label>PPN bawaan (%)</Label><Input type="number" value={settings.defaultTaxPercent} onChange={(e) => update("defaultTaxPercent", Number(e.target.value) || 0)} /></div>
+          <div className="grid gap-2"><Label>Masa berlaku penawaran (hari)</Label><Input type="number" value={settings.quotationValidityDays} onChange={(e) => update("quotationValidityDays", Number(e.target.value) || 0)} /></div>
+          <div className="grid gap-2"><Label>Jatuh tempo tagihan (hari)</Label><Input type="number" value={settings.invoiceDueDays} onChange={(e) => update("invoiceDueDays", Number(e.target.value) || 0)} /></div>
+          <div className="grid gap-2"><Label>Cara bayar bawaan</Label><Select value={settings.defaultPaymentMethod} onValueChange={(value) => update("defaultPaymentMethod", value ?? "CBD")}><SelectTrigger className="w-full"><SelectValue>{(v: string) => ({ CBD: "CBD (bayar sebelum kirim)", Term: "Tempo" } as Record<string, string>)[v] ?? v}</SelectValue></SelectTrigger><SelectContent><SelectItem value="CBD">CBD (bayar sebelum kirim)</SelectItem><SelectItem value="Term">Tempo</SelectItem><SelectItem value="Transfer">Transfer</SelectItem></SelectContent></Select></div>
+          <div className="grid gap-2"><Label>Nama penanda tangan tagihan & kwitansi</Label><Input value={settings.defaultSignatoryName} onChange={(e) => update("defaultSignatoryName", e.target.value)} /></div>
+          <div className="grid gap-2"><Label>Jabatan penanda tangan tagihan & kwitansi</Label><Input value={settings.defaultSignatoryTitle} onChange={(e) => update("defaultSignatoryTitle", e.target.value)} /></div>
           {[
-            ["Akun Kas Default", "defaultCashAccountCode"],
+            ["Akun kas", "defaultCashAccountCode"],
             ["Akun Bank Mandiri", "defaultBankMandiriAccountCode"],
             ["Akun Bank BCA", "defaultBankBcaAccountCode"],
-            ["Akun Piutang", "defaultReceivableAccountCode"],
-            ["Akun Aset Tetap", "defaultFixedAssetAccountCode"],
-            ["Akun Kewajiban", "defaultLiabilityAccountCode"],
-            ["Akun Ekuitas", "defaultEquityAccountCode"],
-            ["Akun Pendapatan Project", "defaultProjectRevenueAccountCode"],
-            ["Akun Pendapatan Non-Project", "defaultNonProjectRevenueAccountCode"],
-            ["Akun Beban Operasional", "defaultOperationalExpenseAccountCode"],
-            ["Akun Beban Project", "defaultProjectExpenseAccountCode"],
+            ["Akun piutang", "defaultReceivableAccountCode"],
+            ["Akun aset tetap", "defaultFixedAssetAccountCode"],
+            ["Akun utang", "defaultLiabilityAccountCode"],
+            ["Akun modal", "defaultEquityAccountCode"],
+            ["Akun pendapatan proyek", "defaultProjectRevenueAccountCode"],
+            ["Akun pendapatan non-proyek", "defaultNonProjectRevenueAccountCode"],
+            ["Akun beban operasional", "defaultOperationalExpenseAccountCode"],
+            ["Akun beban proyek", "defaultProjectExpenseAccountCode"],
           ].map(([label, key]) => (
-            <div className="grid gap-2" key={key}><Label>{label}</Label><Select value={settings[key as keyof SettingsData] as string} onValueChange={(value) => update(key as keyof SettingsData, value as never)}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent>{accounts.map((account) => <SelectItem key={account.code} value={account.code}>{account.code} - {account.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="grid gap-2" key={key}><Label>{label}</Label><Select value={settings[key as keyof SettingsData] as string} onValueChange={(value) => update(key as keyof SettingsData, value as never)}><SelectTrigger className="w-full"><SelectValue>{(v: string) => { const a = accounts.find((x) => x.code === v); return a ? `${a.code} - ${a.name}` : v; }}</SelectValue></SelectTrigger><SelectContent>{accounts.map((account) => <SelectItem key={account.code} value={account.code}>{account.code} - {account.name}</SelectItem>)}</SelectContent></Select></div>
           ))}
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="size-5 text-primary" /> Security</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="size-5 text-primary" /> Tanda tangan PDF</CardTitle></CardHeader>
         <CardContent className="space-y-4 text-sm text-muted-foreground">
-          <label className="flex items-center justify-between gap-4"><div><Label>Finance Approval</Label><p className="text-xs text-muted-foreground">Wajib approval manual untuk perubahan finance penting.</p></div><input type="checkbox" checked={settings.financeApprovalRequired} onChange={(e) => update("financeApprovalRequired", e.target.checked)} className="h-4 w-4" /></label>
-          <label className="flex items-center justify-between gap-4"><div><Label>User Self Reset</Label><p className="text-xs text-muted-foreground">Izinkan user reset password sendiri.</p></div><input type="checkbox" checked={settings.allowUserSelfReset} onChange={(e) => update("allowUserSelfReset", e.target.checked)} className="h-4 w-4" /></label>
 
-          <div className="border-t pt-4 space-y-4">
+          <div className="space-y-4">
             <h4 className="font-semibold text-sm text-foreground">Penanda tangan penawaran</h4>
             <p className="text-xs text-muted-foreground">Dipakai di PDF penawaran. PNG latar transparan paling rapi; tanda tangan & stempel boleh jadi satu gambar.</p>
             <div className="grid gap-2"><Label>Nama</Label><Input value={settings.quotationSignatoryName} onChange={(e) => update("quotationSignatoryName", e.target.value)} /></div>
@@ -181,7 +179,7 @@ export function SettingsPanel({ initialSettings, accountOptions: dbAccountOption
 
           <div className="border-t pt-4 space-y-4">
             <h4 className="font-semibold text-sm text-foreground">Tanda tangan tagihan & kwitansi</h4>
-            <p className="text-xs text-muted-foreground">Dipakai di PDF tagihan dan kwitansi, atas nama penanda tangan default ({settings.defaultSignatoryName}). Kosong = PDF tanpa tanda tangan.</p>
+            <p className="text-xs text-muted-foreground">Dipakai di PDF tagihan dan kwitansi, atas nama penanda tangan tagihan ({settings.defaultSignatoryName}). Kosong = PDF tanpa tanda tangan.</p>
             <KolomGambar label="Tanda tangan" nilai={settings.signatureImageUrl} onUbah={(url) => update("signatureImageUrl" as GambarKey, url)} />
             <KolomGambar label="Stempel" nilai={settings.stampImageUrl} onUbah={(url) => update("stampImageUrl" as GambarKey, url)} />
           </div>

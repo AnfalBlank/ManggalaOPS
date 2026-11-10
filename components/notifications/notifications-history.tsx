@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
+
+import { isiNotifikasi, judulNotifikasi } from "@/lib/label-status";
 import { Bell, CheckCheck, MailOpen } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -48,14 +51,14 @@ export function NotificationsHistory({ items }: { items: NotificationItem[] }) {
     return (
       <EmptyState
         title="Belum ada notifikasi"
-        description="Notifikasi muncul saat ada invoice baru, payment masuk, atau aktivitas penting lainnya."
+        description="Notifikasi muncul kalau ada tagihan baru, pembayaran masuk, PO klien, atau surat jalan."
       />
     );
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
           {unread > 0 ? <><span className="font-semibold text-foreground">{unread}</span> belum dibaca</> : "Semua sudah dibaca"}
         </p>
@@ -80,16 +83,16 @@ export function NotificationsHistory({ items }: { items: NotificationItem[] }) {
               {item.isRead ? <MailOpen className="size-4" /> : <Bell className="size-4" />}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-baseline justify-between gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-0.5 sm:gap-3">
                 <span className={`text-sm ${item.isRead ? "font-medium text-slate-700" : "font-semibold text-slate-900"}`}>
-                  {item.title}
+                  {judulNotifikasi(item.title)}
                 </span>
                 <span className="text-xs text-muted-foreground shrink-0">
-                  {item.createdAt ? format(new Date(item.createdAt), "dd MMM yyyy HH:mm") : "-"}
+                  {item.createdAt ? format(new Date(item.createdAt), "dd MMM yyyy HH:mm", { locale: localeId }) : "-"}
                 </span>
               </div>
               {item.message ? (
-                <p className="text-sm text-muted-foreground mt-1">{item.message}</p>
+                <p className="text-sm text-muted-foreground mt-1">{isiNotifikasi(item.message)}</p>
               ) : null}
             </div>
           </div>

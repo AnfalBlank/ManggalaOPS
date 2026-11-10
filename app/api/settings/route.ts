@@ -13,7 +13,7 @@ export async function GET() {
     await requireRole(["admin"]);
     return NextResponse.json(await getAppSettings());
   } catch (error) {
-    return toErrorResponse(error, "Failed to fetch settings");
+    return toErrorResponse(error, "Gagal ngambil setelan");
   }
 }
 
@@ -76,6 +76,6 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ ok: true, data: await getAppSettings() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to save settings");
+    return toErrorResponse(error, "Gagal nyimpen setelan");
   }
 }

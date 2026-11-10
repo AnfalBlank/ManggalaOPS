@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 
 import { TableFilterBar } from "@/components/filters/table-filter-bar";
 import { Badge } from "@/components/ui/badge";
+import { Pagination, paginate } from "@/components/ui/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type AuditRow = {
@@ -37,6 +39,24 @@ function actionStyle(action: string) {
   return "bg-slate-100 text-slate-700";
 }
 
+const NAMA_DATA: Record<string, string> = {
+  user: "Pengguna", quotation: "Penawaran", invoice: "Tagihan", client: "Klien", delivery_order: "Surat jalan",
+  upload: "File", payment: "Pembayaran", expense: "Pengeluaran", lead: "Calon klien", settings: "Setelan",
+  client_po: "PO klien", supplier_po: "PO supplier", project: "Proyek", login: "Login", logout: "Keluar",
+};
+const NAMA_AKSI: Record<string, string> = {
+  create: "dibuat", update: "diubah", delete: "dihapus", accept: "diterima", success: "berhasil", failed: "gagal",
+  from_invoice: "dibuat dari tagihan", create_from_po: "dibuat dari PO", "reminder.sent": "pengingat dikirim",
+};
+function labelAksi(action: string) {
+  if (action === "logout") return "Keluar";
+  const [depan, ...sisa] = action.split(".");
+  const belakang = sisa.join(".");
+  if (depan === "login") return belakang === "failed" ? "Login gagal" : "Login";
+  const nama = NAMA_DATA[depan] ?? depan;
+  return belakang ? `${nama} ${NAMA_AKSI[belakang] ?? belakang}` : nama;
+}
+
 export function AuditLogTable({ rows }: { rows: AuditRow[] }) {
   const [query, setQuery] = useState("");
   const [type, setType] = useState("all");
@@ -44,13 +64,18 @@ export function AuditLogTable({ rows }: { rows: AuditRow[] }) {
   const filtered = useMemo(
     () =>
       rows.filter((row) => {
-        const haystack = `${row.action} ${row.entity ?? ""} ${row.entityId ?? ""} ${row.userName ?? ""} ${row.userEmail ?? ""} ${row.ip ?? ""}`.toLowerCase();
+        const haystack = `${row.action} ${labelAksi(row.action)} ${row.entity ?? ""} ${row.entityId ?? ""} ${row.userName ?? ""} ${row.userEmail ?? ""} ${row.ip ?? ""}`.toLowerCase();
         const matchesQuery = haystack.includes(query.toLowerCase());
         const matchesType = type === "all" || row.action.startsWith(type);
         return matchesQuery && matchesType;
       }),
     [rows, query, type],
   );
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  useEffect(() => { setPage(1); }, [query, type, pageSize]);
+  const paged = paginate(filtered, page, pageSize);
 
   const typeOptions = useMemo(() => {
     const set = new Set<string>();
@@ -59,8 +84,8 @@ export function AuditLogTable({ rows }: { rows: AuditRow[] }) {
       if (prefix) set.add(prefix);
     });
     return [
-      { label: "Semua entity", value: "all" },
-      ...Array.from(set).sort().map((item) => ({ label: item, value: item })),
+      { label: "Semua jenis data", value: "all" },
+      ...Array.from(set).sort().map((item) => ({ label: NAMA_DATA[item] ?? item, value: item })),
     ];
   }, [rows]);
 
@@ -69,20 +94,20 @@ export function AuditLogTable({ rows }: { rows: AuditRow[] }) {
       <TableFilterBar
         value={query}
         onChange={setQuery}
-        placeholder="Cari user, action, atau IP..."
+        placeholder="Cari nama, aksi, atau IP..."
         typeValue={type}
         onTypeChange={setType}
         typeOptions={typeOptions}
       />
 
-      <div className="w-full overflow-x-auto rounded-2xl border bg-white">
-        <Table className="min-w-[900px]">
+      <div className="w-full overflow-x-auto md:rounded-2xl md:border md:bg-white">
+        <Table className="min-w-[900px] xl:min-w-0">
           <TableHeader>
             <TableRow>
               <TableHead className="w-[160px]">Waktu</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Action</TableHead>
-              <TableHead>Entity</TableHead>
+              <TableHead>Pengguna</TableHead>
+              <TableHead>Aksi</TableHead>
+              <TableHead>Data</TableHead>
               <TableHead>Detail</TableHead>
               <TableHead>IP</TableHead>
             </TableRow>
@@ -91,13 +116,13 @@ export function AuditLogTable({ rows }: { rows: AuditRow[] }) {
             {filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                  Tidak ada entry yang cocok dengan filter.
+                  Gak ada catatan yang cocok.
                 </TableCell>
               </TableRow>
-            ) : filtered.map((row) => (
+            ) : paged.map((row) => (
               <TableRow key={row.id}>
                 <TableCell className="text-xs text-muted-foreground">
-                  {row.createdAt ? format(new Date(row.createdAt), "dd MMM yyyy HH:mm:ss") : "-"}
+                  {row.createdAt ? format(new Date(row.createdAt), "dd MMM yyyy HH:mm:ss", { locale: localeId }) : "-"}
                 </TableCell>
                 <TableCell>
                   {row.userName ? (
@@ -106,16 +131,16 @@ export function AuditLogTable({ rows }: { rows: AuditRow[] }) {
                       <div className="text-xs text-muted-foreground">{row.userEmail ?? "-"}</div>
                     </div>
                   ) : (
-                    <span className="text-xs text-muted-foreground italic">— anonymous —</span>
+                    <span className="text-xs text-muted-foreground italic">— tanpa nama —</span>
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge className={`${actionStyle(row.action)} border-none font-mono text-xs`}>{row.action}</Badge>
+                  <Badge className={`${actionStyle(row.action)} border-none text-xs`} title={row.action}>{labelAksi(row.action)}</Badge>
                 </TableCell>
                 <TableCell className="text-sm">
                   {row.entity ? (
                     <span>
-                      {row.entity}
+                      {NAMA_DATA[row.entity] ?? row.entity}
                       {row.entityId ? <span className="text-muted-foreground"> #{row.entityId}</span> : null}
                     </span>
                   ) : "-"}
@@ -132,8 +157,10 @@ export function AuditLogTable({ rows }: { rows: AuditRow[] }) {
         </Table>
       </div>
 
+      <Pagination page={page} pageSize={pageSize} total={filtered.length} onPageChange={setPage} onPageSizeChange={setPageSize} />
+
       <p className="text-xs text-muted-foreground">
-        Total {filtered.length} dari {rows.length} entry yang ditampilkan. Audit log menyimpan 500 entry terbaru.
+        Tampil {filtered.length} dari {rows.length} catatan (500 catatan terbaru).
       </p>
     </div>
   );

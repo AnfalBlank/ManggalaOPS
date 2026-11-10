@@ -7,18 +7,18 @@ import { getNotificationsForRole, markAllNotificationsRead } from "@/lib/notific
 export async function GET() {
   try {
     const role = await getCurrentRole();
-    if (!role) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!role) return NextResponse.json({ error: "Belum login" }, { status: 401 });
     const data = await getNotificationsForRole(role);
     return NextResponse.json(data);
   } catch (error) {
-    return toErrorResponse(error, "Failed to fetch notifications");
+    return toErrorResponse(error, "Gagal ngambil notifikasi");
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const role = await getCurrentRole();
-    if (!role) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!role) return NextResponse.json({ error: "Belum login" }, { status: 401 });
     const body = await request.json();
 
     if (body.action === "mark-all-read") {
@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+    return NextResponse.json({ error: "Aksi gak dikenal" }, { status: 400 });
   } catch (error) {
-    return toErrorResponse(error, "Failed to update notifications");
+    return toErrorResponse(error, "Gagal ubah notifikasi");
   }
 }

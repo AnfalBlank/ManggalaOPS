@@ -60,7 +60,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const data = await db.select(userSelect).from(users).orderBy(desc(users.id));
     return NextResponse.json({ ok: true, data });
   } catch (error) {
-    return toErrorResponse(error, "Failed to update user");
+    return toErrorResponse(error, "Gagal nyimpen pengguna");
   }
 }
 
@@ -78,6 +78,6 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
     const data = await db.select(userSelect).from(users).orderBy(desc(users.id));
     return NextResponse.json({ ok: true, data });
   } catch (error) {
-    return toErrorResponse(error, "Failed to delete user");
+    return toErrorResponse(error, "Gagal hapus pengguna");
   }
 }

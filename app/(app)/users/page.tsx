@@ -12,12 +12,12 @@ export default async function UsersPage() {
       <PageWrapper>
         <RoleGuard allow={["admin"]}>
           <div className="mb-6">
-            <h1 className="text-3xl font-bold tracking-tight text-primary">User Management</h1>
-            <p className="text-muted-foreground mt-1">Kelola akun, role, dan reset password user operasional.</p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Pengguna</h1>
+            <p className="text-muted-foreground mt-1">Atur akun tim, jabatan, dan ganti password.</p>
           </div>
           {users.length === 0 ? (
             <div className="space-y-4">
-              <EmptyState title="Belum ada user" description="Tambahkan user operasional pertama dari halaman ini." />
+              <EmptyState title="Belum ada pengguna" description="Tambah akun tim pertama dari halaman ini." />
               <UserManagement users={users} />
             </div>
           ) : (
@@ -29,7 +29,7 @@ export default async function UsersPage() {
   } catch (error) {
     return (
       <PageWrapper>
-        <ErrorState title="Gagal memuat users" description={error instanceof Error ? error.message : "Terjadi error saat memuat user management."} />
+        <ErrorState title="Gagal memuat pengguna" description={error instanceof Error ? error.message : "Ada masalah pas ngambil data pengguna."} />
       </PageWrapper>
     );
   }

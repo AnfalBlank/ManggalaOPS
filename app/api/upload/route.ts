@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     const data = await req.formData();
     const file = data.get("file");
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      return NextResponse.json({ error: "Belum ada file yang dipilih" }, { status: 400 });
     }
 
     if (file.size <= 0 || file.size > MAX_BYTES) {
@@ -43,13 +43,13 @@ export async function POST(req: NextRequest) {
     const uploadPath = path.join(uploadsDir, filename);
     // Defense in depth: ensure final path is within uploadsDir.
     if (!uploadPath.startsWith(uploadsDir + path.sep)) {
-      return NextResponse.json({ error: "Invalid path" }, { status: 400 });
+      return NextResponse.json({ error: "Nama file gak valid" }, { status: 400 });
     }
     await writeFile(uploadPath, buffer);
 
     await audit({ userId: user.id, action: "upload.create", entity: "upload", entityId: filename, payload: { mime: file.type, size: file.size } });
     return NextResponse.json({ url: `/api/uploads/${filename}`, filename, size: file.size });
   } catch (error) {
-    return toErrorResponse(error, "Upload failed");
+    return toErrorResponse(error, "Gagal unggah file");
   }
 }

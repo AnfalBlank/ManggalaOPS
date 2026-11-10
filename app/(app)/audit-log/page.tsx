@@ -31,9 +31,9 @@ export default async function AuditLogPage() {
       <PageWrapper>
         <RoleGuard allow={["admin"]}>
           <div className="mb-6">
-            <h1 className="text-3xl font-bold tracking-tight text-primary">Audit Log</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Log aktivitas</h1>
             <p className="text-muted-foreground mt-1">
-              Riwayat aktivitas sensitif: pembuatan, perubahan, dan penghapusan data oleh user (500 entry terbaru).
+              Siapa bikin, ubah, atau hapus data, plus riwayat login (500 catatan terbaru).
             </p>
           </div>
           <AuditLogTable
@@ -57,8 +57,8 @@ export default async function AuditLogPage() {
     return (
       <PageWrapper>
         <ErrorState
-          title="Gagal memuat audit log"
-          description={error instanceof Error ? error.message : "Terjadi error saat memuat audit log."}
+          title="Gagal memuat log aktivitas"
+          description={error instanceof Error ? error.message : "Ada masalah pas ngambil log aktivitas."}
         />
       </PageWrapper>
     );

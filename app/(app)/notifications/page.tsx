@@ -13,7 +13,7 @@ export default async function NotificationsPage() {
     if (!role) {
       return (
         <PageWrapper>
-          <ErrorState title="Unauthorized" description="Silakan login terlebih dahulu." />
+          <ErrorState title="Belum login" description="Silakan masuk dulu." />
         </PageWrapper>
       );
     }
@@ -28,7 +28,7 @@ export default async function NotificationsPage() {
     return (
       <PageWrapper>
         <div className="mb-6">
-          <h1 className="text-3xl font-bold tracking-tight text-primary">Notifications</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Notifikasi</h1>
           <p className="text-muted-foreground mt-1">Riwayat notifikasi sistem (200 terbaru).</p>
         </div>
         <NotificationsHistory items={items.map((item) => ({
@@ -44,7 +44,7 @@ export default async function NotificationsPage() {
   } catch (error) {
     return (
       <PageWrapper>
-        <ErrorState title="Gagal memuat notifications" description={error instanceof Error ? error.message : "Terjadi error."} />
+        <ErrorState title="Gagal memuat notifikasi" description={error instanceof Error ? error.message : "Ada masalah pas ngambil notifikasi."} />
       </PageWrapper>
     );
   }

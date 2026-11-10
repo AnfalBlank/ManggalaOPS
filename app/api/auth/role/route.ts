@@ -10,5 +10,5 @@ export async function GET() {
 }
 
 export async function POST() {
-  return NextResponse.json({ error: "Role switching disabled in production hardening mode" }, { status: 403 });
+  return NextResponse.json({ error: "Ganti jabatan dimatiin" }, { status: 403 });
 }

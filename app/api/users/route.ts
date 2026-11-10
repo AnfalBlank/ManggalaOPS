@@ -24,7 +24,7 @@ export async function GET() {
     const data = await db.select(userSelect).from(users).orderBy(desc(users.id));
     return NextResponse.json(data);
   } catch (error) {
-    return toErrorResponse(error, "Failed to fetch users");
+    return toErrorResponse(error, "Gagal ngambil data pengguna");
   }
 }
 
@@ -54,6 +54,6 @@ export async function POST(request: NextRequest) {
     const data = await db.select(userSelect).from(users).orderBy(desc(users.id));
     return NextResponse.json({ ok: true, data, passwordPolicy: { minLength: PASSWORD_MIN_LENGTH } });
   } catch (error) {
-    return toErrorResponse(error, "Failed to create user");
+    return toErrorResponse(error, "Gagal nambah pengguna");
   }
 }

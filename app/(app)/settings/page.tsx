@@ -43,8 +43,8 @@ export default async function SettingsPage() {
     <PageWrapper>
       <RoleGuard allow={["admin"]}>
         <div className="mb-6">
-          <h1 className="text-3xl font-bold tracking-tight text-primary">Settings</h1>
-          <p className="text-muted-foreground mt-1">Pengaturan sistem dasar untuk ManggalaOPS.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Setelan</h1>
+          <p className="text-muted-foreground mt-1">Data perusahaan, angka bawaan penawaran & tagihan, akun, dan tanda tangan PDF.</p>
         </div>
 
         <SettingsPanel initialSettings={settings} accountOptions={accountOptions} />
