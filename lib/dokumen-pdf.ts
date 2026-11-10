@@ -2,32 +2,38 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 
-let tabDisiapkan: Window | null = null;
+// PDF ditampilkan di panel kanan halaman yang sama (components/layout/panel-pdf.tsx), bukan tab baru.
+// Panel dipasang di AppShell; di luar AppShell (mis. halaman login) jatuh ke tab baru / unduh.
+export const EVENT_PANEL_PDF = "manggala:panel-pdf";
+export type PesanPanelPdf = { status: "memuat" } | { status: "siap"; url: string; filename: string } | { status: "batal" };
 
-// Panggil langsung di klik tombol (sebelum await apa pun) kalau PDF-nya dibikin pakai proses yang nunggu,
-// supaya tab barunya gak dianggap popup dan diblokir browser.
+let panelTerpasang = false;
+export function daftarPanelPdf(terpasang: boolean) {
+  panelTerpasang = terpasang;
+}
+
+function kirimKePanel(pesan: PesanPanelPdf) {
+  window.dispatchEvent(new CustomEvent<PesanPanelPdf>(EVENT_PANEL_PDF, { detail: pesan }));
+}
+
+// Dipanggil di klik tombol sebelum PDF selesai dibikin: panel langsung kebuka dengan tanda "menyiapkan".
 export function siapkanTab() {
-  tabDisiapkan = window.open("", "_blank");
-  if (tabDisiapkan) tabDisiapkan.document.title = "Menyiapkan dokumen…";
+  if (panelTerpasang) kirimKePanel({ status: "memuat" });
 }
 
 export function batalkanTab() {
-  if (tabDisiapkan && !tabDisiapkan.closed) tabDisiapkan.close();
-  tabDisiapkan = null;
+  if (panelTerpasang) kirimKePanel({ status: "batal" });
 }
 
-// Buka PDF di tab baru supaya bisa dilihat dulu (unduh dari penampil PDF browser).
-// Kalau browser nahan tab baru (popup diblokir), file langsung diunduh.
 export function tampilkanPdf(doc: jsPDF, filename: string) {
   const blob = doc.output("blob");
   const url = URL.createObjectURL(new File([blob], filename, { type: "application/pdf" }));
-  let tab = tabDisiapkan;
-  tabDisiapkan = null;
-  if (tab && !tab.closed) tab.location.href = url;
-  else tab = window.open(url, "_blank");
-  if (!tab) {
-    doc.save(filename);
+  if (panelTerpasang) {
+    kirimKePanel({ status: "siap", url, filename });
+    return; // panel yang membuang URL saat ditutup/diganti
   }
+  const tab = window.open(url, "_blank");
+  if (!tab) doc.save(filename);
   setTimeout(() => URL.revokeObjectURL(url), 5 * 60 * 1000);
 }
 

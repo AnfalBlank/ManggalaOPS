@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { PanelPdf } from "@/components/layout/panel-pdf";
 import { Topbar } from "@/components/layout/topbar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { getCurrentUser } from "@/lib/session-auth";
@@ -21,6 +22,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </SidebarInset>
+      <PanelPdf />
     </SidebarProvider>
   );
 }
