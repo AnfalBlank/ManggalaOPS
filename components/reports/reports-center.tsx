@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import { Briefcase, BarChart3, Calculator, PiggyBank } from "lucide-react";
 
 import { ExportReportButtons } from "@/components/reports/export-report-buttons";
+import { LabaRugiTabel } from "@/components/reports/laba-rugi-tabel";
+import type { DataLaba } from "@/lib/laba-rugi";
 import { PageWrapper } from "@/components/layout/page-wrapper";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -41,7 +43,7 @@ function withinRange(value: string | number | null | undefined, start: string, e
 
 const rupiah = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
 
-export function ReportsCenter({ laporan }: { laporan: LaporanData[] }) {
+export function ReportsCenter({ laporan, laba }: { laporan: LaporanData[]; laba?: DataLaba | null }) {
   const currentDate = format(new Date(), "yyyy-MM-dd");
   const lastMonthDate = format(subMonths(new Date(), 1), "yyyy-MM-dd");
   const [startDate, setStartDate] = useState(lastMonthDate);
@@ -77,6 +79,8 @@ export function ReportsCenter({ laporan }: { laporan: LaporanData[] }) {
           <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
         </div>
       </div>
+
+      {laba ? <LabaRugiTabel data={laba} dari={startDate} sampai={endDate} /> : null}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {reports.map((report, idx) => (

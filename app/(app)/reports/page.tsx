@@ -1,6 +1,7 @@
 import { ReportsCenter, type LaporanData } from "@/components/reports/reports-center";
 import { getInvoices, getLeads, getPayments, getProjects } from "@/lib/data";
 import { getFinanceOverviewData } from "@/lib/admin-data";
+import { getDataLaba } from "@/lib/laba-rugi-data";
 import { labelKategori } from "@/lib/expense-categories";
 import { labelStatus } from "@/lib/label-status";
 import { getCurrentUser } from "@/lib/session-auth";
@@ -15,12 +16,13 @@ export default async function ReportsPage() {
   const user = await getCurrentUser();
   const lihatUang = ["admin", "finance"].includes(user?.role ?? "");
 
-  const [finance, leads, invoices, payments, projects] = await Promise.all([
+  const [finance, leads, invoices, payments, projects, laba] = await Promise.all([
     lihatUang ? getFinanceOverviewData() : null,
     lihatUang ? getLeads() : [],
     lihatUang ? getInvoices() : [],
     lihatUang ? getPayments() : [],
     getProjects(),
+    lihatUang ? getDataLaba() : null,
   ]);
 
   const laporan: LaporanData[] = [];
@@ -82,5 +84,5 @@ export default async function ReportsPage() {
     });
   }
 
-  return <ReportsCenter laporan={laporan} />;
+  return <ReportsCenter laporan={laporan} laba={laba} />;
 }

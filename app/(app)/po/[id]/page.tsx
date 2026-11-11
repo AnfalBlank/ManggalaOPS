@@ -6,10 +6,15 @@ import { PageWrapper } from "@/components/layout/page-wrapper";
 import { DownloadDeliveryOrderButton } from "@/components/pdf/download-delivery-order-button";
 import { AksiPo, LihatPoSupplier } from "@/components/po/po-aksi";
 import { PoSupplierDialog, SuratJalanDialog, TagihanDariPoDialog } from "@/components/po/po-dialogs";
+import { CatatBelanjaDialog, LihatNota } from "@/components/forms/expense-dialogs";
 import { DeretTahap, LabelPosisi } from "@/components/po/tahap";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InlineStatusSelect } from "@/components/ui/inline-status-select";
+import { getPaymentAccounts } from "@/lib/admin-data";
 import { getInvoices } from "@/lib/data";
+import { labelKategori } from "@/lib/expense-categories";
+import { labaSatuPo } from "@/lib/laba-rugi";
+import { getBelanjaPo, getDataLaba } from "@/lib/laba-rugi-data";
 import { formatCurrency } from "@/lib/format";
 import { getClientPoDetail } from "@/lib/po";
 import { getCurrentUser } from "@/lib/session-auth";
@@ -49,6 +54,11 @@ export default async function DetailPo({ params }: { params: Promise<{ id: strin
   const { po, items, suratJalan, poSupplier, penerima, tagihanDefault } = detail;
   const tagihan = semuaTagihan.filter((t) => t.clientPoId === poId);
   const role = user?.role ?? "";
+  const lihatLaba = ["admin", "finance"].includes(role);
+  const [dataLaba, belanja, akunBayar] = lihatLaba ? await Promise.all([getDataLaba(), getBelanjaPo(poId), getPaymentAccounts()]) : [null, [], []];
+  const laba = dataLaba ? labaSatuPo(dataLaba, poId) : null;
+  const namaProyek = dataLaba && po.projectId ? (dataLaba.proyek.find((p) => p.id === po.projectId)?.name ?? null) : null;
+  const kodeSupplier = new Map(poSupplier.map((s) => [s.id, `${s.code} · ${s.supplierName}`]));
   const bisaUang = ["admin", "finance", "sales"].includes(role);
   const bisaKirim = ["admin", "sales", "project_manager"].includes(role);
   const lihatTagihan = ["admin", "finance"].includes(role);
@@ -270,6 +280,67 @@ export default async function DetailPo({ params }: { params: Promise<{ id: strin
           </Link>
         </div>
       </Bagian>
+      ) : null}
+
+      {lihatLaba && laba ? (
+        <Bagian
+          judul="Belanja & untung"
+          keterangan="Biaya yang dikeluarin buat PO ini, dan untung kotornya."
+          aksi={
+            <CatatBelanjaDialog
+              po={{ id: po.id, poNumber: po.poNumber, clientName: po.clientName, projectId: po.projectId, projectName: namaProyek }}
+              poSupplier={poSupplier.filter((s) => s.status !== "Batal").map((s) => ({ id: s.id, code: s.code, clientPoId: s.clientPoId, supplierName: s.supplierName }))}
+              paymentAccounts={akunBayar}
+            />
+          }
+        >
+          <div className="grid grid-cols-2 gap-px border-b border-border/50 bg-border/50 lg:grid-cols-5">
+            {[
+              { label: "Nilai PO", nilai: formatCurrency(laba.nilaiPo), ket: "termasuk PPN" },
+              { label: "Tagihan terbit", nilai: formatCurrency(laba.tagihanTotal), ket: `${tagihan.length} tagihan` },
+              { label: "Uang masuk", nilai: formatCurrency(laba.uangMasuk), ket: "dari klien" },
+              { label: "Belanja", nilai: formatCurrency(laba.belanjaTotal), ket: `${laba.jumlahBelanja} catatan` },
+            ].map((k) => (
+              <div key={k.label} className="bg-white p-4">
+                <p className="text-xs text-muted-foreground">{k.label}</p>
+                <p className="mt-1 text-lg font-semibold tabular-nums">{k.nilai}</p>
+                <p className="text-xs text-muted-foreground">{k.ket}</p>
+              </div>
+            ))}
+            <div className="col-span-2 bg-white p-4 lg:col-span-1">
+              <p className="text-xs text-muted-foreground">Untung kotor</p>
+              <p className={`mt-1 text-lg font-semibold tabular-nums ${laba.untung < 0 ? "text-rose-700" : "text-emerald-700"}`}>{formatCurrency(laba.untung)}</p>
+              <p className="text-xs text-muted-foreground">margin {laba.margin === null ? "-" : `${laba.margin.toLocaleString("id-ID")}%`}</p>
+            </div>
+          </div>
+          <p className="border-b border-border/50 px-4 py-3 text-xs text-muted-foreground">
+            {laba.pakaiTagihan
+              ? `Dihitung tanpa PPN: tagihan terbit ${formatCurrency(laba.pendapatan)} − belanja ${formatCurrency(laba.belanja)}.`
+              : `Belum ada tagihan, jadi pakai perkiraan nilai PO tanpa PPN ${formatCurrency(laba.dasar)} − belanja ${formatCurrency(laba.belanja)}.`}{" "}
+            Uang masuk gak ditambahin lagi, karena itu pelunasan tagihan yang sama.
+          </p>
+          {belanja.length === 0 ? (
+            <Kosong teks="Belum ada belanja buat PO ini." />
+          ) : (
+            <ul className="divide-y divide-border/50">
+              {belanja.map((b) => (
+                <li key={b.id} className="flex items-start justify-between gap-3 p-4">
+                  <div className="min-w-0">
+                    <p className="font-medium text-slate-900 break-words">{b.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {b.code} · {tgl(b.date)} · {labelKategori(b.category)}
+                      {b.supplierPoId ? ` · ${kodeSupplier.get(b.supplierPoId) ?? ""}` : ""}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-0.5">
+                    <p className="font-semibold whitespace-nowrap tabular-nums">{formatCurrency(b.amount)}</p>
+                    {b.receiptUrl ? <LihatNota url={b.receiptUrl} kode={b.code} /> : <span className="text-xs text-muted-foreground">tanpa nota</span>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Bagian>
       ) : null}
     </PageWrapper>
   );
