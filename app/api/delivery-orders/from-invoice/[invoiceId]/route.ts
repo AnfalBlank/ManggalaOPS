@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 
 import { db } from "@/db";
 import { clients, deliveryOrderItems, deliveryOrders, invoiceItems, invoices } from "@/db/schema";
@@ -23,6 +23,14 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ invoi
     const invoice = await db.query.invoices.findFirst({ where: eq(invoices.id, invoiceId) });
     if (!invoice) {
       return NextResponse.json({ error: "Tagihan gak ketemu" }, { status: 404 });
+    }
+
+    if (invoice.clientPoId) {
+      return NextResponse.json({ error: "Tagihan ini punya PO klien. Bikin surat jalan dari halaman PO biar sisa barang kehitung." }, { status: 400 });
+    }
+    const udahAda = await db.query.deliveryOrders.findFirst({ where: and(eq(deliveryOrders.invoiceId, invoiceId), ne(deliveryOrders.status, "Cancelled")) });
+    if (udahAda) {
+      return NextResponse.json({ error: `Tagihan ini udah punya surat jalan SJ-${String(udahAda.id).padStart(4, "0")}. Pakai yang itu, atau batalkan dulu kalau mau bikin ulang.` }, { status: 400 });
     }
 
     const items = await db.select().from(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));

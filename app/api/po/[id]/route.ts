@@ -8,6 +8,7 @@ import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
 import { parseMoneyInput } from "@/lib/money";
 import { getClientPoDetail } from "@/lib/po";
+import { cekNilaiPoCukup, cekNomorPoKlien } from "@/lib/cegah-dobel";
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -40,7 +41,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (body.fileUrl !== undefined) set.fileUrl = nullableTrim(body.fileUrl, 500);
     if (body.notes !== undefined) set.notes = nullableTrim(body.notes, 2000);
     if (body.closed !== undefined) set.closedAt = body.closed ? new Date() : null;
-    await db.update(clientPos).set(set).where(eq(clientPos.id, poId));
+    await db.transaction(async (tx) => {
+      await tx.update(clientPos).set(set).where(eq(clientPos.id, poId));
+      if (set.poNumber) await cekNomorPoKlien(tx, po.clientId, set.poNumber, poId);
+      if (set.value !== undefined) await cekNilaiPoCukup(tx, poId, set.value ?? 0);
+    });
     await audit({ userId: user.id, action: body.closed === undefined ? "client_po.update" : body.closed ? "client_po.close" : "client_po.reopen", entity: "client_po", entityId: poId, payload: { ...set } as Record<string, unknown> });
     return NextResponse.json({ ok: true });
   } catch (error) {

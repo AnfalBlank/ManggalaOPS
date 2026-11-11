@@ -10,6 +10,7 @@ import { deletePaymentJournal, upsertPaymentJournal } from "@/lib/business";
 import { getPayments } from "@/lib/data";
 import { parseMoneyInput } from "@/lib/money";
 import { ensurePaymentMatchesInvoice } from "@/lib/validators";
+import { cekBayarTagihan } from "@/lib/cegah-dobel";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -29,7 +30,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       excludePaymentId: paymentId,
     });
 
-    await db
+    await db.transaction(async (tx) => {
+      await tx
       .update(payments)
       .set({
         invoiceId,
@@ -40,13 +42,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         referenceCode: nullableTrim(body.referenceCode, 200),
       })
       .where(eq(payments.id, paymentId));
+      await cekBayarTagihan(tx, invoiceId);
+    });
 
     await upsertPaymentJournal(paymentId);
     await audit({ userId: user.id, action: "payment.update", entity: "payment", entityId: paymentId });
 
     return NextResponse.json({ ok: true, data: await getPayments() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to update payment");
+    return toErrorResponse(error, "Gagal menyimpan pembayaran");
   }
 }
 

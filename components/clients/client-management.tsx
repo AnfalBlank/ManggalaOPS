@@ -48,6 +48,7 @@ function ClientDialog({ client }: { client?: ClientRow }) {
   const [npwp, setNpwp] = useState(client?.npwp ?? "");
   const [address, setAddress] = useState(client?.address ?? "");
   const [notes, setNotes] = useState(client?.notes ?? "");
+  const [menyimpan, setMenyimpan] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -70,6 +71,8 @@ function ClientDialog({ client }: { client?: ClientRow }) {
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Batal</Button>
           <Button onClick={async () => {
+            if (menyimpan) return;
+            setMenyimpan(true);
             try {
               const payload = { name, contactPerson, additionalPic, phone, email, npwp, address, notes };
               if (client) {
@@ -83,8 +86,10 @@ function ClientDialog({ client }: { client?: ClientRow }) {
               router.refresh();
             } catch (error) {
               toast.error(error instanceof Error ? error.message : "Gagal nyimpen data klien");
+            } finally {
+              setMenyimpan(false);
             }
-          }} disabled={!name.trim()}>Simpan</Button>
+          }} disabled={!name.trim() || menyimpan}>{menyimpan ? "Menyimpan…" : "Simpan"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

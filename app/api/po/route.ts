@@ -10,6 +10,7 @@ import { acceptQuotationAndCreateProject } from "@/lib/business";
 import { parseMoneyInput } from "@/lib/money";
 import { createNotification } from "@/lib/notifications";
 import { getClientPoList } from "@/lib/po";
+import { cekNomorPoKlien } from "@/lib/cegah-dobel";
 
 export async function GET() {
   try {
@@ -36,6 +37,7 @@ export async function POST(request: NextRequest) {
     ensure(quotation, "Penawaran tidak ditemukan");
     const ada = await db.query.clientPos.findFirst({ where: eq(clientPos.quotationId, quotationId) });
     ensure(!ada, `Penawaran ini udah punya PO (${ada?.poNumber})`);
+    await cekNomorPoKlien(db, quotation.clientId, poNumber);
 
     const { projectId } = await acceptQuotationAndCreateProject(quotationId);
     const value = body.value !== undefined && body.value !== "" ? parseMoneyInput(body.value) : (quotation.total ?? 0);
@@ -57,6 +59,7 @@ export async function POST(request: NextRequest) {
           createdAt: new Date(),
         })
         .returning({ id: clientPos.id });
+      await cekNomorPoKlien(tx, quotation.clientId, poNumber, po.id);
       if (items.length) {
         await tx.insert(clientPoItems).values(
           items.map((i) => ({ clientPoId: po.id, description: i.description, qty: i.qty, unit: i.unit ?? "Unit", unitPrice: i.unitPrice, unitCost: i.unitCost ?? 0, amount: i.amount })),

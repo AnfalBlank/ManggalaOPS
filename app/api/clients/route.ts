@@ -22,7 +22,10 @@ export async function POST(request: NextRequest) {
     const { user } = await requireRole(["admin", "sales"]);
     const body = await request.json();
     const name = trimString(body.name, 200);
-    ensure(name.length > 0, "Nama client wajib diisi");
+    ensure(name.length > 0, "Nama klien wajib diisi");
+    const semua = await db.select({ id: clients.id, name: clients.name }).from(clients);
+    const kembar = semua.find((c) => c.name.trim().replace(/\s+/g, " ").toLowerCase() === name.replace(/\s+/g, " ").toLowerCase());
+    ensure(!kembar, `Klien "${name}" udah ada di daftar klien. Pakai data yang udah ada.`);
 
     const inserted = await db.insert(clients).values({
       name,

@@ -9,6 +9,7 @@ import { requireRole } from "@/lib/auth";
 import { createNotification } from "@/lib/notifications";
 import { getClientPoItems } from "@/lib/po";
 import { getAppSettings } from "@/lib/settings";
+import { cekSisaKirimPo } from "@/lib/cegah-dobel";
 
 // Bikin surat jalan dari PO klien. Jumlah per barang gak boleh lebih dari sisa yang belum dikirim.
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -63,6 +64,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       await tx.insert(deliveryOrderItems).values(
         baris.map((b) => ({ deliveryOrderId: sj.id, clientPoItemId: b.itemId, description: b.description, qty: b.qty, unit: b.unit, serialNumber: b.serialNumber })),
       );
+      // Dicek ulang setelah ditulis: dua surat jalan yang disimpan bareng gak bisa lewat sisa barang.
+      await cekSisaKirimPo(tx, poId);
       return sj.id;
     });
 

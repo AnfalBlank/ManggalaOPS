@@ -85,6 +85,7 @@ export function PaymentRowActions({ row, clients, invoices, paymentAccounts = []
   const [paymentMethod, setPaymentMethod] = useState(row.paymentMethod ?? "");
   const [paymentAccountCode, setPaymentAccountCode] = useState(row.paymentAccountCode ?? paymentAccounts[0]?.code ?? "1002");
   const [referenceCode, setReferenceCode] = useState(row.referenceCode ?? "");
+  const [menyimpan, setMenyimpan] = useState(false);
   const filteredInvoices = invoices.filter((invoice) => !clientId || String(invoice.clientId ?? "") === clientId);
 
   return (
@@ -120,7 +121,9 @@ export function PaymentRowActions({ row, clients, invoices, paymentAccounts = []
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Batal</Button>
-            <Button onClick={async () => {
+            <Button disabled={menyimpan} onClick={async () => {
+              if (menyimpan) return;
+              setMenyimpan(true);
               try {
                 await requestJson(`/api/payments/${row.id}`, "PATCH", { clientId, invoiceId, amount, paymentMethod, paymentAccountCode, referenceCode });
                 toast.success("Pembayaran diperbarui");
@@ -128,8 +131,10 @@ export function PaymentRowActions({ row, clients, invoices, paymentAccounts = []
                 router.refresh();
               } catch (error) {
                 toast.error(error instanceof Error ? error.message : "Gagal menyimpan pembayaran");
+              } finally {
+                setMenyimpan(false);
               }
-            }}>Simpan</Button>
+            }}>{menyimpan ? "Menyimpan…" : "Simpan"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

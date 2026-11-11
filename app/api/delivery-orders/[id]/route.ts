@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { deliveryOrderItems, deliveryOrders } from "@/db/schema";
+import { clientPos, deliveryOrderItems, deliveryOrders } from "@/db/schema";
 import { ensure, ensurePositiveInt, nullableTrim, toErrorResponse, trimString } from "@/lib/api-helpers";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
@@ -22,6 +22,21 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       notes?: string | null;
     }>;
     ensure(items.length > 0, "Minimal satu item barang");
+
+    const sj = await db.query.deliveryOrders.findFirst({ where: eq(deliveryOrders.id, deliveryId) });
+    ensure(sj, "Surat jalan tidak ditemukan");
+    // Surat jalan dari PO: barang & jumlahnya nyambung ke sisa PO, jadi gak boleh diganti di sini (dulu sambungannya
+    // ilang pas disimpan, sisa PO jadi salah). Yang boleh diubah: kepala surat, no. seri, catatan.
+    const barisLama = sj.clientPoId ? await db.select().from(deliveryOrderItems).where(eq(deliveryOrderItems.deliveryOrderId, deliveryId)).orderBy(asc(deliveryOrderItems.id)) : [];
+    const dariPo = barisLama.some((b) => b.clientPoItemId);
+    if (dariPo) {
+      const sama =
+        barisLama.length === items.length &&
+        barisLama.every((b, i) => b.description.trim() === trimString(items[i].description, 1000) && b.qty === Math.max(1, Number(items[i].qty ?? 0) || 1));
+      ensure(sama, "Barang & jumlah di surat jalan dari PO gak bisa diubah di sini. Ubah status jadi Batal, lalu bikin surat jalan baru dari halaman PO.");
+      const po = await db.query.clientPos.findFirst({ where: eq(clientPos.id, sj.clientPoId!) });
+      ensure(!po || po.clientId === ensurePositiveInt(body.clientId, "clientId"), "Surat jalan ini nyambung ke PO klien, kliennya gak bisa diganti");
+    }
 
     await db.transaction(async (tx) => {
       await tx.update(deliveryOrders).set({
@@ -46,6 +61,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         status: trimString(body.status, 50) || "Draft",
       }).where(eq(deliveryOrders.id, deliveryId));
 
+      if (dariPo) {
+        for (const [i, b] of barisLama.entries()) {
+          await tx.update(deliveryOrderItems).set({ serialNumber: nullableTrim(items[i].serialNumber, 200), notes: nullableTrim(items[i].notes, 500), unit: trimString(items[i].unit ?? "", 50) || b.unit || "Unit" }).where(eq(deliveryOrderItems.id, b.id));
+        }
+        return;
+      }
       await tx.delete(deliveryOrderItems).where(eq(deliveryOrderItems.deliveryOrderId, deliveryId));
       await tx.insert(deliveryOrderItems).values(items.map((item) => ({
         deliveryOrderId: deliveryId,

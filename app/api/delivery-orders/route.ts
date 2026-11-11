@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { deliveryOrderItems, deliveryOrders, invoiceItems, invoices, quotationItems, quotations } from "@/db/schema";
+import { clientPos, deliveryOrderItems, deliveryOrders, invoiceItems, invoices, quotationItems, quotations } from "@/db/schema";
 import { ensure, ensurePositiveInt, nullableTrim, toErrorResponse, trimString } from "@/lib/api-helpers";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
@@ -37,6 +37,15 @@ export async function POST(request: NextRequest) {
     const invoiceId = body.invoiceId ? ensurePositiveInt(body.invoiceId, "invoiceId") : null;
     const quotationId = body.quotationId ? ensurePositiveInt(body.quotationId, "quotationId") : null;
     const date = body.date ? new Date(body.date) : new Date();
+    // Barang yang punya PO klien dikirim lewat halaman PO (biar sisa barang kehitung), bukan form bebas ini.
+    if (invoiceId) {
+      const inv = await db.query.invoices.findFirst({ where: eq(invoices.id, invoiceId) });
+      ensure(!inv?.clientPoId, "Tagihan ini punya PO klien. Bikin surat jalan dari halaman PO biar sisa barang kehitung.");
+    }
+    if (quotationId) {
+      const po = await db.query.clientPos.findFirst({ where: eq(clientPos.quotationId, quotationId) });
+      ensure(!po, `Penawaran ini udah punya PO ${po?.poNumber ?? ""}. Bikin surat jalan dari halaman PO biar sisa barang kehitung.`);
+    }
 
     const newId = await db.transaction(async (tx) => {
       const inserted = await tx.insert(deliveryOrders).values({

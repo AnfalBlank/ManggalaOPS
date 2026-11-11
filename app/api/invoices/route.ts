@@ -11,6 +11,7 @@ import { getInvoices } from "@/lib/data";
 import { parseMoneyInput } from "@/lib/money";
 import { createNotification } from "@/lib/notifications";
 import { computeOutputTax, normalizeTaxPercent } from "@/lib/output-tax";
+import { cekTotalTagihanPo } from "@/lib/cegah-dobel";
 
 export async function GET() {
   try {
@@ -93,6 +94,9 @@ export async function POST(request: NextRequest) {
         amount: parseMoneyInput(item.amount),
       })));
 
+      // Dicek setelah ditulis (masih di transaksi) biar dua tagihan yang disimpan bareng gak lolos dua-duanya.
+      if (clientPoId) await cekTotalTagihanPo(tx, clientPoId);
+
       return newId;
     });
 
@@ -102,6 +106,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, data: await getInvoices() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to create invoice");
+    return toErrorResponse(error, "Gagal membuat tagihan");
   }
 }

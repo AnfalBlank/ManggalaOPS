@@ -10,6 +10,7 @@ import { getPayments } from "@/lib/data";
 import { parseMoneyInput } from "@/lib/money";
 import { createNotification } from "@/lib/notifications";
 import { ensurePaymentMatchesInvoice } from "@/lib/validators";
+import { cekBayarTagihan } from "@/lib/cegah-dobel";
 
 export async function GET() {
   try {
@@ -35,15 +36,20 @@ export async function POST(request: NextRequest) {
 
     await ensurePaymentMatchesInvoice({ invoiceId, clientId, amount });
 
-    const inserted = await db.insert(payments).values({
-      invoiceId,
-      clientId,
-      amount,
-      paymentMethod,
-      paymentAccountCode,
-      date: new Date(),
-      referenceCode,
-    }).returning({ id: payments.id });
+    // Ditulis dulu lalu dicek di transaksi yang sama: dua pembayaran yang disimpan bareng gak bisa lewat total tagihan.
+    const inserted = await db.transaction(async (tx) => {
+      const rows = await tx.insert(payments).values({
+        invoiceId,
+        clientId,
+        amount,
+        paymentMethod,
+        paymentAccountCode,
+        date: new Date(),
+        referenceCode,
+      }).returning({ id: payments.id });
+      await cekBayarTagihan(tx, invoiceId);
+      return rows;
+    });
 
     if (inserted[0]?.id) {
       await upsertPaymentJournal(inserted[0].id);
@@ -53,6 +59,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, data: await getPayments() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to record payment");
+    return toErrorResponse(error, "Gagal mencatat pembayaran");
   }
 }

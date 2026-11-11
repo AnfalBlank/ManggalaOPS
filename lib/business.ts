@@ -1,4 +1,4 @@
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import {
@@ -40,6 +40,20 @@ export async function acceptQuotationAndCreateProject(quotationId: number) {
       .returning({ id: projects.id });
 
     projectId = insertedProject[0]?.id ?? null;
+
+    // Dua orang nyatet PO/terima penawaran yang sama barengan: cuma satu proyek yang dipakai, yang kebikin dobel dibuang.
+    if (projectId) {
+      const dipasang = await db
+        .update(quotations)
+        .set({ projectId })
+        .where(and(eq(quotations.id, quotationId), isNull(quotations.projectId)))
+        .returning({ id: quotations.id });
+      if (dipasang.length === 0) {
+        await db.delete(projects).where(eq(projects.id, projectId));
+        const terbaru = await db.query.quotations.findFirst({ where: eq(quotations.id, quotationId) });
+        projectId = terbaru?.projectId ?? null;
+      }
+    }
   }
 
   await db

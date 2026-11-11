@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { invoiceItems, invoices } from "@/db/schema";
+import { clientPos, invoiceItems, invoices } from "@/db/schema";
 import { ensure, ensurePositiveInt, nullableTrim, toErrorResponse, trimString } from "@/lib/api-helpers";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
@@ -11,6 +11,7 @@ import { getInvoices } from "@/lib/data";
 import { parseMoneyInput } from "@/lib/money";
 import { computeOutputTax, normalizeTaxPercent } from "@/lib/output-tax";
 import { ensureInvoiceCanBeDeleted, ensureInvoiceCanBeUpdated } from "@/lib/validators";
+import { cekTotalTagihanPo } from "@/lib/cegah-dobel";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -24,12 +25,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const { tax, total } = computeOutputTax(subtotal, normalizeTaxPercent(body.taxPercent, 11));
 
     await ensureInvoiceCanBeUpdated(invoiceId, total);
+    const lama = await db.query.invoices.findFirst({ where: eq(invoices.id, invoiceId) });
+    ensure(lama, "Tagihan tidak ditemukan");
+    const clientId = ensurePositiveInt(body.clientId, "clientId");
+    if (lama.clientPoId) {
+      const po = await db.query.clientPos.findFirst({ where: eq(clientPos.id, lama.clientPoId) });
+      ensure(!po || po.clientId === clientId, "Tagihan ini nyambung ke PO klien, kliennya gak bisa diganti");
+    }
 
     await db.transaction(async (tx) => {
       await tx
         .update(invoices)
         .set({
-          clientId: ensurePositiveInt(body.clientId, "clientId"),
+          clientId,
           dueDate: body.dueDate ? new Date(body.dueDate) : null,
           paymentMethod: trimString(body.paymentMethod, 50) || "CBD",
           attachment: nullableTrim(body.attachment, 500),
@@ -59,13 +67,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           amount: parseMoneyInput(item.amount),
         })));
       }
+      if (lama.clientPoId) await cekTotalTagihanPo(tx, lama.clientPoId);
     });
 
     await upsertInvoiceJournal(invoiceId);
     await audit({ userId: user.id, action: "invoice.update", entity: "invoice", entityId: invoiceId, payload: { total } });
     return NextResponse.json({ ok: true, data: await getInvoices() });
   } catch (error) {
-    return toErrorResponse(error, "Failed to update invoice");
+    return toErrorResponse(error, "Gagal menyimpan tagihan");
   }
 }
 
