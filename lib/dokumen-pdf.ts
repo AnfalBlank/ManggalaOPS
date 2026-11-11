@@ -37,6 +37,16 @@ export function tampilkanPdf(doc: jsPDF, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 5 * 60 * 1000);
 }
 
+// Buka file upload (nota/PO klien) di panel yang sama. URL server, bukan blob.
+export function tampilkanBerkas(url: string, filename: string) {
+  const alamat = url.replace(/^\/uploads\//, "/api/uploads/");
+  if (panelTerpasang) {
+    kirimKePanel({ status: "siap", url: alamat, filename });
+    return;
+  }
+  window.open(alamat, "_blank");
+}
+
 export type Kop = {
   companyName?: string | null;
   companyEmail?: string | null;

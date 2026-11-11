@@ -30,7 +30,7 @@ export async function upsertExpenseJournal(expenseId: number) {
 
   await db.delete(journalEntries).where(eq(journalEntries.journalId, journalId));
 
-  const expenseAccountCode = expense.projectId ? mapping.projectExpense : mapping.operationalExpense;
+  const expenseAccountCode = expense.projectId || expense.clientPoId ? mapping.projectExpense : mapping.operationalExpense;
   const journalRows = [
     { journalId, accountCode: expenseAccountCode, debit: expense.baseAmount ?? expense.amount, credit: 0 },
   ];

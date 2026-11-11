@@ -12,6 +12,13 @@ function pakaiPenampilBawaan() {
   return !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 }
 
+// URL blob (PDF bikinan browser) dibuang pas panel ditutup; URL file server dibiarin.
+function buang(url: string) {
+  if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+}
+
+const isGambar = (nama: string) => /\.(jpe?g|png|webp)$/i.test(nama);
+
 export function PanelPdf() {
   const [open, setOpen] = useState(false);
   const [memuat, setMemuat] = useState(false);
@@ -31,7 +38,7 @@ export function PanelPdf() {
         setMemuat(false);
         if (!urlLama.current) setOpen(false);
       } else {
-        if (urlLama.current && urlLama.current !== pesan.url) URL.revokeObjectURL(urlLama.current);
+        if (urlLama.current && urlLama.current !== pesan.url) buang(urlLama.current);
         urlLama.current = pesan.url;
         setBerkas({ url: pesan.url, filename: pesan.filename });
         setMemuat(false);
@@ -51,7 +58,7 @@ export function PanelPdf() {
       setMemuat(false);
       // Kasih waktu animasi tutup sebelum URL dibuang.
       setTimeout(() => {
-        if (urlLama.current) URL.revokeObjectURL(urlLama.current);
+        if (urlLama.current) buang(urlLama.current);
         urlLama.current = null;
         setBerkas(null);
       }, 400);
@@ -69,7 +76,7 @@ export function PanelPdf() {
           <FileText className="size-5 shrink-0 text-primary" />
           <div className="min-w-0 flex-1">
             <SheetTitle className="truncate text-base">{berkas?.filename ?? "Menyiapkan dokumen…"}</SheetTitle>
-            <SheetDescription className="sr-only">Pratinjau dokumen PDF</SheetDescription>
+            <SheetDescription className="sr-only">Pratinjau dokumen</SheetDescription>
           </div>
           {berkas ? (
             <>
@@ -100,6 +107,11 @@ export function PanelPdf() {
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
               <Loader2 className="size-6 animate-spin" />
               Menyiapkan dokumen…
+            </div>
+          ) : isGambar(berkas.url) ? (
+            <div className="absolute inset-0 overflow-auto p-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={berkas.url} alt={berkas.filename} className="mx-auto h-auto max-w-full rounded-md bg-white shadow-sm" />
             </div>
           ) : bisaIframe ? (
             <iframe key={berkas.url} src={berkas.url} title={berkas.filename} className="absolute inset-0 h-full w-full border-0 bg-white" />

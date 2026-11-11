@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CreditCard } from "lucide-react";
 
-import { ExpenseRowActions } from "@/components/forms/expense-dialogs";
+import { ExpenseRowActions, LihatNota, type PoPilihan, type PoSupplierPilihan } from "@/components/forms/expense-dialogs";
 import { TableFilterBar } from "@/components/filters/table-filter-bar";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -17,7 +17,7 @@ const expenseTypeOptions = [
   ...expenseCategoryOptions.map((item) => ({ label: labelKategori(item), value: item })),
 ];
 
-type ExpenseRow = { id: number; date: Date; category: string; description: string; amount: number; taxMode?: string | null; taxPercent?: number | null; taxAmount?: number | null; baseAmount?: number | null; status: string | null; projectId: number | null; paymentAccountCode?: string | null; paymentAccountName?: string | null };
+type ExpenseRow = { id: number; date: Date; category: string; description: string; amount: number; taxMode?: string | null; taxPercent?: number | null; taxAmount?: number | null; baseAmount?: number | null; status: string | null; projectId: number | null; paymentAccountCode?: string | null; paymentAccountName?: string | null; clientPoId?: number | null; supplierPoId?: number | null; receiptUrl?: string | null };
 type ProjectOption = { id: number; name: string; clientId?: number; clientName?: string };
 type PaymentAccount = { code: string; name: string; balance: number };
 
@@ -29,11 +29,15 @@ export function FinanceOverview({
   recentExpenses,
   paymentAccounts = [],
   projects = [],
+  poKlien = [],
+  poSupplier = [],
   filters,
 }: {
   recentExpenses: ExpenseRow[];
   paymentAccounts?: PaymentAccount[];
   projects?: ProjectOption[];
+  poKlien?: PoPilihan[];
+  poSupplier?: PoSupplierPilihan[];
   filters?: { initialQuery?: string; initialPeriod?: FilterPeriod; initialType?: string };
 }) {
   const [query, setQuery] = useState(filters?.initialQuery ?? "");
@@ -47,14 +51,16 @@ export function FinanceOverview({
     setType(filters?.initialType ?? "all");
   }, [filters?.initialPeriod, filters?.initialQuery, filters?.initialType]);
 
+  const nomorPo = useMemo(() => new Map(poKlien.map((po) => [po.id, po.poNumber])), [poKlien]);
   const filteredExpenses = useMemo(
     () => recentExpenses.filter((expense) => {
-      const matchesQuery = `${expense.category} ${labelKategori(expense.category)} ${expense.description} ${labelStatus(expense.status)}`.toLowerCase().includes(query.toLowerCase());
+      const po = expense.clientPoId ? nomorPo.get(expense.clientPoId) ?? "" : "";
+      const matchesQuery = `${expense.category} ${labelKategori(expense.category)} ${expense.description} ${labelStatus(expense.status)} ${po}`.toLowerCase().includes(query.toLowerCase());
       const matchesPeriod = isWithinPeriod(expense.date, period, range);
       const matchesType = type === "all" || expense.category === type;
       return matchesQuery && matchesPeriod && matchesType;
     }),
-    [period, query, recentExpenses, type, range],
+    [period, query, recentExpenses, type, range, nomorPo],
   );
   const totalTersaring = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
 
@@ -87,6 +93,7 @@ export function FinanceOverview({
                 <TableHead className="text-xs uppercase tracking-wider">Tanggal</TableHead>
                 <TableHead className="text-xs uppercase tracking-wider">Kategori</TableHead>
                 <TableHead className="text-xs uppercase tracking-wider">Keterangan</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider">PO / nota</TableHead>
                 <TableHead className="text-right text-xs uppercase tracking-wider">DPP</TableHead>
                 <TableHead className="text-right text-xs uppercase tracking-wider">PPN</TableHead>
                 <TableHead className="text-right text-xs uppercase tracking-wider">Total (Rp)</TableHead>
@@ -98,7 +105,7 @@ export function FinanceOverview({
             <TableBody>
               {filteredExpenses.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="py-10 text-center text-sm text-muted-foreground">Belum ada pengeluaran yang cocok dengan filter.</TableCell>
+                  <TableCell colSpan={11} className="py-10 text-center text-sm text-muted-foreground">Belum ada pengeluaran yang cocok dengan filter.</TableCell>
                 </TableRow>
               ) : filteredExpenses.map((expense) => (
                 <TableRow key={expense.id} className="group hover:bg-muted/30 transition-colors border-b last:border-0">
@@ -106,12 +113,18 @@ export function FinanceOverview({
                   <TableCell className="text-sm py-4">{tanggal(expense.date)}</TableCell>
                   <TableCell className="py-4 font-medium text-slate-700"><div className="flex items-center gap-2"><CreditCard className="size-4 text-muted-foreground" />{labelKategori(expense.category)}</div></TableCell>
                   <TableCell className="text-sm py-4 max-w-[250px] truncate" title={expense.description}>{expense.description}</TableCell>
+                  <TableCell className="text-sm py-4">
+                    <div className="flex flex-col items-start gap-0.5">
+                      {expense.clientPoId ? <a href={`/po/${expense.clientPoId}`} className="font-medium text-primary underline">PO {nomorPo.get(expense.clientPoId) ?? expense.clientPoId}</a> : <span className="text-muted-foreground">-</span>}
+                      {expense.receiptUrl ? <LihatNota url={expense.receiptUrl} kode={`EXP-${String(expense.id).padStart(4, "0")}`} /> : null}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-right py-4 text-foreground">{formatCurrency(expense.baseAmount ?? expense.amount)}</TableCell>
                   <TableCell className="text-right py-4 text-foreground">{formatCurrency(expense.taxAmount ?? 0)}</TableCell>
                   <TableCell className="text-right font-medium py-4 text-foreground">{formatCurrency(expense.amount)}</TableCell>
                   <TableCell className="py-4 text-sm">{expense.paymentAccountName ?? expense.paymentAccountCode ?? "-"}</TableCell>
                   <TableCell className="text-center py-4"><Badge>{labelStatus(expense.status)}</Badge></TableCell>
-                  <TableCell className="text-right py-4"><ExpenseRowActions expense={expense} paymentAccounts={paymentAccounts} projects={projects} /></TableCell>
+                  <TableCell className="text-right py-4"><ExpenseRowActions expense={expense} paymentAccounts={paymentAccounts} projects={projects} poKlien={poKlien} poSupplier={poSupplier} /></TableCell>
                 </TableRow>
               ))}
             </TableBody>

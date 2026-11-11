@@ -25,7 +25,7 @@ export default async function FinancePage({ searchParams }: { searchParams?: Pro
             </div>
             <div className="flex flex-wrap gap-2">
               <FinanceExportButton rows={data.recentExpenses.map((expense) => ({ date: new Date(expense.date).toISOString().slice(0, 10), category: labelKategori(expense.category), description: expense.description, amount: expense.amount, status: labelStatus(expense.status) }))} />
-              <CreateExpenseDialog paymentAccounts={data.paymentAccounts} projects={data.projects} />
+              <CreateExpenseDialog paymentAccounts={data.paymentAccounts} projects={data.projects} poKlien={data.poKlien} poSupplier={data.poSupplier} />
             </div>
           </div>
 
@@ -35,6 +35,8 @@ export default async function FinancePage({ searchParams }: { searchParams?: Pro
             recentExpenses={data.recentExpenses}
             paymentAccounts={data.paymentAccounts}
             projects={data.projects}
+            poKlien={data.poKlien}
+            poSupplier={data.poSupplier}
             filters={{ initialQuery: params.q, initialPeriod: (params.period as "all" | "30d" | "month" | "year") ?? "all", initialType: params.type ?? "all" }}
           />
         </RoleGuard>

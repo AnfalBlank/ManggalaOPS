@@ -2,7 +2,8 @@ import {
   sqliteTable,
   text,
   integer,
-  real
+  real,
+  type AnySQLiteColumn
 } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable('users', {
@@ -235,6 +236,9 @@ export const expenses = sqliteTable('expenses', {
   status: text('status').default('Pending'),
   projectId: integer('project_id').references(() => projects.id),
   paymentAccountCode: text('payment_account_code').references(() => accounts.code),
+  clientPoId: integer('client_po_id').references((): AnySQLiteColumn => clientPos.id),
+  supplierPoId: integer('supplier_po_id').references((): AnySQLiteColumn => supplierPos.id),
+  receiptUrl: text('receipt_url'),
 });
 
 // 4. Accounting (Double-Entry)

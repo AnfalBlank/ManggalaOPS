@@ -3,10 +3,11 @@ import { desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { expenses, journalEntries } from "@/db/schema";
-import { ensure, ensurePositiveInt, toErrorResponse, trimString } from "@/lib/api-helpers";
+import { ensure, toErrorResponse, trimString } from "@/lib/api-helpers";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
 import { computeExpenseTax, normalizeExpenseTaxMode, normalizeExpenseTaxPercent } from "@/lib/expense-tax";
+import { BelanjaDobelError, bacaTautanBelanja, cekBelanjaDobel } from "@/lib/belanja";
 import { upsertExpenseJournal } from "@/lib/expense-journal";
 import { parseMoneyInput } from "@/lib/money";
 import { labelKategori } from "@/lib/expense-categories";
@@ -51,10 +52,15 @@ export async function POST(request: NextRequest) {
     const description = trimString(body.description, 500);
     ensure(description.length > 0, "Keterangan pengeluaran wajib diisi");
 
+    const tautan = await bacaTautanBelanja(body);
+    const date = body.date ? new Date(body.date) : new Date();
+    ensure(!Number.isNaN(date.getTime()), "Tanggal gak valid");
+    await cekBelanjaDobel({ date, amount: computedTax.totalAmount, clientPoId: tautan.clientPoId, description, receiptUrl: tautan.receiptUrl, konfirmasi: body.konfirmasiDobel === true });
+
     await ensureSufficientBalance(paymentAccountCode, computedTax.totalAmount);
 
     const inserted = await db.insert(expenses).values({
-      date: body.date ? new Date(body.date) : new Date(),
+      date,
       category,
       description,
       amount: computedTax.totalAmount,
@@ -63,19 +69,23 @@ export async function POST(request: NextRequest) {
       taxAmount: computedTax.taxAmount,
       baseAmount: computedTax.baseAmount,
       status: trimString(body.status, 50) || "Approved",
-      projectId: body.projectId ? ensurePositiveInt(body.projectId, "projectId") : null,
+      projectId: tautan.projectId,
+      clientPoId: tautan.clientPoId,
+      supplierPoId: tautan.supplierPoId,
+      receiptUrl: tautan.receiptUrl,
       paymentAccountCode,
     }).returning({ id: expenses.id });
 
     if (inserted[0]?.id) {
       await upsertExpenseJournal(inserted[0].id);
       await createNotification({ title: "Pengeluaran baru", message: `${labelKategori(category)} sebesar Rp ${computedTax.totalAmount.toLocaleString('id-ID')} dicatat.`, type: "warning", targetRole: "finance" });
-      await audit({ userId: user.id, action: "expense.create", entity: "expense", entityId: inserted[0].id, payload: { category, amount: computedTax.totalAmount } });
+      await audit({ userId: user.id, action: "expense.create", entity: "expense", entityId: inserted[0].id, payload: { category, amount: computedTax.totalAmount, clientPoId: tautan.clientPoId, supplierPoId: tautan.supplierPoId } });
     }
 
     const data = await db.select().from(expenses).orderBy(desc(expenses.id));
     return NextResponse.json({ ok: true, data });
   } catch (error) {
-    return toErrorResponse(error, "Failed to create expense");
+    if (error instanceof BelanjaDobelError) return NextResponse.json({ error: error.message, perluKonfirmasi: true }, { status: 409 });
+    return toErrorResponse(error, "Gagal mencatat pengeluaran");
   }
 }

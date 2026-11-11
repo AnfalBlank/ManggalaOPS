@@ -7,6 +7,7 @@ import { ensure, ensurePositiveInt, toErrorResponse, trimString } from "@/lib/ap
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
 import { computeExpenseTax, normalizeExpenseTaxMode, normalizeExpenseTaxPercent } from "@/lib/expense-tax";
+import { BelanjaDobelError, bacaTautanBelanja, cekBelanjaDobel } from "@/lib/belanja";
 import { deleteExpenseJournal, upsertExpenseJournal } from "@/lib/expense-journal";
 import { parseMoneyInput } from "@/lib/money";
 import { getAccountMapping } from "@/lib/account-mapping";
@@ -40,19 +41,31 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const mapping = await getAccountMapping();
     const paymentAccountCode = trimString(body.paymentAccountCode, 50) || mapping.bankMandiri;
 
+    const category = trimString(body.category, 200);
+    ensure(category.length > 0, "Kategori pengeluaran wajib diisi");
+    const description = trimString(body.description, 500);
+    ensure(description.length > 0, "Keterangan pengeluaran wajib diisi");
+    const tautan = await bacaTautanBelanja(body);
+    const date = body.date ? new Date(body.date) : new Date();
+    ensure(!Number.isNaN(date.getTime()), "Tanggal gak valid");
+    await cekBelanjaDobel({ date, amount: computedTax.totalAmount, clientPoId: tautan.clientPoId, description, receiptUrl: tautan.receiptUrl, kecualiId: expenseId, konfirmasi: body.konfirmasiDobel === true });
+
     await ensureSufficientBalance(paymentAccountCode, computedTax.totalAmount, expenseId);
 
     await db.update(expenses).set({
-      date: body.date ? new Date(body.date) : new Date(),
-      category: trimString(body.category, 200),
-      description: trimString(body.description, 500),
+      date,
+      category,
+      description,
       amount: computedTax.totalAmount,
       taxMode,
       taxPercent,
       taxAmount: computedTax.taxAmount,
       baseAmount: computedTax.baseAmount,
       status: trimString(body.status, 50) || "Approved",
-      projectId: body.projectId ? ensurePositiveInt(body.projectId, "projectId") : null,
+      projectId: tautan.projectId,
+      clientPoId: tautan.clientPoId,
+      supplierPoId: tautan.supplierPoId,
+      receiptUrl: tautan.receiptUrl,
       paymentAccountCode,
     }).where(eq(expenses.id, expenseId));
 
@@ -61,7 +74,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const data = await db.select().from(expenses).orderBy(desc(expenses.id));
     return NextResponse.json({ ok: true, data });
   } catch (error) {
-    return toErrorResponse(error, "Failed to update expense");
+    if (error instanceof BelanjaDobelError) return NextResponse.json({ error: error.message, perluKonfirmasi: true }, { status: 409 });
+    return toErrorResponse(error, "Gagal menyimpan pengeluaran");
   }
 }
 
