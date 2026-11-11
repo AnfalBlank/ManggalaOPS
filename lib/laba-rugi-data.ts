@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { clientPos, clients, expenses, invoices, payments, projects, quotations } from "@/db/schema";
 import { formatDocumentNumber } from "@/lib/format";
 import type { DataLaba } from "@/lib/laba-rugi";
+import { namaProyek } from "@/lib/label-status";
 
 const iso = (d: Date | null | undefined) => (d ? new Date(d).toISOString() : "");
 
@@ -31,7 +32,7 @@ export async function getDataLaba(): Promise<DataLaba> {
       const persen = p.qSubtotal ? (p.qTax ?? 0) / p.qSubtotal : 0;
       return { id: p.id, poNumber: p.poNumber, clientName: p.clientName, projectId: p.projectId, nilai, nilaiDpp: Math.round(nilai / (1 + persen)) };
     }),
-    proyek: proyek.map((p) => ({ id: p.id, code: formatDocumentNumber("PRJ", p.id), name: p.name, clientName: p.clientName ?? "-" })),
+    proyek: proyek.map((p) => ({ id: p.id, code: formatDocumentNumber("PRJ", p.id), name: namaProyek(p.name), clientName: p.clientName ?? "-" })),
   };
 }
 
