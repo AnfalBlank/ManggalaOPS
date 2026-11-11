@@ -8,6 +8,7 @@ import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
 import { getDeliveryOrders } from "@/lib/data-delivery";
 import { createNotification } from "@/lib/notifications";
+import { ambilNomor } from "@/lib/nomor-dokumen";
 
 export async function GET() {
   try {
@@ -48,7 +49,9 @@ export async function POST(request: NextRequest) {
     }
 
     const newId = await db.transaction(async (tx) => {
+      const nomor = await ambilNomor(tx, "SJ", date);
       const inserted = await tx.insert(deliveryOrders).values({
+        nomor,
         clientId,
         projectId,
         invoiceId,

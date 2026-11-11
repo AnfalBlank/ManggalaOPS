@@ -8,6 +8,7 @@ import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
 import { getDeliveryOrders } from "@/lib/data-delivery";
 import { getAppSettings } from "@/lib/settings";
+import { ambilNomor, nomorDokumen } from "@/lib/nomor-dokumen";
 
 /**
  * Auto-generate a delivery order from an existing invoice. The created
@@ -30,7 +31,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ invoi
     }
     const udahAda = await db.query.deliveryOrders.findFirst({ where: and(eq(deliveryOrders.invoiceId, invoiceId), ne(deliveryOrders.status, "Cancelled")) });
     if (udahAda) {
-      return NextResponse.json({ error: `Tagihan ini udah punya surat jalan SJ-${String(udahAda.id).padStart(4, "0")}. Pakai yang itu, atau batalkan dulu kalau mau bikin ulang.` }, { status: 400 });
+      return NextResponse.json({ error: `Tagihan ini udah punya surat jalan ${nomorDokumen("SJ", udahAda.id, udahAda.nomor, udahAda.date)}. Pakai yang itu, atau batalkan dulu kalau mau bikin ulang.` }, { status: 400 });
     }
 
     const items = await db.select().from(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
@@ -42,12 +43,15 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ invoi
     const settings = await getAppSettings();
 
     const newId = await db.transaction(async (tx) => {
+      const tanggal = new Date();
+      const nomor = await ambilNomor(tx, "SJ", tanggal);
       const inserted = await tx.insert(deliveryOrders).values({
+        nomor,
         clientId: invoice.clientId,
         projectId: invoice.projectId,
         invoiceId: invoice.id,
         quotationId: invoice.quotationId,
-        date: new Date(),
+        date: tanggal,
         vehicleNumber: null,
         driverName: null,
         shippingMethod: "Direct Delivery",

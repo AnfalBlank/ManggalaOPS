@@ -7,6 +7,7 @@ import { ensure, ensurePositiveInt, nullableTrim, toErrorResponse, trimString } 
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
 import { getDeliveryOrders } from "@/lib/data-delivery";
+import { isiNomorKosong } from "@/lib/nomor-dokumen";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -39,6 +40,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     await db.transaction(async (tx) => {
+      // Surat jalan dari CRM versi lama yang belum punya nomor tersimpan dikunci dulu sebelum tanggalnya diubah.
+      await isiNomorKosong(tx, "SJ");
       await tx.update(deliveryOrders).set({
         clientId: ensurePositiveInt(body.clientId, "clientId"),
         projectId: body.projectId ? ensurePositiveInt(body.projectId, "projectId") : null,

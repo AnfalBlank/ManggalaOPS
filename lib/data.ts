@@ -14,6 +14,7 @@ import {
 } from "@/db/schema";
 import { toIsoString } from "@/lib/db-utils";
 import { formatDocumentNumber } from "@/lib/format";
+import { kodeId, nomorDokumen } from "@/lib/nomor-dokumen";
 import type {
   DashboardSummary,
   InvoiceListItem,
@@ -106,6 +107,7 @@ export async function getQuotations(): Promise<QuotationListItem[]> {
   const rows = await db
     .select({
       id: quotations.id,
+      nomor: quotations.nomor,
       clientId: quotations.clientId,
       clientName: clients.name,
       projectId: quotations.projectId,
@@ -152,7 +154,8 @@ export async function getQuotations(): Promise<QuotationListItem[]> {
 
   return rows.map((row) => ({
     id: row.id,
-    code: formatDocumentNumber("QUO", row.id),
+    code: nomorDokumen("SP", row.id, row.nomor, row.date),
+    kodeLama: kodeId("SP", row.id),
     clientId: row.clientId,
     clientName: row.clientName,
     projectId: row.projectId,
@@ -213,6 +216,7 @@ export async function getInvoices(): Promise<InvoiceListItem[]> {
   const rows = await db
     .select({
       id: invoices.id,
+      nomor: invoices.nomor,
       clientId: invoices.clientId,
       clientName: clients.name,
       clientPhone: clients.phone,
@@ -276,7 +280,8 @@ export async function getInvoices(): Promise<InvoiceListItem[]> {
 
     return {
       id: row.id,
-      code: formatDocumentNumber("INV", row.id),
+      code: nomorDokumen("INV", row.id, row.nomor, row.date),
+      kodeLama: kodeId("INV", row.id),
       clientId: row.clientId,
       clientName: row.clientName,
       clientPhone: row.clientPhone,
@@ -342,6 +347,9 @@ export async function getPayments(): Promise<PaymentListItem[]> {
   const rows = await db
     .select({
       id: payments.id,
+      nomor: payments.nomor,
+      invoiceNomor: invoices.nomor,
+      invoiceDate: invoices.date,
       invoiceId: payments.invoiceId,
       clientId: payments.clientId,
       clientName: clients.name,
@@ -353,13 +361,16 @@ export async function getPayments(): Promise<PaymentListItem[]> {
     })
     .from(payments)
     .innerJoin(clients, eq(payments.clientId, clients.id))
+    .leftJoin(invoices, eq(payments.invoiceId, invoices.id))
     .orderBy(desc(payments.id));
 
   return rows.map((row) => ({
     id: row.id,
-    code: formatDocumentNumber("PAY", row.id),
+    code: nomorDokumen("KW", row.id, row.nomor, row.date),
+    kodeLama: kodeId("KW", row.id),
     invoiceId: row.invoiceId,
-    invoiceCode: formatDocumentNumber("INV", row.invoiceId),
+    invoiceCode: nomorDokumen("INV", row.invoiceId, row.invoiceNomor, row.invoiceDate),
+    invoiceKodeLama: kodeId("INV", row.invoiceId),
     clientId: row.clientId,
     clientName: row.clientName,
     amount: row.amount,

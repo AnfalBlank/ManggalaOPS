@@ -3,6 +3,7 @@ import {
   text,
   integer,
   real,
+  primaryKey,
   type AnySQLiteColumn
 } from "drizzle-orm/sqlite-core";
 
@@ -140,6 +141,7 @@ export const projects = sqliteTable('projects', {
 // 2. Billing & Procurement
 export const quotations = sqliteTable('quotations', {
   id: integer('id').primaryKey({ autoIncrement: true }),
+  nomor: text('nomor').unique(), // nomor surat tersimpan (0025), dikunci pas dibuat
   clientId: integer('client_id').references(() => clients.id).notNull(),
   projectId: integer('project_id').references(() => projects.id),
   date: integer('date', { mode: 'timestamp' }).notNull(),
@@ -178,6 +180,7 @@ export const quotationItems = sqliteTable('quotation_items', {
 
 export const invoices = sqliteTable('invoices', {
   id: integer('id').primaryKey({ autoIncrement: true }),
+  nomor: text('nomor').unique(), // nomor surat tersimpan (0025), dikunci pas dibuat
   clientId: integer('client_id').references(() => clients.id).notNull(),
   projectId: integer('project_id').references(() => projects.id),
   quotationId: integer('quotation_id').references(() => quotations.id),
@@ -214,6 +217,7 @@ export const invoiceItems = sqliteTable('invoice_items', {
 // 3. Finance
 export const payments = sqliteTable('payments', {
   id: integer('id').primaryKey({ autoIncrement: true }),
+  nomor: text('nomor').unique(), // nomor surat tersimpan (0025), dikunci pas dibuat
   invoiceId: integer('invoice_id').references(() => invoices.id).notNull(),
   clientId: integer('client_id').references(() => clients.id).notNull(),
   amount: real('amount').notNull(),
@@ -267,6 +271,7 @@ export const journalEntries = sqliteTable('journal_entries', {
 // 4b. Delivery Orders (Surat Jalan)
 export const deliveryOrders = sqliteTable('delivery_orders', {
   id: integer('id').primaryKey({ autoIncrement: true }),
+  nomor: text('nomor').unique(), // nomor surat tersimpan (0025), dikunci pas dibuat
   clientId: integer('client_id').references(() => clients.id).notNull(),
   projectId: integer('project_id').references(() => projects.id),
   invoiceId: integer('invoice_id').references(() => invoices.id),
@@ -386,6 +391,7 @@ export const clientPoItems = sqliteTable('client_po_items', {
 
 export const supplierPos = sqliteTable('supplier_pos', {
   id: integer('id').primaryKey({ autoIncrement: true }),
+  nomor: text('nomor').unique(), // nomor surat tersimpan (0025), dikunci pas dibuat
   clientPoId: integer('client_po_id').references(() => clientPos.id).notNull(),
   supplierName: text('supplier_name').notNull(),
   supplierContact: text('supplier_contact'),
@@ -412,3 +418,10 @@ export const supplierPoItems = sqliteTable('supplier_po_items', {
   unitPrice: real('unit_price').notNull(),
   amount: real('amount').notNull(),
 });
+
+// Penghitung nomor dokumen per jenis (SP, INV, SJ, PO, KW) & tahun. Mulai 0001 tiap 1 Januari.
+export const nomorDokumen = sqliteTable('nomor_dokumen', {
+  jenis: text('jenis').notNull(),
+  tahun: integer('tahun').notNull(),
+  terakhir: integer('terakhir').notNull(),
+}, (t) => [primaryKey({ columns: [t.jenis, t.tahun] })]);

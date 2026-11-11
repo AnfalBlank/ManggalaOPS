@@ -11,6 +11,7 @@ import { parseMoneyInput } from "@/lib/money";
 import { createNotification } from "@/lib/notifications";
 import { getClientPoList } from "@/lib/po";
 import { cekNomorPoKlien } from "@/lib/cegah-dobel";
+import { cariNomor } from "@/lib/nomor-dokumen";
 
 export async function GET() {
   try {
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
       return po.id;
     });
 
-    await createNotification({ title: "PO klien masuk", message: `PO ${poNumber} dicatat untuk QUO-${String(quotationId).padStart(4, "0")}.`, type: "success", targetRole: "finance" });
+    await createNotification({ title: "PO klien masuk", message: `PO ${poNumber} dicatat untuk penawaran ${await cariNomor("SP", quotationId)}.`, type: "success", targetRole: "finance" });
     await audit({ userId: user.id, action: "client_po.create", entity: "client_po", entityId: poId, payload: { quotationId, poNumber, value } });
     return NextResponse.json({ ok: true, id: poId });
   } catch (error) {

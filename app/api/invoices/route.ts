@@ -12,6 +12,7 @@ import { parseMoneyInput } from "@/lib/money";
 import { createNotification } from "@/lib/notifications";
 import { computeOutputTax, normalizeTaxPercent } from "@/lib/output-tax";
 import { cekTotalTagihanPo } from "@/lib/cegah-dobel";
+import { ambilNomor } from "@/lib/nomor-dokumen";
 
 export async function GET() {
   try {
@@ -57,13 +58,17 @@ export async function POST(request: NextRequest) {
       ensure(po.clientId === clientId, "PO klien bukan milik client ini");
     }
 
-    const invoiceId = await db.transaction(async (tx) => {
+    const tanggal = body.date ? new Date(body.date) : new Date();
+    ensure(!Number.isNaN(tanggal.getTime()), "Tanggal tagihan gak valid");
+    const { invoiceId, nomor } = await db.transaction(async (tx) => {
+      const nomor = await ambilNomor(tx, "INV", tanggal);
       const inserted = await tx.insert(invoices).values({
+        nomor,
         clientId,
         projectId: body.projectId ? ensurePositiveInt(body.projectId, "projectId") : null,
         quotationId: body.quotationId ? ensurePositiveInt(body.quotationId, "quotationId") : null,
         clientPoId,
-        date: body.date ? new Date(body.date) : new Date(),
+        date: tanggal,
         dueDate,
         paymentMethod: trimString(body.paymentMethod, 50) || "CBD",
         attachment: nullableTrim(body.attachment, 500),
@@ -97,11 +102,11 @@ export async function POST(request: NextRequest) {
       // Dicek setelah ditulis (masih di transaksi) biar dua tagihan yang disimpan bareng gak lolos dua-duanya.
       if (clientPoId) await cekTotalTagihanPo(tx, clientPoId);
 
-      return newId;
+      return { invoiceId: newId, nomor };
     });
 
     await upsertInvoiceJournal(invoiceId);
-    await createNotification({ title: "Tagihan baru", message: `INV-${String(invoiceId).padStart(4, "0")} dibuat, total Rp ${total.toLocaleString('id-ID')}.`, type: "info", targetRole: "finance" });
+    await createNotification({ title: "Tagihan baru", message: `Tagihan ${nomor} dibuat, total Rp ${total.toLocaleString('id-ID')}.`, type: "info", targetRole: "finance" });
     await audit({ userId: user.id, action: "invoice.create", entity: "invoice", entityId: invoiceId, payload: { clientId, total, clientPoId } });
 
     return NextResponse.json({ ok: true, data: await getInvoices() });

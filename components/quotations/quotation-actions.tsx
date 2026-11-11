@@ -60,7 +60,7 @@ export function QuotationActionsTable({
 
   const filtered = useMemo(
     () => quotations.filter((quote) => {
-      const matchesQuery = `${quote.code} ${quote.clientName} ${quote.projectName ?? ""} ${quote.status} ${labelStatus(quote.status)}`.toLowerCase().includes(query.toLowerCase());
+      const matchesQuery = `${quote.code} ${quote.kodeLama ?? ""} ${quote.clientName} ${quote.projectName ?? ""} ${quote.status} ${labelStatus(quote.status)}`.toLowerCase().includes(query.toLowerCase());
       const matchesPeriod = isWithinPeriod(quote.date, period);
       const matchesType = type === "all" || quote.status === type;
       return matchesQuery && matchesPeriod && matchesType;

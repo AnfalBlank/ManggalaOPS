@@ -1,9 +1,12 @@
+import { alias } from "drizzle-orm/sqlite-core";
 import { desc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { clientPos, clients, deliveryOrderItems, deliveryOrders, invoices, projects } from "@/db/schema";
 import { toIsoString } from "@/lib/db-utils";
-import { formatDocumentNumber } from "@/lib/format";
+import { kodeId, nomorDokumen } from "@/lib/nomor-dokumen";
+
+const tagihan = alias(invoices, "tagihan");
 
 export type DeliveryOrderItemRow = {
   id: number;
@@ -17,6 +20,7 @@ export type DeliveryOrderItemRow = {
 export type DeliveryOrderListItem = {
   id: number;
   code: string;
+  kodeLama?: string;
   clientId: number;
   clientName: string;
   projectId: number | null;
@@ -48,6 +52,9 @@ export async function getDeliveryOrders(): Promise<DeliveryOrderListItem[]> {
   const rows = await db
     .select({
       id: deliveryOrders.id,
+      nomor: deliveryOrders.nomor,
+      invoiceNomor: tagihan.nomor,
+      invoiceDate: tagihan.date,
       clientId: deliveryOrders.clientId,
       clientName: clients.name,
       projectId: deliveryOrders.projectId,
@@ -76,19 +83,21 @@ export async function getDeliveryOrders(): Promise<DeliveryOrderListItem[]> {
     .innerJoin(clients, eq(deliveryOrders.clientId, clients.id))
     .leftJoin(projects, eq(deliveryOrders.projectId, projects.id))
     .leftJoin(clientPos, eq(deliveryOrders.clientPoId, clientPos.id))
+    .leftJoin(tagihan, eq(deliveryOrders.invoiceId, tagihan.id))
     .orderBy(desc(deliveryOrders.id));
 
   const itemRows = await db.select().from(deliveryOrderItems);
 
   return rows.map((row) => ({
     id: row.id,
-    code: formatDocumentNumber("SJ", row.id),
+    code: nomorDokumen("SJ", row.id, row.nomor, row.date),
+    kodeLama: kodeId("SJ", row.id),
     clientId: row.clientId,
     clientName: row.clientName,
     projectId: row.projectId,
     projectName: row.projectName,
     invoiceId: row.invoiceId,
-    invoiceCode: row.invoiceId ? formatDocumentNumber("INV", row.invoiceId) : null,
+    invoiceCode: row.invoiceId ? nomorDokumen("INV", row.invoiceId, row.invoiceNomor, row.invoiceDate) : null,
     quotationId: row.quotationId,
     clientPoId: row.clientPoId ?? null,
     poNumber: row.poNumber ?? null,

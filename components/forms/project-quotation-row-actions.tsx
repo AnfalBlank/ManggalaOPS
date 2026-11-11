@@ -27,6 +27,7 @@ type ProjectRow = {
 
 type QuotationRow = {
   id: number;
+  code: string;
   clientId: number;
   clientName?: string;
   projectId: number | null;
@@ -97,10 +98,10 @@ export function QuotationRowActions({ quotation, clients, projects }: { quotatio
   return (
     <div className="flex justify-end gap-2">
       <DetailDialog
-        title={`Detail penawaran QUO-${String(quotation.id).padStart(4, "0")}`}
+        title={`Detail penawaran ${quotation.code}`}
         description="Ringkasan data penawaran"
         rows={[
-          { label: "No. penawaran", value: `QUO-${String(quotation.id).padStart(4, "0")}` },
+          { label: "No. penawaran", value: `${quotation.code}` },
           { label: "Klien", value: quotation.clientName ?? "-" },
           { label: "Proyek", value: namaProyek(quotation.projectName) },
           { label: "Subtotal", value: formatCurrency(quotation.subtotal) },
@@ -113,7 +114,7 @@ export function QuotationRowActions({ quotation, clients, projects }: { quotatio
       <QuotationDialog clients={clients} projects={projects} quotation={quotation} />
       <ConfirmDialog
         trigger={<Button variant="outline" size="sm" className="text-destructive"><Trash2 className="size-4" /> Hapus</Button>}
-        title={`Hapus penawaran QUO-${String(quotation.id).padStart(4, "0")}?`}
+        title={`Hapus penawaran ${quotation.code}?`}
         description="Penawaran bakal dihapus permanen beserta semua barangnya."
         confirmText="Hapus"
         variant="destructive"

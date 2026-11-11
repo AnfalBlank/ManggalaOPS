@@ -2,7 +2,7 @@ import { asc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { accounts, clients, invoices, payments } from "@/db/schema";
-import { formatDocumentNumber } from "@/lib/format";
+import { nomorDokumen } from "@/lib/nomor-dokumen";
 
 export async function getClientOptions() {
   const rows = await db
@@ -35,6 +35,8 @@ export async function getInvoiceOptions() {
   const rows = await db
     .select({
       id: invoices.id,
+      nomor: invoices.nomor,
+      date: invoices.date,
       clientId: invoices.clientId,
       clientName: clients.name,
       total: invoices.total,
@@ -54,7 +56,7 @@ export async function getInvoiceOptions() {
     })
     .map((row) => ({
       id: row.id,
-      code: formatDocumentNumber("INV", row.id),
+      code: nomorDokumen("INV", row.id, row.nomor, row.date),
       clientId: row.clientId,
       clientName: row.clientName,
       total: Number(row.total ?? 0),

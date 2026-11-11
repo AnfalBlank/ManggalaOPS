@@ -49,7 +49,9 @@ const formatCurrency = (amount: number) =>
 
 const toRomanMonth = (m: number) => ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"][m - 1] || "I";
 
+// `id` = nomor surat tersimpan (0001/MUI/SP/…). Kode pendek lama (QUO-0079) masih dihitung pakai rumus lama.
 function buildLetterNumber(id: string, date: Date) {
+  if (id.includes("/")) return id;
   return `${id.replace(/\D/g, "") || "0001"}/MUI/SP/${toRomanMonth(date.getMonth() + 1)}/${date.getFullYear()}`;
 }
 

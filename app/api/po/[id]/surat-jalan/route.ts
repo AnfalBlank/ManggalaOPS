@@ -10,6 +10,7 @@ import { createNotification } from "@/lib/notifications";
 import { getClientPoItems } from "@/lib/po";
 import { getAppSettings } from "@/lib/settings";
 import { cekSisaKirimPo } from "@/lib/cegah-dobel";
+import { ambilNomor } from "@/lib/nomor-dokumen";
 
 // Bikin surat jalan dari PO klien. Jumlah per barang gak boleh lebih dari sisa yang belum dikirim.
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -37,15 +38,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     ensure(baris.length > 0, "Isi jumlah barang yang dikirim");
 
     const settings = await getAppSettings();
-    const sjId = await db.transaction(async (tx) => {
+    const tanggal = body.date ? new Date(body.date) : new Date();
+    ensure(!Number.isNaN(tanggal.getTime()), "Tanggal surat jalan gak valid");
+    const { sjId, nomor } = await db.transaction(async (tx) => {
+      const nomor = await ambilNomor(tx, "SJ", tanggal);
       const [sj] = await tx
         .insert(deliveryOrders)
         .values({
+          nomor,
           clientId: po.clientId,
           projectId: po.projectId,
           quotationId: po.quotationId,
           clientPoId: poId,
-          date: body.date ? new Date(body.date) : new Date(),
+          date: tanggal,
           vehicleNumber: nullableTrim(body.vehicleNumber, 50),
           driverName: nullableTrim(body.driverName, 200),
           shippingMethod: nullableTrim(body.shippingMethod, 100),
@@ -66,10 +71,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       );
       // Dicek ulang setelah ditulis: dua surat jalan yang disimpan bareng gak bisa lewat sisa barang.
       await cekSisaKirimPo(tx, poId);
-      return sj.id;
+      return { sjId: sj.id, nomor };
     });
 
-    await createNotification({ title: "Surat jalan dibuat", message: `SJ-${String(sjId).padStart(4, "0")} untuk PO ${po.poNumber}.`, type: "info", targetRole: "finance" });
+    await createNotification({ title: "Surat jalan dibuat", message: `Surat jalan ${nomor} untuk PO ${po.poNumber}.`, type: "info", targetRole: "finance" });
     await audit({ userId: user.id, action: "delivery_order.create_from_po", entity: "delivery_order", entityId: sjId, payload: { clientPoId: poId } });
     return NextResponse.json({ ok: true, id: sjId });
   } catch (error) {

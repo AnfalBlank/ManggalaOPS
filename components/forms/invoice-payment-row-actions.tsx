@@ -94,7 +94,7 @@ export function PaymentRowActions({ row, clients, invoices, paymentAccounts = []
         title={`Detail ${row.code}`}
         description="Ringkasan lengkap data pembayaran"
         rows={[
-          { label: "No. pembayaran", value: row.code },
+          { label: "No. kwitansi", value: row.code },
           { label: "Klien", value: row.clientName },
           { label: "Tagihan", value: row.invoiceCode },
           { label: "Tanggal", value: formatDateSafe(row.date) },

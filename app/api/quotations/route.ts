@@ -8,6 +8,7 @@ import { requireRole } from "@/lib/auth";
 import { getQuotations } from "@/lib/data";
 import { parseMoneyInput } from "@/lib/money";
 import { computeOutputTax, normalizeTaxPercent } from "@/lib/output-tax";
+import { ambilNomor } from "@/lib/nomor-dokumen";
 
 export async function GET() {
   try {
@@ -39,10 +40,13 @@ export async function POST(request: NextRequest) {
     const { tax, total } = computeOutputTax(subtotal, normalizeTaxPercent(body.taxPercent, 11));
 
     const quotationId = await db.transaction(async (tx) => {
+      const tanggal = new Date();
+      const nomor = await ambilNomor(tx, "SP", tanggal);
       const inserted = await tx.insert(quotations).values({
+        nomor,
         clientId,
         projectId: body.projectId ? ensurePositiveInt(body.projectId, "projectId") : null,
-        date: new Date(),
+        date: tanggal,
         validUntil: body.validUntil ? new Date(body.validUntil) : null,
         paymentMethod: trimString(body.paymentMethod, 50) || "CBD",
         attachment: nullableTrim(body.attachment, 500),

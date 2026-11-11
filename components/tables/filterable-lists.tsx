@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { Receipt } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 
@@ -181,7 +183,7 @@ export function FilterableInvoicesTable({ invoices, clients, settings, filters }
   const filtered = useMemo(
     () => {
       const searched = invoices.filter((invoice) => {
-        const matchesQuery = `${invoice.code} ${invoice.clientName} ${invoice.projectName ?? ""} ${invoice.status} ${labelStatus(invoice.status)}`.toLowerCase().includes(query.toLowerCase());
+        const matchesQuery = `${invoice.code} ${invoice.kodeLama ?? ""} ${invoice.clientName} ${invoice.projectName ?? ""} ${invoice.status} ${labelStatus(invoice.status)}`.toLowerCase().includes(query.toLowerCase());
         const matchesPeriod = isWithinPeriod(invoice.date, period);
         const matchesType = type === "all" || invoice.status === type;
         return matchesQuery && matchesPeriod && matchesType;
@@ -271,22 +273,14 @@ export function FilterableInvoicesTable({ invoices, clients, settings, filters }
                       }}
                     />
                     {invoice.amountPaid > 0 ? (
-                      <DownloadKwitansiButton
-                        payload={{
-                          id: invoice.code,
-                          client: invoice.clientName,
-                          amount: invoice.amountPaid,
-                          description: `Pembayaran tagihan ${invoice.code}`,
-                          companyName: settings.companyName,
-                          companyEmail: settings.companyEmail,
-                          companyPhone: settings.companyPhone,
-                          companyAddress: settings.companyAddress,
-                          signatoryName: settings.defaultSignatoryName,
-                          signatoryTitle: settings.defaultSignatoryTitle,
-                          signatureImageUrl: settings.signatureImageUrl,
-                          stampImageUrl: settings.stampImageUrl,
-                        }}
-                      />
+                      // Kwitansi 1 nomor per pembayaran: dicetak dari menu Pembayaran, bukan gabungan per tagihan.
+                      <Link
+                        href={`/payments?q=${encodeURIComponent(invoice.code)}`}
+                        title="Kwitansi (per pembayaran)"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                      >
+                        <Receipt className="size-4" />
+                      </Link>
                     ) : null}
                     <InvoiceRowActions row={invoice} clients={clients} />
                   </div>
@@ -307,7 +301,7 @@ export function FilterablePaymentsTable({ payments, clients, invoices, settings,
   const filtered = useMemo(
     () => {
       const searched = payments.filter((payment) => {
-        const matchesQuery = `${payment.code} ${payment.clientName} ${payment.invoiceCode} ${payment.paymentMethod ?? ""}`.toLowerCase().includes(query.toLowerCase());
+        const matchesQuery = `${payment.code} ${payment.kodeLama ?? ""} ${payment.clientName} ${payment.invoiceCode} ${payment.invoiceKodeLama ?? ""} ${payment.paymentMethod ?? ""}`.toLowerCase().includes(query.toLowerCase());
         const matchesPeriod = isWithinPeriod(payment.date, period);
         const matchesType = type === "all" || (payment.paymentMethod ?? "").toLowerCase() === type.toLowerCase();
         return matchesQuery && matchesPeriod && matchesType;
@@ -347,7 +341,7 @@ export function FilterablePaymentsTable({ payments, clients, invoices, settings,
         <Table className="min-w-[920px] xl:min-w-0">
           <TableHeader className="bg-slate-50 sticky top-0 z-10">
             <TableRow>
-              <TableHead>No. bayar</TableHead>
+              <TableHead>No. kwitansi</TableHead>
               <TableHead>Klien</TableHead>
               <TableHead>Tagihan</TableHead>
               <TableHead>Cara bayar</TableHead>

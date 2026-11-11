@@ -57,12 +57,14 @@ export function labelTipeAkun(type: string | null | undefined) {
 
 const nomor = (prefix: string, id: string) => `${prefix}-${id.padStart(4, "0")}`;
 
-export function labelJurnal(description: string | null | undefined) {
+// `nomorTagihan`: ID tagihan → nomor surat (biar jurnal nampilin nomor yang sama dengan daftar tagihan & PDF).
+export function labelJurnal(description: string | null | undefined, nomorTagihan?: Record<string, string>) {
   if (!description) return "-";
+  const inv = (id: string) => nomorTagihan?.[id] ?? nomor("INV", id);
   const pola: [RegExp, (id: string) => string][] = [
-    [/^Invoice issued #(\d+)$/, (id) => `Tagihan terbit ${nomor("INV", id)}`],
+    [/^Invoice issued #(\d+)$/, (id) => `Tagihan terbit ${inv(id)}`],
     [/^Invoice from quotation #(\d+)$/, (id) => `Tagihan dari penawaran ${nomor("QUO", id)}`],
-    [/^Payment received for invoice #(\d+)$/, (id) => `Pembayaran masuk untuk ${nomor("INV", id)}`],
+    [/^Payment received for invoice #(\d+)$/, (id) => `Pembayaran masuk untuk ${inv(id)}`],
     [/^Expense recorded #(\d+)$/, (id) => `Pengeluaran ${nomor("EXP", id)}`],
   ];
   for (const [regex, ubah] of pola) {

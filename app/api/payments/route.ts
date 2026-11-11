@@ -11,6 +11,7 @@ import { parseMoneyInput } from "@/lib/money";
 import { createNotification } from "@/lib/notifications";
 import { ensurePaymentMatchesInvoice } from "@/lib/validators";
 import { cekBayarTagihan } from "@/lib/cegah-dobel";
+import { ambilNomor, cariNomor } from "@/lib/nomor-dokumen";
 
 export async function GET() {
   try {
@@ -38,13 +39,16 @@ export async function POST(request: NextRequest) {
 
     // Ditulis dulu lalu dicek di transaksi yang sama: dua pembayaran yang disimpan bareng gak bisa lewat total tagihan.
     const inserted = await db.transaction(async (tx) => {
+      const tanggal = new Date();
+      const nomor = await ambilNomor(tx, "KW", tanggal);
       const rows = await tx.insert(payments).values({
+        nomor,
         invoiceId,
         clientId,
         amount,
         paymentMethod,
         paymentAccountCode,
-        date: new Date(),
+        date: tanggal,
         referenceCode,
       }).returning({ id: payments.id });
       await cekBayarTagihan(tx, invoiceId);
@@ -53,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     if (inserted[0]?.id) {
       await upsertPaymentJournal(inserted[0].id);
-      await createNotification({ title: "Pembayaran masuk", message: `Pembayaran tagihan INV-${String(invoiceId).padStart(4, "0")} sebesar Rp ${amount.toLocaleString('id-ID')} dicatat.`, type: "success", targetRole: "finance" });
+      await createNotification({ title: "Pembayaran masuk", message: `Pembayaran tagihan ${await cariNomor("INV", invoiceId)} sebesar Rp ${amount.toLocaleString('id-ID')} dicatat.`, type: "success", targetRole: "finance" });
       await audit({ userId: user.id, action: "payment.create", entity: "payment", entityId: inserted[0].id, payload: { invoiceId, amount } });
     }
 

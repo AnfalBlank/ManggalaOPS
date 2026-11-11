@@ -47,6 +47,7 @@ export type QuotationItemRow = {
 export type QuotationListItem = {
   id: number;
   code: string;
+  kodeLama?: string; // QUO-/INV-/PAY-xxxx (ID baris), gak tampil, cuma buat dicari
   clientId: number;
   clientName: string;
   projectId: number | null;
@@ -86,6 +87,7 @@ export type InvoiceItemRow = {
 export type InvoiceListItem = {
   id: number;
   code: string;
+  kodeLama?: string; // QUO-/INV-/PAY-xxxx (ID baris), gak tampil, cuma buat dicari
   clientId: number;
   clientName: string;
   clientPhone: string | null;
@@ -120,8 +122,10 @@ export type InvoiceListItem = {
 export type PaymentListItem = {
   id: number;
   code: string;
+  kodeLama?: string; // QUO-/INV-/PAY-xxxx (ID baris), gak tampil, cuma buat dicari
   invoiceId: number;
   invoiceCode: string;
+  invoiceKodeLama?: string;
   clientId: number;
   clientName: string;
   amount: number;

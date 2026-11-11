@@ -14,7 +14,7 @@ import {
   supplierPos,
 } from "@/db/schema";
 import { getDeliveryOrders } from "@/lib/data-delivery";
-import { formatDocumentNumber } from "@/lib/format";
+import { nomorDokumen } from "@/lib/nomor-dokumen";
 
 const iso = (d: Date | null | undefined) => (d ? new Date(d).toISOString() : null);
 
@@ -111,6 +111,8 @@ export async function getClientPoList(): Promise<PoRingkas[]> {
       poDate: clientPos.poDate,
       quotationId: clientPos.quotationId,
       quotationSubject: quotations.subject,
+      quotationNomor: quotations.nomor,
+      quotationDate: quotations.date,
       clientId: clientPos.clientId,
       clientName: clients.name,
       projectId: clientPos.projectId,
@@ -167,7 +169,7 @@ export async function getClientPoList(): Promise<PoRingkas[]> {
       poNumber: r.poNumber,
       poDate: iso(r.poDate),
       quotationId: r.quotationId,
-      quotationCode: formatDocumentNumber("QUO", r.quotationId),
+      quotationCode: nomorDokumen("SP", r.quotationId, r.quotationNomor, r.quotationDate),
       quotationSubject: r.quotationSubject,
       clientId: r.clientId,
       clientName: r.clientName,
@@ -212,7 +214,7 @@ export async function getSupplierPoList(filter?: { clientPoId?: number }): Promi
   const items = await db.select().from(supplierPoItems).where(inArray(supplierPoItems.supplierPoId, rows.map((r) => r.s.id)));
   return rows.map(({ s, poNumber, clientName }) => ({
     id: s.id,
-    code: formatDocumentNumber("POS", s.id),
+    code: nomorDokumen("PO", s.id, s.nomor, s.date),
     clientPoId: s.clientPoId,
     poNumber,
     clientName,

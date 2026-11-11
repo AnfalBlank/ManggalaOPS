@@ -151,6 +151,7 @@ const gayaTabel = {
 
 export type PoSupplierPdf = {
   id: number;
+  code?: string; // nomor surat tersimpan (0001/MUI/PO/…)
   date: Date;
   supplierName: string;
   supplierContact?: string | null;
@@ -169,7 +170,7 @@ export type PoSupplierPdf = {
 
 export function buatPoSupplierPdf(data: PoSupplierPdf, kop: Kop) {
   const doc = new jsPDF("p", "mm", "a4");
-  const nomor = nomorSurat(data.id, "PO", data.date);
+  const nomor = data.code?.includes("/") ? data.code : nomorSurat(data.id, "PO", data.date);
   kepala(doc, kop, "PURCHASE ORDER");
   let y = blokKiriKanan(
     doc,

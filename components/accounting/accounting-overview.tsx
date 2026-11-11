@@ -29,10 +29,12 @@ type JournalEntryRow = { id: number; date: Date; description: string; accountCod
 export function AccountingOverview({
   accounts,
   entries,
+  nomorTagihan,
   filters,
 }: {
   accounts: AccountRow[];
   entries: JournalEntryRow[];
+  nomorTagihan?: Record<string, string>;
   filters?: { initialQuery?: string; initialPeriod?: FilterPeriod; initialType?: string };
 }) {
   const [query, setQuery] = useState(filters?.initialQuery ?? "");
@@ -56,7 +58,7 @@ export function AccountingOverview({
 
   const filteredEntries = useMemo(
     () => entries.filter((entry) => {
-      const matchesQuery = `${entry.description} ${labelJurnal(entry.description)} ${entry.accountCode} ${entry.accountName ?? ""}`.toLowerCase().includes(query.toLowerCase());
+      const matchesQuery = `${entry.description} ${labelJurnal(entry.description, nomorTagihan)} ${entry.accountCode} ${entry.accountName ?? ""}`.toLowerCase().includes(query.toLowerCase());
       const matchesPeriod = isWithinPeriod(entry.date, period);
       return matchesQuery && matchesPeriod;
     }),
@@ -111,7 +113,7 @@ export function AccountingOverview({
 
         <Card className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-border p-4 md:p-6">
           <CardContent className="p-0">
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-4"><h2 className="text-lg font-bold tracking-tight text-foreground">Jurnal umum</h2><LedgerExportButton entries={filteredEntries.map((entry) => ({ date: format(new Date(entry.date), "yyyy-MM-dd"), description: labelJurnal(entry.description), accountCode: `${entry.accountCode} - ${entry.accountName ?? '-'}`, debit: entry.debit ?? 0, credit: entry.credit ?? 0 }))} /></div>
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4"><h2 className="text-lg font-bold tracking-tight text-foreground">Jurnal umum</h2><LedgerExportButton entries={filteredEntries.map((entry) => ({ date: format(new Date(entry.date), "yyyy-MM-dd"), description: labelJurnal(entry.description, nomorTagihan), accountCode: `${entry.accountCode} - ${entry.accountName ?? '-'}`, debit: entry.debit ?? 0, credit: entry.credit ?? 0 }))} /></div>
             <div className="w-full overflow-x-auto pb-4 rounded-xl border max-md:border-0 max-md:pb-0">
               <Table className="min-w-[600px]">
                 <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
@@ -126,7 +128,7 @@ export function AccountingOverview({
                   {Object.entries(grouped).map(([journalId, journalEntries]) => (
                     <Fragment key={`journal-group-${journalId}`}>
                       <TableRow className="bg-muted/10 border-b-0 hover:bg-muted/10">
-                        <TableCell colSpan={4} className="py-2 text-xs font-medium text-muted-foreground bg-muted/20">JRN-{journalId} - {labelJurnal(journalEntries[0]?.description)}</TableCell>
+                        <TableCell colSpan={4} className="py-2 text-xs font-medium text-muted-foreground bg-muted/20">JRN-{journalId} - {labelJurnal(journalEntries[0]?.description, nomorTagihan)}</TableCell>
                       </TableRow>
                       {journalEntries.map((entry, index) => (
                         <TableRow key={`${journalId}-${index}`} className="border-b-0 hover:bg-transparent">

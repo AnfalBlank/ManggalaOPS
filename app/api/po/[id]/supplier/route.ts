@@ -8,6 +8,7 @@ import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
 import { parseMoneyInput } from "@/lib/money";
 import { computeOutputTax, normalizeTaxPercent } from "@/lib/output-tax";
+import { ambilNomor } from "@/lib/nomor-dokumen";
 
 // PO keluar ke supplier untuk memenuhi PO klien.
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -32,16 +33,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const subtotal = items.reduce((s, i) => s + i.amount, 0);
     const { tax, total } = computeOutputTax(subtotal, normalizeTaxPercent(body.taxPercent, 11));
+    const tanggal = body.date ? new Date(body.date) : new Date();
+    ensure(!Number.isNaN(tanggal.getTime()), "Tanggal PO supplier gak valid");
     const supId = await db.transaction(async (tx) => {
+      const nomor = await ambilNomor(tx, "PO", tanggal);
       const [sup] = await tx
         .insert(supplierPos)
         .values({
+          nomor,
           clientPoId: poId,
           supplierName,
           supplierContact: nullableTrim(body.supplierContact, 200),
           supplierPhone: nullableTrim(body.supplierPhone, 50),
           supplierAddress: nullableTrim(body.supplierAddress, 500),
-          date: body.date ? new Date(body.date) : new Date(),
+          date: tanggal,
           expectedDate: body.expectedDate ? new Date(body.expectedDate) : null,
           paymentTerms: nullableTrim(body.paymentTerms, 200),
           notes: nullableTrim(body.notes, 2000),

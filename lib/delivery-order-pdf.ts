@@ -52,7 +52,9 @@ export type DeliveryOrderPdfData = {
 const toRomanMonth = (month: number) =>
   ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"][month - 1] || "I";
 
+// `id` = nomor surat tersimpan (0001/MUI/SJ/…). Kode pendek lama (SJ-0012) masih dihitung pakai rumus lama.
 function buildLetterNumber(id: string, date: Date) {
+  if (id.includes("/")) return id;
   const number = id.replace(/\D/g, "") || "0001";
   return `${number}/MUI/SJ/${toRomanMonth(date.getMonth() + 1)}/${date.getFullYear()}`;
 }

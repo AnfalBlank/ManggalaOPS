@@ -8,6 +8,7 @@ import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
 import { computeOutputTax, normalizeTaxPercent } from "@/lib/output-tax";
 import { getAppSettings } from "@/lib/settings";
+import { ambilNomor } from "@/lib/nomor-dokumen";
 
 /**
  * Convert an existing Lead into a draft Quotation. The new quotation inherits
@@ -32,10 +33,13 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     const { tax, total } = computeOutputTax(subtotal, taxPercent);
 
     const quotationId = await db.transaction(async (tx) => {
+      const tanggal = new Date();
+      const nomor = await ambilNomor(tx, "SP", tanggal);
       const inserted = await tx.insert(quotations).values({
+        nomor,
         clientId: lead.clientId,
         projectId: null,
-        date: new Date(),
+        date: tanggal,
         validUntil: new Date(Date.now() + validityDays * 24 * 60 * 60 * 1000),
         paymentMethod: settings.defaultPaymentMethod ?? "CBD",
         subject: `Penawaran ${lead.serviceName}`,

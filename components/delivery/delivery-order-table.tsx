@@ -68,7 +68,7 @@ export function DeliveryOrdersTable({
 
   const filtered = useMemo(
     () => deliveries.filter((delivery) => {
-      const haystack = `${delivery.code} ${delivery.clientName} ${delivery.projectName ?? ""} ${delivery.recipientName ?? ""} ${delivery.invoiceCode ?? ""} ${delivery.poNumber ?? ""} ${labelStatus(delivery.status)}`.toLowerCase();
+      const haystack = `${delivery.code} ${delivery.kodeLama ?? ""} ${delivery.clientName} ${delivery.projectName ?? ""} ${delivery.recipientName ?? ""} ${delivery.invoiceCode ?? ""} ${delivery.poNumber ?? ""} ${labelStatus(delivery.status)}`.toLowerCase();
       const matchesQuery = haystack.includes(query.toLowerCase());
       const matchesPeriod = isWithinPeriod(delivery.date, period);
       const matchesType = type === "all" || delivery.status === type;

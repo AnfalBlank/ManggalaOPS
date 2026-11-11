@@ -58,7 +58,9 @@ export const generateKwitansiPDF = async (paymentData: ReceiptPdfData) => {
   });
 
   const amountInWords = toWordsId(paymentData.amount);
-  const receiptNumber = `KWT-${paymentData.id}`;
+  // `id` = nomor kwitansi tersimpan: lama "KWT-PAY-0005", baru "0017/MUI/KW/XI/2026".
+  const receiptNumber = paymentData.id.includes("/") || paymentData.id.startsWith("KWT-") ? paymentData.id : `KWT-${paymentData.id}`;
+  const nomorPembayaran = paymentData.id.replace(/^KWT-/, "");
   const today = format(new Date(), "dd MMMM yyyy", { locale: localeId });
   const companyName = paymentData.companyName || "PT. Manggala Utama Indonesia";
   const companyEmail = paymentData.companyEmail || "admin@manggala-utama.id";
@@ -155,7 +157,7 @@ export const generateKwitansiPDF = async (paymentData: ReceiptPdfData) => {
   dottedLine(valueX, contentRightEdge, 107);
 
   doc.setFont("helvetica", "normal");
-  doc.text(`Nomor     : ${paymentData.id}`, labelX, 116);
+  doc.text(`Nomor     : ${nomorPembayaran}`, labelX, 116);
   doc.text(`Tanggal   : ${today}`, labelX, 122);
 
   doc.setFont("helvetica", "bold");
@@ -178,5 +180,5 @@ export const generateKwitansiPDF = async (paymentData: ReceiptPdfData) => {
   doc.setFont("helvetica", "normal");
   doc.text(signatoryTitle, signatureX + 13, 138);
 
-  tampilkanPdf(doc, `Kwitansi_${paymentData.id}.pdf`);
+  tampilkanPdf(doc, `Kwitansi_${nomorPembayaran.replace(/\//g, "-")}.pdf`);
 };

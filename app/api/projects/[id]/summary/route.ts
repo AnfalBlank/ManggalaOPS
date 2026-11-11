@@ -6,6 +6,7 @@ import { expenses, invoices, payments, projects, quotations } from "@/db/schema"
 import { ensurePositiveInt, toErrorResponse } from "@/lib/api-helpers";
 import { requireRole } from "@/lib/auth";
 import { formatDocumentNumber } from "@/lib/format";
+import { nomorDokumen } from "@/lib/nomor-dokumen";
 
 /**
  * Aggregated view of a project's financial position:
@@ -24,10 +25,11 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
 
     const [project, quotationRows, invoiceRows, expenseRows] = await Promise.all([
       db.query.projects.findFirst({ where: eq(projects.id, projectId) }),
-      db.select({ id: quotations.id, status: quotations.status, total: quotations.total, date: quotations.date }).from(quotations).where(eq(quotations.projectId, projectId)),
+      db.select({ id: quotations.id, nomor: quotations.nomor, status: quotations.status, total: quotations.total, date: quotations.date }).from(quotations).where(eq(quotations.projectId, projectId)),
       db
         .select({
           id: invoices.id,
+          nomor: invoices.nomor,
           date: invoices.date,
           status: invoices.status,
           total: invoices.total,
@@ -63,7 +65,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
       },
       quotations: quotationRows.map((q) => ({
         id: q.id,
-        code: formatDocumentNumber("QUO", q.id),
+        code: nomorDokumen("SP", q.id, q.nomor, q.date),
         status: q.status,
         total: q.total ?? 0,
         date: q.date,
@@ -71,7 +73,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
       lihatUang,
       invoices: (lihatUang ? invoiceRows : []).map((inv) => ({
         id: inv.id,
-        code: formatDocumentNumber("INV", inv.id),
+        code: nomorDokumen("INV", inv.id, inv.nomor, inv.date),
         date: inv.date,
         status: inv.status,
         total: inv.total ?? 0,

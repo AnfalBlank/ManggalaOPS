@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { accounts, clientPos, clients, expenses, journalEntries, journals, supplierPos, users } from "@/db/schema";
 import { getFinanceSummary } from "@/lib/business";
 import { getAccountMapping } from "@/lib/account-mapping";
-import { formatDocumentNumber } from "@/lib/format";
+import { nomorDokumen } from "@/lib/nomor-dokumen";
 
 export async function getFinanceOverviewData() {
   const mapping = await getAccountMapping();
@@ -51,7 +51,7 @@ export async function getFinanceOverviewData() {
       .from(clientPos)
       .innerJoin(clients, eq(clientPos.clientId, clients.id))
       .orderBy(desc(clientPos.id)),
-    db.select({ id: supplierPos.id, clientPoId: supplierPos.clientPoId, supplierName: supplierPos.supplierName }).from(supplierPos).orderBy(desc(supplierPos.id)),
+    db.select({ id: supplierPos.id, nomor: supplierPos.nomor, date: supplierPos.date, clientPoId: supplierPos.clientPoId, supplierName: supplierPos.supplierName }).from(supplierPos).orderBy(desc(supplierPos.id)),
   ]);
 
   return {
@@ -60,7 +60,7 @@ export async function getFinanceOverviewData() {
     paymentAccounts: accountRows.filter((account) => account.type === "Asset" && paymentAccountCodes.includes(account.code)),
     projects: projectRows,
     poKlien: poRows,
-    poSupplier: supRows.map((s) => ({ ...s, code: formatDocumentNumber("POS", s.id) })),
+    poSupplier: supRows.map(({ nomor, date, ...s }) => ({ ...s, code: nomorDokumen("PO", s.id, nomor, date) })),
   };
 }
 

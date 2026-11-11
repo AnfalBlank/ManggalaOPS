@@ -5,6 +5,7 @@ import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
 import { createNotification } from "@/lib/notifications";
 import { getClientIp } from "@/lib/rate-limit";
+import { cariNomor } from "@/lib/nomor-dokumen";
 
 /**
  * Track that a WhatsApp reminder was opened by the user. The browser opens
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     await createNotification({
       title: `Pengingat ${channel === "whatsapp" ? "WhatsApp" : channel} terkirim`,
-      message: `${user.name} ngirim pengingat ke klien untuk tagihan INV-${String(invoiceId).padStart(4, "0")}.`,
+      message: `${user.name} ngirim pengingat ke klien untuk tagihan ${await cariNomor("INV", invoiceId)}.`,
       type: "info",
       targetRole: "finance",
     });

@@ -50,7 +50,8 @@ const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(amount);
 
 const toRomanMonth = (m: number) => ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"][m - 1] || "I";
-const buildLetterNumber = (id: string, date: Date) => `${id.replace(/\D/g, "") || "0001"}/MUI/INV/${toRomanMonth(date.getMonth() + 1)}/${date.getFullYear()}`;
+// `id` = nomor surat tersimpan (0001/MUI/INV/…). Kode pendek lama (INV-0049) masih dihitung pakai rumus lama.
+const buildLetterNumber = (id: string, date: Date) => id.includes("/") ? id : `${id.replace(/\D/g, "") || "0001"}/MUI/INV/${toRomanMonth(date.getMonth() + 1)}/${date.getFullYear()}`;
 
 type DocExt = jsPDF & { lastAutoTable?: { finalY?: number } };
 

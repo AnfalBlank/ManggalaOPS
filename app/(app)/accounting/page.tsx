@@ -44,6 +44,7 @@ export default async function AccountingPage({ searchParams }: { searchParams?: 
           <AccountingDetailedReports accounts={data.accounts} />
           <AccountingOverview
             accounts={data.accounts}
+            nomorTagihan={Object.fromEntries(invoices.map((inv) => [String(inv.id), inv.code]))}
             entries={data.entries as { id: number; date: Date; description: string; accountCode: string; debit: number | null; credit: number | null }[]}
             filters={{ initialQuery: params.q, initialPeriod: (params.period as "all" | "30d" | "month" | "year") ?? "all", initialType: params.type ?? "all" }}
           />

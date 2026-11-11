@@ -12,6 +12,7 @@ import {
   quotations,
 } from "@/db/schema";
 import { getAccountMapping } from "@/lib/account-mapping";
+import { ambilNomor, nomorDokumen } from "@/lib/nomor-dokumen";
 
 const VAT_OUTPUT_ACCOUNT_CODE = "2101";
 
@@ -31,7 +32,7 @@ export async function acceptQuotationAndCreateProject(quotationId: number) {
       .insert(projects)
       .values({
         clientId: quotation.clientId,
-        name: `Proyek dari QUO-${String(quotation.id).padStart(4, "0")}`,
+        name: `Proyek dari penawaran ${nomorDokumen("SP", quotation.id, quotation.nomor, quotation.date)}`,
         value: quotation.total ?? quotation.subtotal ?? 0,
         status: "In Progress",
         progress: 0,
@@ -111,20 +112,25 @@ export async function createInvoiceFromQuotation(quotationId: number) {
     throw new Error("Quotation tidak ditemukan");
   }
 
-  const insertedInvoice = await db
-    .insert(invoices)
-    .values({
-      clientId: quotation.clientId,
-      projectId: quotation.projectId,
-      quotationId: quotation.id,
-      date: new Date(),
-      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-      subtotal: quotation.subtotal,
-      tax: quotation.tax,
-      total: quotation.total,
-      status: "Unpaid",
-    })
-    .returning({ id: invoices.id });
+  const insertedInvoice = await db.transaction(async (tx) => {
+    const tanggal = new Date();
+    const nomor = await ambilNomor(tx, "INV", tanggal);
+    return tx
+      .insert(invoices)
+      .values({
+        nomor,
+        clientId: quotation.clientId,
+        projectId: quotation.projectId,
+        quotationId: quotation.id,
+        date: tanggal,
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        subtotal: quotation.subtotal,
+        tax: quotation.tax,
+        total: quotation.total,
+        status: "Unpaid",
+      })
+      .returning({ id: invoices.id, nomor: invoices.nomor });
+  });
 
   const invoiceId = insertedInvoice[0]?.id;
 
@@ -158,7 +164,7 @@ export async function createInvoiceFromQuotation(quotationId: number) {
     await upsertInvoiceJournal(invoiceId);
   }
 
-  return { invoiceId };
+  return { invoiceId, nomor: insertedInvoice[0]?.nomor ?? null };
 }
 
 export async function upsertPaymentJournal(paymentId: number) {
