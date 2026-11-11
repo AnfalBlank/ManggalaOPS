@@ -14,9 +14,25 @@ import { computeOutputTax, normalizeTaxPercent } from "@/lib/output-tax";
 
 export async function GET() {
   try {
-    await requireRole(["admin", "finance", "sales", "project_manager"]);
+    const { role } = await requireRole(["admin", "finance", "sales", "project_manager"]);
     const data = await getInvoices();
-    return NextResponse.json(data);
+    if (role === "admin" || role === "finance") return NextResponse.json(data);
+    // Sales & project manager cuma butuh data buat isi surat jalan (penerima & barang), tanpa angka uang.
+    return NextResponse.json(data.map((row) => ({
+      id: row.id,
+      code: row.code,
+      clientId: row.clientId,
+      clientName: row.clientName,
+      projectId: row.projectId,
+      projectName: row.projectName,
+      recipientName: row.recipientName,
+      recipientCompany: row.recipientCompany,
+      recipientAddress: row.recipientAddress,
+      subject: row.subject,
+      signatoryName: row.signatoryName,
+      signatoryTitle: row.signatoryTitle,
+      items: (row.items ?? []).map((item) => ({ description: item.description, qty: item.qty, unit: item.unit })),
+    })));
   } catch (error) {
     return toErrorResponse(error, "Failed to fetch invoices");
   }

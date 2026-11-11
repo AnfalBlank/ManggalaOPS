@@ -11,7 +11,7 @@ import { computeOutputTax, normalizeTaxPercent } from "@/lib/output-tax";
 
 export async function GET() {
   try {
-    await requireRole(["admin", "finance", "sales", "project_manager"]);
+    await requireRole(["admin", "sales"]); // sama dengan akses halamannya
     const data = await getQuotations();
     return NextResponse.json(data);
   } catch (error) {

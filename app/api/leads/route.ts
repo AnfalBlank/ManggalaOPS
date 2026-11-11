@@ -10,7 +10,7 @@ import { parseMoneyInput } from "@/lib/money";
 
 export async function GET() {
   try {
-    await requireRole(["admin", "finance", "sales", "project_manager"]);
+    await requireRole(["admin", "sales"]); // sama dengan akses halamannya
     const data = await getLeads();
     return NextResponse.json(data);
   } catch (error) {
